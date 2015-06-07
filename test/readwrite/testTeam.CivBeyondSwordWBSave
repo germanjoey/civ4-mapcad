@@ -1,0 +1,9 @@
+BeginTeam
+	TeamID=0
+	Tech=TECH_MYSTICISM
+	Tech=TECH_THE_WHEEL
+	Tech=TECH_FISHING
+	Tech=TECH_HUNTING
+	ContactWithTeam=0
+	RevealMap=0
+EndTeam

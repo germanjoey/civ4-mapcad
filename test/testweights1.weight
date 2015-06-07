@@ -1,0 +1,5 @@
+>= 0.8 => grass_forest0,
+>= 0.6 => grass_forest1,
+>= 0.4 => grass_forest2,
+>= 0.2 => grass_forest3,
+<  0.2 => grass_forest

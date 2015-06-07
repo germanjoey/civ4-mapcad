@@ -1,0 +1,14 @@
+BeginMap
+	grid width=68
+	grid height=45
+	top latitude=45
+	bottom latitude=45
+	wrap X=1
+	wrap Y=1
+	world size=WORLDSIZE_STANDARD
+	climate=CLIMATE_TEMPERATE
+	sealevel=SEALEVEL_MEDIUM
+	num plots written=3060
+	num signs written=1
+	Randomize Resources=false
+EndMap

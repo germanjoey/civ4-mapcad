@@ -1,0 +1,13 @@
+	BeginUnit
+		UnitType=UNIT_HOLY_ROMAN_LANDSKNECHT, UnitOwner=18
+		UnitName=SS Honor Guard
+		Damage=0
+		Level=1, Experience=0
+		PromotionType=PROMOTION_MARCH
+		PromotionType=PROMOTION_BLITZ
+		PromotionType=PROMOTION_COMMANDO
+		PromotionType=PROMOTION_LEADERSHIP
+		PromotionType=PROMOTION_MORALE
+		FacingDirection=4
+		UnitAIType=UNITAI_RESERVE
+	EndUnit

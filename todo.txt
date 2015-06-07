@@ -1,0 +1,14 @@
+TODO:
+
+- finish layer functionality
+- implement layer commands
+- implement Group class
+- implement Group commands
+- generate mask from map using a filter
+- method of assigning a fixed set of resources/weights to a mask, one at a time - allocation function
+- balance shit
+- bfc shape
+- documentation
+- tutorials
+- implement state as a real class
+- implement pparams as a real class

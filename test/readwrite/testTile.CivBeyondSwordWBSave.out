@@ -1,0 +1,22 @@
+BeginPlot
+	x=35, y=22
+	BonusType=BONUS_URANIUM
+	ImprovementType=IMPROVEMENT_GOODY_HUT
+	FeatureType=FEATURE_FALLOUT, FeatureVariety=0
+	TerrainType=TERRAIN_PLAINS
+	PlotType=1
+	BeginUnit
+		UnitType=UNIT_HOLY_ROMAN_LANDSKNECHT, UnitOwner=18
+		UnitName=SS Honor Guard
+		Damage=0
+		Level=1, Experience=0
+		PromotionType=PROMOTION_MARCH
+		PromotionType=PROMOTION_BLITZ
+		PromotionType=PROMOTION_COMMANDO
+		PromotionType=PROMOTION_LEADERSHIP
+		PromotionType=PROMOTION_MORALE
+		FacingDirection=4
+		UnitAIType=UNITAI_RESERVE
+	EndUnit
+	TeamReveal=0,1,2,3,4,5
+EndPlot

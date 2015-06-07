@@ -1,0 +1,1101 @@
+Version=11
+BeginGame
+	Era=ERA_ANCIENT
+	Speed=GAMESPEED_NORMAL
+	Calendar=CALENDAR_DEFAULT
+	Option=GAMEOPTION_LEAD_ANY_CIV
+	Option=GAMEOPTION_NO_VASSAL_STATES
+	Option=GAMEOPTION_NO_GOODY_HUTS
+	Option=GAMEOPTION_NO_EVENTS
+	Victory=VICTORY_TIME
+	Victory=VICTORY_CONQUEST
+	Victory=VICTORY_DOMINATION
+	Victory=VICTORY_CULTURAL
+	Victory=VICTORY_SPACE_RACE
+	Victory=VICTORY_DIPLOMATIC
+	GameTurn=0
+	MaxTurns=500
+	MaxCityElimination=0
+	NumAdvancedStartPoints=600
+	TargetScore=0
+	StartYear=-4000
+	Description=
+	ModPath=
+EndGame
+BeginTeam
+	TeamID=0
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=1
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=2
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=3
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=4
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=5
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=6
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=7
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=8
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=9
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=10
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=11
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=12
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=13
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=14
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=15
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=16
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=17
+	RevealMap=0
+EndTeam
+BeginPlayer
+	Team=0
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=1
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=2
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=3
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=4
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=5
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=6
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=7
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=8
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=9
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=10
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=11
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=12
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=13
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=14
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=15
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=16
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=17
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginMap
+	grid width=13
+	grid height=13
+	top latitude=45
+	bottom latitude=45
+	wrap X=1
+	wrap Y=1
+	world size=WORLDSIZE_STANDARD
+	climate=CLIMATE_TEMPERATE
+	sealevel=SEALEVEL_MEDIUM
+	num plots written=169
+	num signs written=0
+	Randomize Resources=false
+EndMap
+
+### Plot Info ###
+BeginPlot
+	x=0,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=5
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=6
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=7
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=8
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=9
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=1
+	TerrainType=TERRAIN_GRASS
+	PlotType=1
+EndPlot
+BeginPlot
+	x=1,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=5
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=6
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=7
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=8
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=9
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=5
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=6
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=7
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=8
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=9
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=5
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=6
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=7
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=8
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=9
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=4
+	TerrainType=TERRAIN_GRASS
+	PlotType=1
+EndPlot
+BeginPlot
+	x=4,y=5
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=6
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=7
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=8
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=9
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=5
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=6
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=7
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=8
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=9
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=5
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=6
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=7
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=8
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=9
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=5
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=6
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=7
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=8
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=9
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=5
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=6
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=7
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=8
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=9
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=5
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=6
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=7
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=8
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=9
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=5
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=6
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=7
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=8
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=9
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=5
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=6
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=7
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=8
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=9
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=5
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=6
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=7
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=8
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=9
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot

@@ -1,0 +1,26 @@
+BeginPlayer
+	Team=5
+	LeaderType=LEADER_MEHMED
+	LeaderName=Tsargon
+	CivDesc=Loaded Up and Truckin' (B)
+	CivShortDesc=Loaded Up and Truckin' (B)
+	CivAdjective=Truckin'
+	FlagDecal=Art/Interface/TeamColor/FlagDECAL_Scimitar.dds
+	WhiteFlag=0
+	CivType=CIVILIZATION_PERSIA
+	Color=PLAYERCOLOR_DARK_RED
+	ArtStyle=ARTSTYLE_SOUTH_AMERICA
+	PlayableCiv=1
+	MinorNationStatus=0
+	StartingGold=0
+	StartingX=65, StartingY=34
+	StateReligion=
+	StartingEra=ERA_ANCIENT
+	RandomStartLocation=false
+	CivicOption=CIVICOPTION_GOVERNMENT, Civic=CIVIC_DESPOTISM
+	CivicOption=CIVICOPTION_LEGAL, Civic=CIVIC_BARBARISM
+	CivicOption=CIVICOPTION_LABOR, Civic=CIVIC_TRIBALISM
+	CivicOption=CIVICOPTION_ECONOMY, Civic=CIVIC_DECENTRALIZATION
+	CivicOption=CIVICOPTION_RELIGION, Civic=CIVIC_PAGANISM
+	Handicap=HANDICAP_NOBLE
+EndPlayer
