@@ -16,7 +16,7 @@ sub recenter {
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['layer']
     });
-    return -1 if $pparams->error;
+    return -1 if $pparams->has_error;
     
     my ($layer, $offsetX, $offsetY) = $pparams->required();
     $layer->recenter();
@@ -29,7 +29,7 @@ sub move_layer {
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['layer', 'int', 'int']
     });
-    return -1 if $pparams->error;
+    return -1 if $pparams->has_error;
     
     my ($layer, $offsetX, $offsetY) = $pparams->required();
     $layer->move($offsetX, $offsetY);
@@ -42,7 +42,7 @@ sub set_layer_priority {
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['layer', 'int']
     });
-    return -1 if $pparams->error;
+    return -1 if $pparams->has_error;
     
     my ($layer, $priority) = $pparams->required();
     my $group = $layer->get_group();
@@ -52,28 +52,9 @@ sub set_layer_priority {
     return 1;
 }
 
-# apply a mask to a layer, cut it out, and add it as a new layer to the same project with +1 priority
-sub cut_out_layer {
-    my ($state, @params) = @_;
-    
-    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
-        'shape_params' => 1,
-        'has_result' => 'mask',
-        'required' => ['shape'],
-        'optional' => {
-            'width' => 0,
-            'height' => 0
-        }
-    });
-    return -1 if $pparams->error;
-    
-    print "cut_layer command executed\n\n";
-    return 1;
-}
-
 # apply a mask to a layer, delete everything outside of it, then resize the layer
 sub crop_layer {
     my ($state, @params) = @_;
-    print "crop_layer command executed\n\n";
+    die "crop_layer command not yet implemented\n\n";
     return 1;
 }

@@ -18,9 +18,36 @@ sub new {
         'shape_param' => {},
         'mask' => {},
         'terrain' => {},
+        'in_script' => 0,
+        'log' => []
     };
     
     return bless $obj, $class;
+}
+
+sub in_script {
+    my ($self) = @_;
+    $self->{'in_script'} ++;
+}
+
+sub off_script {
+    my ($self) = @_;
+    $self->{'in_script'} --;
+}
+
+sub is_off_script {
+    my ($self) = @_;
+    return ($self->{'in_script'} == 0);
+}
+
+sub add_log {
+    my ($self, $command) = @_;
+    push @{ $self->{'log'} }, $command;
+}
+
+sub get_log {
+    my ($self) = @_;
+    return @{ $self->{'log'} };
 }
 
 sub get_output_dir {
@@ -35,12 +62,16 @@ sub set_output_dir {
 
 sub get_shape_params {
     my ($self, $shape_name) = @_;
-    return $self->{'shape_params'}{$shape_name};
+    return $self->{'shape_param'}{$shape_name};
 }
 
 sub set_shape_params {
     my ($self, $shape_name, $params) = @_;
-    $self->{'shape_params'}{$shape_name} = $params;
+    
+    use Data::Dumper;
+    die Dumper $self->{'shape'}, $self->{'shape_param'};
+    
+    $self->{'shape_param'}{$shape_name} = $params;
 }
 
 sub get_variable {

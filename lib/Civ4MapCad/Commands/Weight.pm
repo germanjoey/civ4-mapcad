@@ -17,12 +17,14 @@ sub load_terrain {
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['str']
     });
-    return -1 if $pparams->error;
+    return -1 if $pparams->has_error;
     
-    my $filename = $pparams->get_required();
+    my ($filename) = $pparams->get_required();
+    $filename =~ s/"//g;
+    
     my $ret = open (my $test, $filename) || 0;
     unless ($ret) {
-        _$state->report_error("cannot import ascii shape from '$filename': $!");
+        $state->report_error("cannot import ascii shape from '$filename': $!");
         return -1;
     }
     close $test;
@@ -48,9 +50,11 @@ sub import_weight_table_from_file {
         'required' => ['str'],
         'has_result' => 'weight'
     });
-    return -1 if $pparams->error;
+    return -1 if $pparams->has_error;
 
-    my $filename = $pparams->get_required;
+    my ($filename) = $pparams->get_required;
+    $filename =~ s/"//g;
+    
     my $result_name = $pparams->get_result_name();
     
     my $ret = open(my $weights, $filename) || 0;

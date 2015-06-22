@@ -6,12 +6,27 @@ use warnings;
 use Exporter::Dispatch;
 use Civ4MapCad::ParamParser;
 
-use Civ4MapCad::Commands::List qw(list_shapes list_groups list_layers list_masks list_weights show_weights new_weight_table import_weight_table_from_file);
-use Civ4MapCad::Commands::Mask qw(import_mask_from_ascii new_mask_from_shape mask_difference mask_union mask_intersect mask_invert mask_threshold);
-use Civ4MapCad::Commands::Layer qw(move_layer set_layer_priority cut_layer crop_layer extract_layer find_difference);
-use Civ4MapCad::Commands::TopLevel qw(new_project import_project add_layers_from_project flatten_group merge_groups export_group find_starts export_sims);
-use Civ4MapCad::Commands::List qw(list_shapes list_groups list_layers list_masks list_weights show_weights);
-use Civ4MapCad::Commands::Weight qw(load_terrain new_weight_table import_weight_table_from_file);
+use Civ4MapCad::Commands::TopLevel qw(
+   set_output_dir write_log
+);
+use Civ4MapCad::Commands::Weight qw(
+    load_terrain new_weight_table import_weight_table_from_file
+);
+use Civ4MapCad::Commands::List qw(
+    list_shapes list_groups list_layers list_masks list_weights show_weights
+    new_weight_table dump_group dump_mask dump_layer
+);
+use Civ4MapCad::Commands::Mask qw(
+    import_mask_from_ascii new_mask_from_shape mask_difference mask_union
+    mask_intersect mask_invert mask_threshold
+);
+use Civ4MapCad::Commands::Layer qw(
+    move_layer set_layer_priority cut_layer crop_layer extract_layer find_difference
+);
+use Civ4MapCad::Commands::Group qw(
+    export_sims find_starts export_group combine_groups flatten_group copy_layer_from_group import_group new_group find_difference
+    extract_starts_as_mask extract_starts_as_layers normalize_starts find_starts strip_nonsettlers add_scouts_to_settlers extract_starts export_sims
+);
 
 # use Civ4MapCad::Commands::Balance qw();
 
@@ -24,10 +39,11 @@ sub import_shape {
         'has_result' => 'shape',
         'required' => ['str']
     });
-    return -1 if $pparams->error;
+    return -1 if $pparams->has_error;
     
     my $shape_name = $pparams->get_result_name();
     my ($path) = $pparams->get_required();
+    $path =~ s/"//g;    
     
     if (exists $state->{'shape'}{$shape_name}) {
         $state->report_warning("shape with name '$shape_name' already exists.");

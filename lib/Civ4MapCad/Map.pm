@@ -65,7 +65,7 @@ sub default {
     $self->{'MapInfo'} = Civ4MapCad::Map::MapInfo->new_default($width, $height);
     
     # TODO: num teams is dependent on mod
-    foreach my $i (0..17) {
+    foreach my $i (0..$main::max_players-1) {
         my $team = Civ4MapCad::Map::Team->new_default($i);
         $self->{'Teams'}{$i} = $team;
         
@@ -127,6 +127,16 @@ sub expand_dim {
     }
 }
 
+sub wrapsX {
+    my ($self) = @_;
+    return defined($self->info('wrap X')) and ($self->info('wrap X') eq '1');
+}
+
+sub wrapsY {
+    my ($self) = @_;
+    return defined($self->info('wrap Y')) and ($self->info('wrap Y') eq '1');
+}
+
 sub overwrite_tiles {
     my ($self, $map, $offsetX, $offsetY) = @_;
     
@@ -136,9 +146,18 @@ sub overwrite_tiles {
     for my $x (0..$width-1) {
         for my $y (0..$height-1) {
             if (! $map->{'Tiles'}[$x][$y]->is_blank()) {
-                $self->{'Tiles'}[$x + $offsetX][$y + $offsetY] = deepcopy($map->{'Tiles'}[$x][$y]);
-                $self->{'Tiles'}[$x + $offsetX][$y + $offsetY]->set('x', $x + $offsetX);
-                $self->{'Tiles'}[$x + $offsetX][$y + $offsetY]->set('y', $y + $offsetX);
+                my $ax = $x + $offsetX;
+                my $ay = $y + $offsetY;
+            
+                next if (($ax >= $width) or ($ax < 0)) and (!$self->wrapsX());
+                next if (($ay >= $height) or ($ay < 0)) and (!$self->wrapsY());
+            
+                my $tx = ($ax >= $width) ? ($ax - $width) : (($ax < 0) ? ($ax + $width) : $ax);
+                my $ty = ($ay >= $height) ? ($ay - $height) : (($ay < 0) ? ($ay + $height) : $ay);
+            
+                $self->{'Tiles'}[$tx][$ty] = deepcopy($map->{'Tiles'}[$x][$y]);
+                $self->{'Tiles'}[$tx][$ty]->set('x', $tx);
+                $self->{'Tiles'}[$tx][$ty]->set('y', $ty);
             }
         }
     }
@@ -182,10 +201,10 @@ sub add_sign {
 }
 
 sub add_tile {
-    my ($self, $fh) = @_;
+    my ($self, $fh, $strip_nonsettlers) = @_;
     
     my $tile = Civ4MapCad::Map::Tile->new;
-    $tile->parse($fh);
+    $tile->parse($fh, $strip_nonsettlers);
     
     my $x = $tile->get('x');
     my $y = $tile->get('y');
@@ -217,7 +236,7 @@ sub set_map_info {
 }
 
 sub import_map {
-    my ($self, $filename) = @_;
+    my ($self, $filename, $strip_nonsettlers) = @_;
     
     open (my $fh, $filename) or die $!;
     $self->{'Version'} = <$fh>;
@@ -240,7 +259,7 @@ sub import_map {
             $self->add_team($fh);
         }
         elsif ($line =~ /BeginPlayer/) {
-            $self->add_player($fh);
+            $self->add_player($fh, $strip_nonsettlers);
         }
         elsif ($line =~ /BeginMap/) {
             $self->set_map_info($fh);
@@ -292,3 +311,297 @@ sub export_map {
         $sign->write($fh);
     }
 }
+
+sub find_starts {
+    my ($self) = @_;
+
+    my @starts;
+    foreach my $x (0..$#{$self->{'Tiles'}}) {
+        foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
+            if ($self->{'Tiles'}[$x][$y]->has_settler()) {
+                push @starts, $self->{'Tiles'}[$x][$y]->get_starts();
+            }
+        }
+    }
+    
+    return \@starts;
+}
+
+sub reassign_start_at {
+    my ($self, $x, $y, $old, $new) = @_;
+
+    if ($self->{'Tiles'}[$x][$y]->has_settler()) {
+        $self->{'Tiles'}[$x][$y]->reassign_starts($old, $new);
+        $self->reassign_player($old, $new);
+    }
+    
+    return 1;
+}
+
+# TODO: these need to reassign player/team
+sub reassign_start {
+    my ($self, $old, $new) = @_;
+
+    my @starts;
+    foreach my $x (0..$#{$self->{'Tiles'}}) {
+        foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
+            if ($self->{'Tiles'}[$x][$y]->has_settler()) {
+                $self->{'Tiles'}[$x][$y]->reassign_starts($old, $new);
+                $self->reassign_player($old, $new);
+            }
+        }
+    }
+    
+    return 1;
+}
+
+sub strip_nonsettlers {
+    my ($self) = @_;
+
+    foreach my $x (0..$#{$self->{'Tiles'}}) {
+        foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
+            $self->{'Tiles'}[$x][$y]->strip_nonsettlers();
+        }
+    }
+    
+    return 1;
+}
+
+sub strip_all_units {
+    my ($self) = @_;
+
+    foreach my $x (0..$#{$self->{'Tiles'}}) {
+        foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
+            $self->{'Tiles'}[$x][$y]->strip_all_units();
+        }
+    }
+    
+    return 1;
+}
+
+sub add_scouts_to_settlers {
+    my ($self) = @_;
+
+    foreach my $x (0..$#{$self->{'Tiles'}}) {
+        foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
+            $self->{'Tiles'}[$x][$y]->add_scout_if_settler();
+        }
+    }
+    
+    return 1;
+}
+
+sub get_tile {
+    my ($self, $x, $y, $debug) = @_;
+    
+    my $ux = $x;
+    my $uy = $y;
+    
+    if ($x > $#{ $self->{'Tiles'} }) {
+        return unless $self->wrapsX();
+        my $oldX = $ux;
+        $ux = $ux - $self->info('grid width');
+        warn "  A $debug <$oldX $ux / $uy>" if $debug;
+    }
+    elsif ($x < 0) {
+        return unless $self->wrapsX();
+        my $oldX = $ux;
+        $ux = $ux + $self->info('grid width');
+        warn "  B $debug <$oldX $ux / $uy>" if $debug;
+    }
+    
+    if ($y > $#{ $self->{'Tiles'}[$ux] }) {
+        return unless $self->wrapsY();
+        my $oldY = $uy;
+        $uy = $uy - $self->info('grid height');
+        warn "  C $debug <$oldY $uy / $ux>" if $debug;
+    }
+    elsif ($y < 0) {
+        return unless $self->wrapsY();
+        my $oldY = $uy;
+        $uy = $uy + $self->info('grid height');
+        warn "  D $debug <$oldY $uy / $ux>" if $debug;
+    }
+    
+    warn "  <<$ux $uy>>" if $debug;
+    
+    return $self->{'Tiles'}[$ux][$uy];
+}
+
+sub fix_coast {
+    my ($self, $debug) = @_;
+
+    foreach my $x (0..$#{$self->{'Tiles'}}) {
+        foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
+            if ($self->{'Tiles'}[$x][$y]->is_water()) {
+                $self->{'Tiles'}[$x][$y]->set('PlotType', 3);
+
+                my $xp1_yp1 = (defined $self->get_tile($x+1, $y+1)) ? $self->get_tile($x+1, $y+1)->is_land() : 0;
+                my $x00_yp1 = (defined $self->get_tile($x+0, $y+1)) ? $self->get_tile($x+0, $y+1)->is_land() : 0;
+                my $xm1_yp1 = (defined $self->get_tile($x-1, $y+1)) ? $self->get_tile($x-1, $y+1)->is_land() : 0;
+                my $xp1_y00 = (defined $self->get_tile($x+1, $y+0)) ? $self->get_tile($x+1, $y+0)->is_land() : 0;
+                
+                my $xm1_y00 = (defined $self->get_tile($x-1, $y+0)) ? $self->get_tile($x-1, $y+0)->is_land() : 0;
+                my $xp1_ym1 = (defined $self->get_tile($x+1, $y-1)) ? $self->get_tile($x+1, $y-1)->is_land() : 0;
+                my $x00_ym1 = (defined $self->get_tile($x+0, $y-1)) ? $self->get_tile($x+0, $y-1)->is_land() : 0;
+                my $xm1_ym1 = (defined $self->get_tile($x-1, $y-1)) ? $self->get_tile($x-1, $y-1)->is_land() : 0;
+
+                my $ocean = ($self->{'Tiles'}[$x][$y]->get('TerrainType') eq 'TERRAIN_OCEAN');
+
+                if ($xp1_yp1 or $x00_yp1 or $xm1_yp1 or $xp1_y00 or $xm1_y00 or $xp1_ym1 or $x00_ym1 or $xm1_ym1) {
+                    if ($debug) {
+                        warn "$x $y $ocean / $xp1_yp1 or $x00_yp1 or $xm1_yp1 or $xp1_y00 or $xm1_y00 or $xp1_ym1 or $x00_ym1 or $xm1_ym1";
+                        warn " W" . $self->get_tile($x+1, $y+1, "xp1_yp1")->is_water() if $xp1_yp1;
+                        warn " W" . $self->get_tile($x+0, $y+1, "x00_yp1")->is_water() if $x00_yp1;
+                        warn " W" . $self->get_tile($x-1, $y+1, "xm1_yp1")->is_water() if $xm1_yp1;
+                        warn " W" . $self->get_tile($x+1, $y+0, "xp1_y00")->is_water() if $xp1_y00;
+                        warn " W" . $self->get_tile($x-1, $y+0, "xm1_y00")->is_water() if $xm1_y00;
+                        warn " W" . $self->get_tile($x+1, $y-1, "xp1_ym1")->is_water() if $xp1_ym1;
+                        warn " W" . $self->get_tile($x+0, $y-1, "x00_ym1")->is_water() if $x00_ym1;
+                        warn " W" . $self->get_tile($x-1, $y-1, "xm1_ym1")->is_water() if $xm1_ym1;
+                    }
+                
+                    $self->{'Tiles'}[$x][$y]->set('TerrainType','TERRAIN_COAST');
+                }
+                else {
+                    $self->{'Tiles'}[$x][$y]->set('TerrainType','TERRAIN_OCEAN');
+                }
+            }
+        }
+    }
+    
+    return 1;
+}
+
+sub add_dummy_start {
+    my ($self) = @_;
+    
+    my $player = $self->first_unused_player();
+    $self->{'Tiles'}[0][0]->set('TerrainType', 'TERRAIN_GRASS');
+    $self->{'Tiles'}[0][0]->set('PlotType', '2');
+    
+    my $unit = Civ4MapCad::Map::Unit->new();
+    $unit->set('UnitType', 'UNIT_SETTLER');
+    $unit->set('UnitOwner', $player);
+    $unit->set('Damage', '0');
+    $unit->set('Level', '1');
+    $unit->set('Experience', '0');
+    $unit->set('FacingDirection', '4');
+    $unit->set('UnitAIType', 'UNITAI_SETTLE');
+    $self->{'Tiles'}[0][0]->add_unit($unit);
+    
+    $self->{'Players'}[$player] = Civ4MapCad::Map::Player->new_default($player);
+    $self->{'Players'}[$player]->set('LeaderType', 'LEADER_TOKUGAWA');
+    $self->{'Players'}[$player]->set('LeaderName', 'DUMMY');
+    $self->{'Players'}[$player]->set('CivDesc', 'DUMMY');
+    $self->{'Players'}[$player]->set('CivShortDesc', 'DUMMY');
+    $self->{'Players'}[$player]->set('CivAdjective', 'DUMMY');
+    $self->{'Players'}[$player]->set('FlagDecal', 'Art/Interface/TeamColor/FlagDECAL_EyeOfRa.dds');
+    $self->{'Players'}[$player]->set('WhiteFlag', '0');
+    $self->{'Players'}[$player]->set('Color', 'PLAYERCOLOR_DARK_PINK');
+    $self->{'Players'}[$player]->set('ArtStyle', 'ARTSTYLE_MIDDLE_EAST');
+    $self->{'Players'}[$player]->set('PlayableCiv', '0');
+    $self->{'Players'}[$player]->set('CivType', 'CIVILIZATION_JAPAN');
+    $self->{'Players'}[$player]->set('MinorNationStatus', '0');
+    $self->{'Players'}[$player]->set('StartingGold', '0');
+    $self->{'Players'}[$player]->set('StartingX', '0');
+    $self->{'Players'}[$player]->set('StartingY', '0');
+    $self->{'Players'}[$player]->set('StateReligion', '');
+    $self->{'Players'}[$player]->set('StartingEra', 'ERA_ANCIENT');
+    $self->{'Players'}[$player]->set('RandomStartLocation', 'false');
+    $self->{'Players'}[$player]->set('Handicap', 'HANDICAP_MONARCH');
+    $self->{'Players'}[$player]->add_civics('CivicOption=CIVICOPTION_GOVERNMENT, Civic=CIVIC_DESPOTISM');
+    $self->{'Players'}[$player]->add_civics('CivicOption=CIVICOPTION_LEGAL, Civic=CIVICOPTION_LABOR');
+    $self->{'Players'}[$player]->add_civics('CivicOption=CIVICOPTION_LABOR, Civic=CIVICOPTION_ECONOMY');
+    $self->{'Players'}[$player]->add_civics('CivicOption=CIVICOPTION_ECONOMY, Civic=CIVIC_DECENTRALIZATION');
+    $self->{'Players'}[$player]->add_civics('CivicOption=CIVICOPTION_RELIGION, Civic=CIVIC_PAGANISM');
+    
+    $self->{'Teams'}{$player}->add_contact($player);
+}
+
+sub num_players {
+    my ($self) = @_;
+    
+    my $count = 0;
+    foreach my $player (@{ $self->{'Players'} }) {
+        if ($player->is_active()) {
+            $count ++;
+        }
+    }
+    
+    return $count;
+}
+
+
+sub first_unused_player {
+    my ($self) = @_;
+    
+    foreach my $i (0 .. $#{ $self->{'Players'}}) {
+        if (! $self->{'Players'}[$i]->is_active()) {
+            return $i;
+        }
+    }
+    
+    return -1;
+}
+
+sub next_used_player {
+    my ($self) = @_;
+    
+    my $first = $self->first_unused_player();
+    return -1 if $first == -1; # all player slots are used;
+    
+    foreach my $i ($first .. $#{ $self->{'Players'} }) {
+        if ($self->{'Players'}[$i]->is_active()) {
+            return $i;
+        }
+    }
+    
+    return -1;
+}
+
+sub reduce_players {
+    my ($self) = @_;
+    
+    my $i = 0;
+    while (1) {
+        my $first_unused = $self->first_unused_player();
+        my $next_used = $self->next_used_player();
+        $i ++;
+        
+        last if ($first_unused == -1) or ($next_used == -1);
+        $self->reassign_player($next_used, $first_unused);
+    }
+}
+
+sub reassign_player {
+    my ($self, $from, $to) = @_;
+    
+    $self->{'Players'}[$to] = deepcopy($self->{'Players'}[$from]);
+    $self->{'Players'}[$from]->clear();
+    $self->{'Players'}[$from]->default($from);
+    
+    my $teamcount = 0;
+    foreach my $i (0 .. $#{ $self->{'Players'} }) {
+        $teamcount ++ if $self->{'Players'}[$i]->get('Team') eq $self->{'Players'}[$to]->get('Team');
+    }
+    
+    # teamcount will be 2 because both to and from will have the team value at this point
+    if ($teamcount == 2) {
+        $self->{'Teams'}{$to} = deepcopy($self->{'Teams'}{$from});
+        $self->{'Teams'}{$to}->set('TeamID', $to);
+        $self->{'Teams'}{$to}->set_contact($to);
+        $self->{'Players'}[$to]->set('Team', $to);
+        
+        $self->{'Teams'}{$from}->clear();
+        $self->{'Teams'}{$from}->default($from);
+    }
+    
+    foreach my $x (0..$#{$self->{'Tiles'}}) {
+        foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
+            $self->{'Tiles'}[$x][$y]->reassign_units($from, $to);
+        }
+    }
+}
+    
+1;

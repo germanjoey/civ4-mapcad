@@ -87,7 +87,7 @@ sub set {
 }
 
 sub parse {
-    my ($self, $fh) = @_;
+    my ($self, $fh, $strip_nonsettlers) = @_;
     
     # begin unit is already found
     while (1) {
@@ -142,6 +142,99 @@ sub parse {
             }
         }
     }
+    
+    if ($strip_nonsettlers) {
+        $self->strip_nonsettlers();
+    }
+}
+
+sub strip_all_units {
+    my ($self) = @_;
+    $self->{'Units'} = [];
+}
+
+sub strip_nonsettlers {
+    my ($self) = @_;
+    my @stripped;
+    foreach my $unit (@{ $self->{'Units'} }) {
+        if ($unit->is_settler()) {
+            push @stripped, $unit;
+        }
+    }
+    
+    $self->{'Units'} = \@stripped;
+}
+
+sub has_settler {
+    my ($self) = @_;
+    
+    foreach my $unit (@{ $self->{'Units'} }) {
+        if ($unit->is_settler()) {
+            return 1;
+        }
+    }
+    
+    return 0;
+}
+
+sub get_starts {
+    my ($self) = @_;
+    
+    my @starts;
+    foreach my $unit (@{ $self->{'Units'} }) {
+        if ($unit->is_settler()) {
+            push @starts, [$self->get('x'), $self->get('y'), $unit->get('UnitOwner')];
+        }
+    }
+    
+    return @starts;
+}
+
+sub reassign_starts {
+    my ($self, $old, $new) = @_;
+    
+    my @starts;
+    foreach my $unit (@{ $self->{'Units'} }) {
+        if (($unit->is_settler()) and ($unit->get('UnitOwner') eq $old)) {
+            $unit->set('UnitOwner', $new)
+        }
+    }
+}
+
+sub reassign_units {
+    my ($self, $old, $new) = @_;
+    
+    my @starts;
+    foreach my $unit (@{ $self->{'Units'} }) {
+        if ($unit->get('UnitOwner') eq $old) {
+            $unit->set('UnitOwner', $new)
+        }
+    }
+}
+
+sub add_scout_if_settler {
+    my ($self) = @_;
+    
+    my @added;
+    foreach my $unit (@{ $self->{'Units'} }) {
+        if ($unit->is_settler()) {
+            push @added, $unit;
+            my $scout = Civ4MapCad::Map::Unit->new();
+            my $owner = $unit->get('UnitOwner');
+            
+            $scout->set('UnitType','UNIT_SCOUT'); $scout->set('UnitOwner',$owner);
+            $scout->set('Damage','0');
+            $scout->set('Level','1'); $scout->set('Experience','0');
+            $scout->set('FacingDirection','2');
+            $scout->set('UnitAIType','UNITAI_EXPLORE');
+            
+            push @added, $scout;
+        }
+        
+        push @added, $unit;
+    }
+    
+    $self->{'Units'} = \@added;
 }
 
 sub write {
@@ -190,9 +283,37 @@ sub fill {
     $self->set('PlotType', 1);
 }
 
+sub is_land {
+    my ($self) = @_;
+    return (($self->{'TerrainType'} eq 'TERRAIN_OCEAN') or ($self->{'TerrainType'} eq 'TERRAIN_COAST')) ? 0 : 1;
+}
+
+sub is_water {
+    my ($self) = @_;
+    return (($self->{'TerrainType'} eq 'TERRAIN_OCEAN') or ($self->{'TerrainType'} eq 'TERRAIN_COAST')) ? 1 : 0;
+}
+
 sub is_blank {
     my ($self) = @_;
-    return ($self->{'TerrainType'} eq 'TERRAIN_OCEAN') or ($self->{'TerrainType'} eq 'TERRAIN_COAST');
+    return (($self->{'TerrainType'} eq 'TERRAIN_OCEAN') or ($self->{'TerrainType'} eq 'TERRAIN_COAST')) ? 1 : 0;
+}
+
+sub update_tile {
+    my ($self, $terrain) = @_;
+    
+    foreach my $key (%$terrain) {
+        return -1 unless exists $field_names{$key};
+        $self->{$key} = $terrain->{$key};
+    }
+    
+    return 1;
+}
+
+sub set_tile {
+    my ($self, $terrain) = @_;
+    
+    $self->clear();
+    return $self->update_tile($terrain);
 }
 
 

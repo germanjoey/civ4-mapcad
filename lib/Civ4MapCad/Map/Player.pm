@@ -129,5 +129,10 @@ sub write {
     print $fh "EndPlayer\n";
 }
 
+sub is_active {
+    my ($self) = @_;
+    return 1 if $self->{'LeaderType'} ne 'NONE';
+    return 0;
+}
 
 1;

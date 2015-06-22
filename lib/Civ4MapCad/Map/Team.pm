@@ -39,7 +39,7 @@ sub default {
     my ($self, $teamID) = @_;
     $self->clear();
     $self->set('TeamID', $teamID);
-    $self->set('ContactWithTeam', $teamID);
+    # $self->add_contact($teamID);
     $self->set('RevealMap', 0);
 }
 
@@ -65,6 +65,11 @@ sub get {
 sub set {
     my ($self, $key, $value) = @_;
     $self->{$key} = $value;
+}
+
+sub set_contact {
+    my ($self, $value) = @_;
+    $self->{'Contacts'} = [$value];
 }
 
 sub add_contact {

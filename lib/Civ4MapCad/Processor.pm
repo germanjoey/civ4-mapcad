@@ -17,20 +17,36 @@ sub process_command {
     chomp $command;
     $command =~ s/^\s*//;
     $command =~ s/\s*$//;
-    $command = lc $command;
+    $command =~ s/;$//;
     return 0 if $command =~ /^#/;
     
     $command =~ s/\=\>/ => /g;
     $state->{'current_line'} = $command;
     
-    my ($command_name, @params) = split ' ', $command;
+    my ($command_name, @params) = split ' ', $command;    
+    $command_name = lc $command_name;
     
     if ($command_name eq 'run_script') {
         if (@params != 1) {
             my $n = @params;
             $state->report_error("run_script uses only 1 parameter, but recieved $n. Please see commands.txt for more info.");
         }
-        return process_script($state, @params);
+    
+        if ($params[0] !~ /^"[^"]+"$/) {
+            $state->report_error("run_script requires a single string argument containing the path to the script to run.");
+        }
+        
+        $params[0] =~ s/\"//g;
+        
+        $state->in_script();
+        my $ret = process_script($state, @params);
+        $state->off_script();
+        
+        if ($state->is_off_script()) {
+            $state->add_log($command);
+        }
+        
+        return $ret;
     }
     
     elsif ($command_name eq 'exit') {
@@ -44,7 +60,13 @@ sub process_command {
     }
     
     elsif (exists $repl_table->{$command_name}) {
-        return $repl_table->{$command_name}->($state, @params);
+        my $ret = $repl_table->{$command_name}->($state, @params);
+        
+        if ($state->is_off_script()) {
+            $state->add_log($command);
+        }
+        
+        return $ret;
     }
     
     else {
@@ -59,6 +81,7 @@ sub process_script {
     # TODO: put in a call stack to prevent recursive script loads
     
     my $ret = open (my $script, $script_path);
+    
     unless ($ret) {
         $state->report_error("could not load script '$script_path': $!");
         return;
@@ -67,8 +90,11 @@ sub process_script {
     my @lines = <$script>;
     close $script;
     
-    foreach my $i (@lines) {
+    foreach my $i (0..$#lines) {
         my $line = $lines[$i];
+        $line =~ s/^\*//;
+        next if $line =~ /^#/;
+        next unless $line =~ /\w/;
         
         my $ret = process_command($state, $line);
         

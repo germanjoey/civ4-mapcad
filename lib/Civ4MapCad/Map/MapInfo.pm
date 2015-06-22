@@ -38,8 +38,8 @@ sub default {
     
     $self->set('grid width', $width);
     $self->set('grid height', $height);
-    $self->set('top latitude', 45);
-    $self->set('bottom latitude', 45);
+    $self->set('top latitude', 30);
+    $self->set('bottom latitude', 30);
     $self->set('wrap X', 1);
     $self->set('wrap Y', 1);
     $self->set('world size', 'WORLDSIZE_STANDARD');

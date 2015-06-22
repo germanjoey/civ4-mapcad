@@ -3,15 +3,34 @@ package Civ4MapCad::Object::Mask;
 use strict;
 use warnings;
 
+sub new_blank {
+    my ($class, $width, $height) = @_;
+    
+    my %obj = (
+        'width' => $width, # width of the canvas
+        'height' => $height, # height of the canvas
+        'canvas' => [],
+    );
+    
+    foreach my $row (0..($height-1)) {
+        $obj{'canvas'}[$row] = [];
+        foreach my $col (0..($width-1)) {
+            $obj{'canvas'}[$row][$col] = 0;
+        }
+    }
+   
+    return bless \%obj, $class;
+}
+
 sub new_from_shape {
-    my ($class, $state, $width, $height, $shape, $shape_params) = @_;
+    my ($class, $width, $height, $shape, $shape_params) = @_;
  
     my %obj = (
         'width' => $width, # width of the canvas
         'height' => $height, # height of the canvas
         'canvas' => [],
     );
-   
+    
     foreach my $row (0..($height-1)) {
         $obj{'canvas'}[$row] = [];
         foreach my $col (0..($width-1)) {
@@ -81,13 +100,23 @@ sub new_from_file {
     "die TODO: new from layer";
 }
 
+sub get_width {
+    my ($self) = @_;
+    return $self->{'width'};
+}
+
+sub get_height {
+    my ($self) = @_;
+    return $self->{'height'};
+}
+
 sub _max_size {
     my ($self, $other, $offsetX, $offsetY) = @_;
     
     my $left = min(0, $offsetX);
-    my $right = max($self->{'width'}, $other->{'width'} + $offsetX);
+    my $right = max($self->get_width(), $other->get_height() + $offsetX);
     my $bottom = min(0, $offsetY);
-    my $top = max($self->{'height'}, $other->{'height'} + $offsetY);
+    my $top = max($self->get_width(), $other->get_height() + $offsetY);
     
     return ($right - $left, $top - $bottom);
 }

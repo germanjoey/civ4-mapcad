@@ -27,7 +27,7 @@ sub new_from_import {
     my $proto = shift;
     my $class = ref $proto || $proto;
     my ($filename) = @_;
-   
+    
     my $obj = {
         'layers' => {},
         'width' => 0,
@@ -39,11 +39,16 @@ sub new_from_import {
     my ($name) = $filename =~ /(\w+)\.\w+$/;
     $self->{'name'} = $name;
     
-    $self->add_layer($name, Civ4MapCad::Object::Layer->new_from_import($filename));
+    $self->add_layer(Civ4MapCad::Object::Layer->new_from_import($name, $filename));
     $self->{'width'} = $self->{'layers'}{$name}->get_width;
     $self->{'height'} = $self->{'layers'}{$name}->get_height;
     
     return $self;
+}
+
+sub get_name {
+    my ($self) = @_;
+    return $self->{'name'};
 }
 
 sub get_layer {
@@ -64,12 +69,14 @@ sub get_layer_names {
     my @order = sort { $self->{'priority'}{$a} <=> $self->{'priority'}{$b} } @names;
     return @order;
 }
- 
+
 sub add_layer {
-    my ($self, $layer_name, $layer) = @_;
+    my ($self, $layer) = @_;
+    my $layer_name = $layer->get_name();
     
     if (exists $self->{'layers'}{$layer_name}) {
-        # ERROR! layer named $layer_name already exists
+        # WARNING: ovewriting!
+        $self->{'layers'}{$layer_name} = $layer;
         return -1;
     }
    
@@ -100,7 +107,7 @@ sub add_groups {
             $name = $othername . "_" . $name;
             $layer->rename($name);
         }
-        $copy->add_layer($name, $layer);
+        $copy->add_layer($layer);
     }
     
     return $copy;
@@ -135,7 +142,7 @@ sub rename_layer {
     delete $self->{'priority'}{$old_layer_name};
     delete $self->{'layers'}{$old_layer_name};
     
-    $self->{'priority'}{$old_layer_name} = $p
+    $self->{'priority'}{$old_layer_name} = $p;
     $self->{'layers'}{$old_layer_name} = $l;
     
     return 1;
@@ -144,15 +151,15 @@ sub rename_layer {
 sub increase_priority {
     my ($self, $layer_name) = @_;
    
-    if ($self->{'priority'}{$name} > 0) {
-        $self->set_layer_priority($layer_name, $self->{'priority'}{$name} - 1);
+    if ($self->{'priority'}{$layer_name} > 0) {
+        $self->set_layer_priority($layer_name, $self->{'priority'}{$layer_name} - 1);
     }
 }
  
 sub decrease_priority {
     my ($self, $layer_name) = @_;
    
-    $self->set_layer_priority($layer_name, $self->{'priority'}{$name} + 1);
+    $self->set_layer_priority($layer_name, $self->{'priority'}{$layer_name} + 1);
 }
  
 sub set_layer_priority {
@@ -160,14 +167,14 @@ sub set_layer_priority {
    
     foreach my $name (keys %{ $self->{'layers'} }) {
         if ($self->{'priority'}{$name} >= $new_priority) {
-            $self->{'priority}{$name} = $self->{'priority}{$name} + 1;
-            if (($self->{'priority}{$name}) >= $self->{'max_priority'}) {
-                $self->{'max_priority'} = $self->{'priority}{$name};
+            $self->{'priority'}{$name} = $self->{'priority'}{$name} + 1;
+            if (($self->{'priority'}{$name}) >= $self->{'max_priority'}) {
+                $self->{'max_priority'} = $self->{'priority'}{$name};
             }
         }        
     }
    
-    $self->{'priority}{$layer_name} = $new_priority;
+    $self->{'priority'}{$layer_name} = $new_priority;
     if (($self->{'priority'}{$layer_name}) >= $self->{'max_priority'}) {
         $self->{'max_priority'} = $self->{'priority'}{$layer_name};
     }
@@ -196,15 +203,15 @@ sub merge_all {
     my $copy = deepcopy($self);
    
     while (1) {
-        my @remaining = $copy->get_layer_names();
+        my @remaining_layers = $copy->get_layer_names();
         last if @remaining_layers == 1;
        
-        $copy->merge_two_and_replace($remaining[0], $remaining[1]);
+        $copy->merge_two_and_replace($remaining_layers[0], $remaining_layers[1]);
     }
    
     # cleanup priority list
-    my @remaining = $copy->get_layer_names();
-    $copy->{'priority'}{$remaining[0]} = 0;
+    my @remaining_layers = $copy->get_layer_names();
+    $copy->{'priority'}{$remaining_layers[0]} = 0;
     $self->{'max_priority'} = 0;
    
     return $copy;
@@ -215,3 +222,155 @@ sub find_difference {
     
     die "not yet implemented!";
 }
+
+sub normalize_starts {
+    my ($self) = @_;
+    
+    # first normalize each layer
+    foreach my $layer (keys %{ $self->{layers} }) {
+        $self->{'layers'}{$layer}->normalize_starts();
+    }
+    
+    my %duplicates;
+    my %starts_found;
+    my $all_starts = $self->find_starts();
+    
+    foreach my $layer_set (@$all_starts) {
+        my $layer_name = $layer_set->[0];
+        
+        foreach my $start (@{ $layer_set->[1] }) {
+            my ($x, $y, $owner) = @$start;
+            
+            if (exists $starts_found{$owner}) {
+                $duplicates{$owner} = 1;
+                push @{ $starts_found{$owner} }, $layer_name;
+            }
+            else {
+                $starts_found{$owner} = [$layer_name];
+            }
+        }
+    }
+    
+    foreach my $duplicate_start (keys %duplicates) {
+        my @dups = $starts_found{$duplicate_start};
+        my $assigned_layer = shift @dups;
+        while (1) {
+            last unless @dups > 0;
+            my $layer = shift @dups;
+            
+            my $new_id = _get_next_open_start_id(\%starts_found);
+            $starts_found{$new_id} = 1;
+            $self->{'layers'}{$layer}->reassign_start($duplicate_start, $new_id);
+        }
+    }
+    
+    return 1;
+}
+
+sub _get_next_open_start_id {
+    my ($starts_found) = @_;
+    
+    my $id = 0;
+    while (1) {
+        last unless exists $starts_found->{$id};
+        $id ++;
+    }
+    return $id;
+}
+
+sub find_starts {
+    my ($self) = @_;
+
+    my @all_starts;
+    foreach my $layer ($self->get_layers()) {
+        push @all_starts, [$layer->get_name(), $layer->find_starts()];
+    }
+    
+    return \@all_starts;
+}
+
+sub reassign_start {
+    my ($self, $old, $new) = @_;
+
+    foreach my $layer ($self->get_layers()) {
+        $layer->reassign_start($old, $new);
+    }
+}
+
+sub strip_all_units {
+    my ($self) = @_;
+
+    foreach my $layer ($self->get_layers()) {
+        $layer->strip_all_units();
+    }
+}
+
+sub strip_nonsettlers {
+    my ($self) = @_;
+
+    foreach my $layer ($self->get_layers()) {
+        $layer->strip_nonsettlers();
+    }
+}
+
+sub add_scouts_to_settlers {
+    my ($self) = @_;
+
+    foreach my $layer ($self->get_layers()) {
+        $layer->add_scouts_to_settlers();
+    }
+    
+    return 1;
+}
+
+# its assumed that the group is normalized by this point
+sub extract_starts_with_mask {
+    my ($self, $mask) = @_;
+    
+    my $all_starts = $self->find_starts();
+    
+    my @sorted_starts;
+    # sort starts
+    foreach my $start (@$all_starts) {
+        push @sorted_starts, map {[$start->[0], @$_]} @{ $start->[1] };
+    }
+    
+    @sorted_starts = sort { $b->[3] <=> $a->[3] } @sorted_starts;
+    
+    foreach my $start (@sorted_starts) {
+        my ($layer_name, $x, $y, $owner) = @$start;
+        my $offsetX = $x + int($mask->get_width()/2 + 0.6);
+        my $offsetY = $y + int($mask->get_height()/2 + 0.6);
+        
+        my $start_layer = $self->{'layers'}{$layer_name}->select_with_mask($mask, $offsetX, $offsetY);
+        $start_layer->set_player_from_layer($owner, $self->{'layers'}{$layer_name});
+        $start_layer->rename("start" . $owner);
+        
+        my $p = $self->{'priority'}{$layer_name};
+        $self->add_layer($start_layer);
+        $self->set_layer_priority($start_layer->get_name(), $start_layer, $p);
+    }
+    
+    return 1;
+}
+
+sub export {
+    my ($self, $output_dir) = @_;
+
+    foreach my $layer ($self->get_layers()) {
+        my $path = $output_dir . "/" . $self->get_name() . "." . $layer->get_name() . ".CivBeyondSwordWBSave";
+        
+        if ($self->get_name() eq $layer->get_name()) {
+            $path = $output_dir . "/" . $self->get_name() . ".CivBeyondSwordWBSave" ;
+            $path =~ s/\.CivBeyondSwordWBSave/.out.CivBeyondSwordWBSave/ if -e $path;
+        }
+        
+        $layer->reduce_players();
+        $layer->add_dummy_start() if $layer->num_players() == 1;
+        $layer->export_layer($path);
+    }
+    
+    return 1;
+}
+
+1;

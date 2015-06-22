@@ -88,4 +88,9 @@ sub write {
     print $fh "\tEndUnit\n";
 }
 
+sub is_settler {
+    my ($self) = @_;
+    return ('UNIT_SETTLER' eq $self->get('UnitType'));
+}
+
 1;

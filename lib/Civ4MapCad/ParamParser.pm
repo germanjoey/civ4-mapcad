@@ -29,7 +29,7 @@ package Civ4MapCad::ParamParser;
 # the output of parse is a hash containing a value for each input to the command. a special value, _result, specifies where the output of the command should go, if there is one.
 # if an error occurred in parsing params, the error field of the result hash will be set, and the command should bail immediately.
 
-# this needs to be refactored so fucking badly
+use Getopt::Long qw(GetOptionsFromArray :config pass_through);
 
 sub new {
     my $proto = shift;
@@ -45,7 +45,7 @@ sub _process {
 
     my $optional = $param_spec->{'optional'};
     my $required = $param_spec->{'required'} || [];
-    my $has_shape_params = $param_spec->{'shape_params'};
+    my $has_shape_params = $param_spec->{'has_shape_params'};
     
     my $has_result = $param_spec->{'has_result'};
     my $allow_implied_result = $param_spec->{'allow_implied_result'};
@@ -144,6 +144,7 @@ sub _process {
             };
             
             push @{ $processed_params{'_required'} }, $preproc[$i];
+            $i++;
             next;
         }
         elsif ($expected_type eq 'float') {
@@ -154,6 +155,7 @@ sub _process {
             };
         
             push @{ $processed_params{'_required'} }, $preproc[$i];
+            $i++;
             next;
         }
         
@@ -164,7 +166,10 @@ sub _process {
                 return \%processed_params;
             }
         
+            $preproc[$i] =~ s/^"//;
+            $preproc[$i] =~ s/"$//;
             push @{ $processed_params{'_required'} }, $preproc[$i];
+            $i++;
             next;
         }
         
@@ -241,6 +246,7 @@ sub _process {
     
         my %shape_args;
         my $shape_param_spec = $state->get_shape_params($preproc[0]);
+        
         my $shape_opts = _make_opt_list($shape_param_spec, \%shape_args);
         
         GetOptionsFromArray(\@shape_param_list, \%shape_args, @$shape_opts);
