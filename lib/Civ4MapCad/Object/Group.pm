@@ -346,6 +346,7 @@ sub extract_starts_with_mask {
         $start_layer->set_player_from_layer($owner, $self->{'layers'}{$layer_name});
         $start_layer->rename("start" . $owner);
         $start_layer->strip_hidden_strategic();
+        $start_layer->strip_victories();
         $start_layer->set_difficulty($main::config{'difficulty'});
         
         my $p = $self->{'priority'}{$layer_name};

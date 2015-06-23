@@ -331,4 +331,9 @@ sub strip_hidden_strategic {
     return $self->{'map'}->strip_hidden_strategic();
 }
 
+sub strip_victories {
+    my ($self) = @_;
+    return $self->{'map'}->strip_victories();
+}
+
 1;

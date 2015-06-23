@@ -87,6 +87,27 @@ sub add_victory {
     push @{$self->{'Victories'}}, $value;
 }
 
+sub remove_victory {
+    my ($self, $value) = @_;
+    
+    my @kept;
+    foreach my $victory (@{$self->{'Victories'}}) {
+        push @kept, $victory if $victory ne $value;
+    }
+    
+    $self->{'Victories'} = \@kept;
+}
+
+sub strip_victories {
+    my ($self) = @_;
+    
+    $self->remove_victory('VICTORY_CONQUEST');
+    $self->remove_victory('VICTORY_DOMINATION');
+    $self->remove_victory('VICTORY_CULTURAL');
+    $self->remove_victory('VICTORY_SPACE_RACE');
+    $self->remove_victory('VICTORY_DIPLOMATIC');
+}
+
 sub get_victories {
     my ($self, $key) = @_;
     return @{$self->{'Victories'}};

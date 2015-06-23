@@ -607,5 +607,10 @@ sub set_difficulty {
         $player->set('Handicap', 'HANDICAP_' . uc($level));
     }
 }
+
+sub strip_victories {
+    my ($self) = @_;
+    $self->{'Game'}->strip_victories();
+}
     
 1;
