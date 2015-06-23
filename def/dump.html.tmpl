@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="us">
+<head>
+	<meta charset="utf-8">
+	<title>Civ4 Map Cad Debugging Window</title>
+	<link href="doc/jquery-ui-1.11.4/jquery-ui.css" rel="stylesheet">
+	<style>
+	body{
+		font: 62.5% "Trebuchet MS", sans-serif;
+		margin: 50px;
+	}
+	.demoHeaders {
+		margin-top: 2em;
+	}
+	#dialog-link {
+		padding: .4em 1em .4em 20px;
+		text-decoration: none;
+		position: relative;
+	}
+	#dialog-link span.ui-icon {
+		margin: 0 5px 0 0;
+		position: absolute;
+		left: .2em;
+		top: 50%;
+		margin-top: -8px;
+	}
+	#icons {
+		margin: 0;
+		padding: 0;
+	}
+	#icons li {
+		margin: 2px;
+		position: relative;
+		padding: 4px 0;
+		cursor: pointer;
+		float: left;
+		list-style: none;
+	}
+	#icons span.ui-icon {
+		float: left;
+		margin: 0 4px;
+	}
+	.fakewindowcontain .ui-widget-overlay {
+		position: absolute;
+	}
+    
+    .terrain_coast3 {
+        background-color: aqua;
+    }
+
+    .terrain_ocean3 {
+        background-color: blue;
+    }
+    
+   .terrain_plains2 {
+        background-color: darkkhaki;
+    }
+    
+   .terrain_plains1 {
+        background-color: Khaki;
+    }
+    
+   .terrain_grass2 {
+        background-color: lawngreen;
+    }
+    
+   .terrain_grass1 {
+        background-color: limegreen;
+    }
+
+   .terrain_tundra2 {
+        background-color: lightgray;
+    }
+    
+   .terrain_tundra1 {
+        background-color: lightslategray;
+    }
+    
+   .terrain_desert2 {
+        background-color: lightyellow;
+    }
+    
+   .terrain_desert1 {
+        background-color: gold;
+    }
+    
+   .terrain_peak {
+        background-color: brown;
+    }
+    
+    td {
+        border: 0px;
+        padding: 2px;
+        width: 14px;
+        height: 14px;
+    }
+    
+    .isNOfRiver {
+        border-bottom: 2px solid blue !important;
+    }
+    
+    .isWOfRiver {
+        border-right: 2px solid blue !important;
+    }
+
+	</style>
+</head>
+<body>
+
+
+<h2 class="demoHeaders">$$$$HEADER$$$$</h2>
+<div id="tabs">
+	<ul>
+		$$$$DUMP$$$$
+</div>
+
+<script src="doc/jquery-ui-1.11.4/external/jquery/jquery.js"></script>
+<script src="doc/jquery-ui-1.11.4/jquery-ui.js"></script>
+<script>
+$( "#tabs" ).tabs();
+$( ".tooltip" ).tooltip();
+
+// Hover states on the static widgets
+$( "#dialog-link, #icons li" ).hover(
+	function() {
+		$( this ).addClass( "ui-state-hover" );
+	},
+	function() {
+		$( this ).removeClass( "ui-state-hover" );
+	}
+);
+</script>
+</body>
+</html>

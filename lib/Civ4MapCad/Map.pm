@@ -65,7 +65,7 @@ sub default {
     $self->{'MapInfo'} = Civ4MapCad::Map::MapInfo->new_default($width, $height);
     
     # TODO: num teams is dependent on mod
-    foreach my $i (0..$main::max_players-1) {
+    foreach my $i (0..$main::config{'max_players'}-1) {
         my $team = Civ4MapCad::Map::Team->new_default($i);
         $self->{'Teams'}{$i} = $team;
         
@@ -349,6 +349,8 @@ sub reassign_start {
                 $self->{'Tiles'}[$x][$y]->reassign_starts($old, $new);
                 $self->reassign_player($old, $new);
             }
+            
+            $self->{'Tiles'}[$x][$y]->reassign_reveals($old, $new);
         }
     }
     
@@ -401,35 +403,29 @@ sub get_tile {
         return unless $self->wrapsX();
         my $oldX = $ux;
         $ux = $ux - $self->info('grid width');
-        warn "  A $debug <$oldX $ux / $uy>" if $debug;
     }
     elsif ($x < 0) {
         return unless $self->wrapsX();
         my $oldX = $ux;
         $ux = $ux + $self->info('grid width');
-        warn "  B $debug <$oldX $ux / $uy>" if $debug;
     }
     
     if ($y > $#{ $self->{'Tiles'}[$ux] }) {
         return unless $self->wrapsY();
         my $oldY = $uy;
         $uy = $uy - $self->info('grid height');
-        warn "  C $debug <$oldY $uy / $ux>" if $debug;
     }
     elsif ($y < 0) {
         return unless $self->wrapsY();
         my $oldY = $uy;
         $uy = $uy + $self->info('grid height');
-        warn "  D $debug <$oldY $uy / $ux>" if $debug;
     }
-    
-    warn "  <<$ux $uy>>" if $debug;
     
     return $self->{'Tiles'}[$ux][$uy];
 }
 
 sub fix_coast {
-    my ($self, $debug) = @_;
+    my ($self) = @_;
 
     foreach my $x (0..$#{$self->{'Tiles'}}) {
         foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
@@ -449,18 +445,6 @@ sub fix_coast {
                 my $ocean = ($self->{'Tiles'}[$x][$y]->get('TerrainType') eq 'TERRAIN_OCEAN');
 
                 if ($xp1_yp1 or $x00_yp1 or $xm1_yp1 or $xp1_y00 or $xm1_y00 or $xp1_ym1 or $x00_ym1 or $xm1_ym1) {
-                    if ($debug) {
-                        warn "$x $y $ocean / $xp1_yp1 or $x00_yp1 or $xm1_yp1 or $xp1_y00 or $xm1_y00 or $xp1_ym1 or $x00_ym1 or $xm1_ym1";
-                        warn " W" . $self->get_tile($x+1, $y+1, "xp1_yp1")->is_water() if $xp1_yp1;
-                        warn " W" . $self->get_tile($x+0, $y+1, "x00_yp1")->is_water() if $x00_yp1;
-                        warn " W" . $self->get_tile($x-1, $y+1, "xm1_yp1")->is_water() if $xm1_yp1;
-                        warn " W" . $self->get_tile($x+1, $y+0, "xp1_y00")->is_water() if $xp1_y00;
-                        warn " W" . $self->get_tile($x-1, $y+0, "xm1_y00")->is_water() if $xm1_y00;
-                        warn " W" . $self->get_tile($x+1, $y-1, "xp1_ym1")->is_water() if $xp1_ym1;
-                        warn " W" . $self->get_tile($x+0, $y-1, "x00_ym1")->is_water() if $x00_ym1;
-                        warn " W" . $self->get_tile($x-1, $y-1, "xm1_ym1")->is_water() if $xm1_ym1;
-                    }
-                
                     $self->{'Tiles'}[$x][$y]->set('TerrainType','TERRAIN_COAST');
                 }
                 else {
@@ -601,6 +585,26 @@ sub reassign_player {
         foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
             $self->{'Tiles'}[$x][$y]->reassign_units($from, $to);
         }
+    }
+}
+
+sub strip_hidden_strategic {
+    my ($self) = @_;
+
+    foreach my $x (0..$#{$self->{'Tiles'}}) {
+        foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
+            $self->{'Tiles'}[$x][$y]->strip_hidden_strategic();
+        }
+    }
+    
+    return 1;
+}
+
+sub set_difficulty {
+    my ($self, $level) = @_;
+    
+    foreach my $player (@{ $self->{'Players'} }) {
+        $player->set('Handicap', 'HANDICAP_' . uc($level));
     }
 }
     

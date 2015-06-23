@@ -316,5 +316,41 @@ sub set_tile {
     return $self->update_tile($terrain);
 }
 
+sub to_cell {
+    my ($self) = @_;
+    
+    my $river = '';
+    $river .= " isNOfRiver" if $self->get('isNOfRiver');
+    $river .= " isWOfRiver" if $self->get('isWOfRiver'); 
+    my $tt = lc($self->get('TerrainType')) . $self->get('PlotType');
+    $tt = 'terrain_peak' if $self->get('PlotType') eq '0';
+    
+    my $bonus = $self->get('BonusType') ? $self->get('BonusType') : '';
+    $bonus = qq[ title="$bonus"] if $bonus;
+    
+    my $cell = qq[<a$bonus>&nbsp;</a>];
+    
+    return qq[<td class="$tt$river tooltip">$cell</td>];
+}
+
+sub strip_hidden_strategic {
+    my ($self) = @_;
+    
+    return unless exists $self->{'BonusType'};
+    my $bonus = $self->get('BonusType');
+    if ($bonus =~ /IRON|URANIUM|ALUMINUM|COPPER|HORSE|OIL/) {
+        delete $self->{'BonusType'};
+    }
+}
+
+sub reassign_reveals {
+    my ($self, $old, $new) = @_;
+    
+    if (exists $self->{'Revealed'}{$old}) {
+        delete $self->{'Revealed'}{$old};
+        $self->{'Revealed'}{$new} = 1;
+    }
+}
+
 
 1;

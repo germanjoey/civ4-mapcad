@@ -144,14 +144,14 @@ sub wrapsY {
 }
 
 sub translate_mask_coords {
-    my ($self, $x, $y, $mask, $oX, $oY) = @_;
+    my ($self, $x, $y, $oX, $oY) = @_;
     
     # factor in the offset
     my $sx = $x + $oX;
     my $sy = $y + $oY;
     
-    my $mwidth = $mask->get_width();
-    my $mheight = $mask->get_height();
+    my $mwidth = $self->get_width();
+    my $mheight = $self->get_height();
 
     # if we don't wrap, check to see if we're out of bounds. we return -1,-1 in that case
     return (-1, -1) if (($sx >= $mwidth) or ($sx < 0)) and (!$self->wrapsX());
@@ -176,7 +176,7 @@ sub apply_mask {
     
     for my $x ($0 .. $mask->get_width()-1) {
         for my $y (0 .. $mask->get_height()-1) {
-            my ($tx, $ty) = $self->translate_mask_coords($x, $y, $mask, $mask_offsetX, $mask_offsetY);
+            my ($tx, $ty) = $self->translate_mask_coords($x, $y, $mask_offsetX, $mask_offsetY);
             next if ($tx < 0) or ($tx >= $self->get_width());
             next if ($ty < 0) or ($ty >= $self->get_width());
         
@@ -194,13 +194,6 @@ sub apply_mask {
     return 1;
 }
 
-sub set_player_from_layer {
-    my ($self, $player, $other_layer) = @_;
-    
-    $self->{'map'}{'Players'}[$player] = deepcopy($other_layer->{'map'}{'Players'}[$player]);
-    $self->{'map'}{'Teams'}{$player} = deepcopy($other_layer->{'map'}{'Teams'}{$player});
-}
-
 sub select_with_mask {
     my ($self, $mask, $mask_offsetX, $mask_offsetY) = @_;
     
@@ -209,19 +202,17 @@ sub select_with_mask {
     
     my $selection = Civ4MapCad::Object::Layer->new_default($sel_name, $mask->get_width(), $mask->get_height());
     
-    # these dimensions need to account for wrap
-    for my $x (0 .. $mask->get_width()-1) {
-        for my $y (0 .. $mask->get_height()-1) {
-            if ($mask->{'canvas'}[$x][$y] >= 1) { # TODO: add variable threshold
-                my ($tx, $ty) = $self->translate_mask_coords($x, $y, $mask, $mask_offsetX, $mask_offsetY);
+    for my $x (0 .. $mask->get_height()-1) {
+        for my $y (0 .. $mask->get_width()-1) {
+            if ($mask->{'canvas'}[$x][$y] > 0) { # TODO: add variable threshold
+                my ($tx, $ty) = $self->translate_mask_coords($x, $y, $mask_offsetX, $mask_offsetY);
+                
                 next if ($tx < 0) or ($tx >= $self->get_width());
                 next if ($ty < 0) or ($ty >= $self->get_width());
             
-                if ($mask->{'canvas'}[$x][$y] > 0) {
-                    $selection->{'map'}{'Tiles'}[$x][$y] = deepcopy($self->{'map'}{'Tiles'}[$tx][$ty]);
-                    $selection->{'map'}{'Tiles'}[$x][$y]->set('x', $x);
-                    $selection->{'map'}{'Tiles'}[$x][$y]->set('y', $y);
-                }
+                $selection->{'map'}{'Tiles'}[$x][$y] = deepcopy($self->{'map'}{'Tiles'}[$tx][$ty]);
+                $selection->{'map'}{'Tiles'}[$x][$y]->set('x', $x);
+                $selection->{'map'}{'Tiles'}[$x][$y]->set('y', $y);
             }
         }
     }
@@ -229,6 +220,19 @@ sub select_with_mask {
     $selection->move($mask_offsetX, $mask_offsetY);
     
     return $selection;
+}
+
+sub set_difficulty {
+    my ($self, $level) = @_;
+    $self->{'map'}->set_difficulty($level);
+}
+
+
+sub set_player_from_layer {
+    my ($self, $player, $other_layer) = @_;
+    
+    $self->{'map'}{'Players'}[$player] = deepcopy($other_layer->{'map'}{'Players'}[$player]);
+    $self->{'map'}{'Teams'}{$player} = deepcopy($other_layer->{'map'}{'Teams'}{$player});
 }
 
 sub normalize_starts {
@@ -319,7 +323,12 @@ sub add_dummy_start {
 
 sub fix_coast {
     my ($self) = @_;
-    return $self->{'map'}->fix_coast(($self->get_name() eq 'start0') ? 1 : 0);
+    return $self->{'map'}->fix_coast();
+}
+
+sub strip_hidden_strategic {
+    my ($self) = @_;
+    return $self->{'map'}->strip_hidden_strategic();
 }
 
 1;

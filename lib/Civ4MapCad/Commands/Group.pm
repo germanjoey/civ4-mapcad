@@ -292,14 +292,17 @@ sub extract_starts {
     
     my $result_name = $pparams->get_result_name();
     my ($group) = $pparams->get_required();
-    $group->normalize_starts();
+    
+    my $copy = deepcopy($group);
+    $copy->normalize_starts();
     
     my $bfc = $state->get_variable('@bfc_tight', 'mask');
-    my $new_group = $group->extract_starts_with_mask($bfc);
-    $state->set_variable($result_name, 'group', $new_group);
+    $copy->extract_starts_with_mask($bfc);
+    $state->set_variable($result_name, 'group', $copy);
     return 1;
 }
 
+# TODO: respect delete_existing
 sub export_sims {
     my ($state, @params) = @_;
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
@@ -318,8 +321,6 @@ sub export_sims {
     
     $copy->normalize_starts();
     my $bfc = $state->get_variable('@bfc_for_sim', 'mask');
-    
-    # TODO: add a dummy AI in top corner
     
     $copy->extract_starts_with_mask($bfc);
     $copy->export($output_dir);

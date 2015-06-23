@@ -14,7 +14,7 @@ use Civ4MapCad::Commands::Weight qw(
 );
 use Civ4MapCad::Commands::List qw(
     list_shapes list_groups list_layers list_masks list_weights show_weights
-    new_weight_table dump_group dump_mask dump_layer
+    dump_group dump_mask dump_layer dump_mask_to_console
 );
 use Civ4MapCad::Commands::Mask qw(
     import_mask_from_ascii new_mask_from_shape mask_difference mask_union

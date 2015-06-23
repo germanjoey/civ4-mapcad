@@ -7,12 +7,12 @@ use lib 'lib';
 use Civ4MapCad::State;
 use Civ4MapCad::Processor qw(process_command);
 
-our $max_players = 40;
+our %config;
+
+$config{'max_players'} = 40;
+$config{'difficulty'} = 'Monarch';
 
 our $state = Civ4MapCad::State->new;
-#$SIG{'INT'} = sub {
-#    check_save($state);
-#};
 
 print "\n";
 print "Welcome to Civ4 Map Cad!\n";
@@ -29,15 +29,3 @@ while (1) {
     next unless $command =~ /\w/;
     process_command($state, $command);
 }
-
-sub check_save {
-    my ($state) = @_;
-    
-    # XXX: this should just save a temp state or whatever
-    if (!$state->{'saved'}) {
-        print "Current state is not saved. Really exit?";
-    }
-    
-    return 1;
-}
-

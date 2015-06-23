@@ -339,12 +339,14 @@ sub extract_starts_with_mask {
     
     foreach my $start (@sorted_starts) {
         my ($layer_name, $x, $y, $owner) = @$start;
-        my $offsetX = $x + int($mask->get_width()/2 + 0.6);
-        my $offsetY = $y + int($mask->get_height()/2 + 0.6);
+        my $offsetX = $x - int($mask->get_width()/2);
+        my $offsetY = $y - int($mask->get_height()/2);
         
         my $start_layer = $self->{'layers'}{$layer_name}->select_with_mask($mask, $offsetX, $offsetY);
         $start_layer->set_player_from_layer($owner, $self->{'layers'}{$layer_name});
         $start_layer->rename("start" . $owner);
+        $start_layer->strip_hidden_strategic();
+        $start_layer->set_difficulty($main::config{'difficulty'});
         
         my $p = $self->{'priority'}{$layer_name};
         $self->add_layer($start_layer);
@@ -360,7 +362,9 @@ sub export {
     foreach my $layer ($self->get_layers()) {
         my $path = $output_dir . "/" . $self->get_name() . "." . $layer->get_name() . ".CivBeyondSwordWBSave";
         
+        my $strip = 1;
         if ($self->get_name() eq $layer->get_name()) {
+            $strip = 0;
             $path = $output_dir . "/" . $self->get_name() . ".CivBeyondSwordWBSave" ;
             $path =~ s/\.CivBeyondSwordWBSave/.out.CivBeyondSwordWBSave/ if -e $path;
         }
