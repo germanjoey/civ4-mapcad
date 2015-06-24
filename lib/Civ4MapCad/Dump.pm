@@ -8,7 +8,7 @@ our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(dump_out dump_framework dump_single_layer);
 
 sub dump_framework {
-    my ($template_filename, $dump_filename, $tabs) = @_;
+    my ($template_filename, $dump_filename, $name, $tabs) = @_;
     
     my @tab_heads; my @tab_bodies;
     foreach my $t (0..$#$tabs) {
@@ -46,15 +46,16 @@ sub dump_framework {
         $out .= $tb;
     }
     
-    dump_out($template_filename, $dump_filename, $out);
+    dump_out($template_filename, $dump_filename, $name, $out);
 }
 
 sub dump_out {
-    my ($template_filename, $dump_filename, $output) = @_;
+    my ($template_filename, $dump_filename, $name, $output) = @_;
     
     my ($template) = slurp($template_filename);
     $output =~ s/\n/\n    /g;
     $template =~ s/\$\$\$\$DUMP\$\$\$\$/$output/;
+    $template =~ s/\$\$\$\$HEADER\$\$\$\$/$name/;
     
     open (my $dump, '>', $dump_filename) or die $!;
     print $dump $template;

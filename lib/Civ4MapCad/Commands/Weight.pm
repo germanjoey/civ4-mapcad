@@ -29,7 +29,7 @@ sub load_terrain {
     }
     close $test;
    
-    my %terrain = Config::General->new($filename)->getall;
+    my %terrain = Config::General->new($filename)->getall();
    
     foreach my $name (keys %terrain) {
         $state->set_variable($name, 'terrain', $terrain{$name});
@@ -52,7 +52,7 @@ sub import_weight_table_from_file {
     });
     return -1 if $pparams->has_error;
 
-    my ($filename) = $pparams->get_required;
+    my ($filename) = $pparams->get_required();
     $filename =~ s/"//g;
     
     my $result_name = $pparams->get_result_name();

@@ -336,4 +336,9 @@ sub strip_victories {
     return $self->{'map'}->strip_victories();
 }
 
+sub set_max_num_players {
+    my ($self) = @_;
+    return $self->{'map'}->set_max_num_players();
+}
+
 1;

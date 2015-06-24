@@ -136,7 +136,7 @@ sub dump_group {
         push @layer_cells, dump_single_layer($layer, $do_info);
     }
     
-    dump_framework('def/dump.html.tmpl', 'dump.html', \@layer_cells);
+    dump_framework('def/dump.html.tmpl', 'dump.html', $group->get_name(), \@layer_cells);
 }
 
 sub dump_layer {
@@ -156,7 +156,7 @@ sub dump_layer {
     $copy->fix_coasts();
 
     my $cells = dump_single_layer($copy, $do_info);
-    dump_framework('def/dump.html.tmpl', 'dump.html', [$cells]);
+    dump_framework('def/dump.html.tmpl', 'dump.html', $layer->get_name(), [$cells]);
 }
 
 

@@ -4,15 +4,22 @@ use strict;
 use warnings;
 use lib 'lib';
 
+use Config::General;
 use Civ4MapCad::State;
+use Civ4MapCad::Util qw(find_max_players);
 use Civ4MapCad::Processor qw(process_command);
 
-our %config;
-
-$config{'max_players'} = 40;
-$config{'difficulty'} = 'Monarch';
+our %config = Config::General->new('def/config.cfg')->getall();
 
 our $state = Civ4MapCad::State->new;
+my $max = find_max_players($config{'mod'});
+
+if ($max < 0) {
+    print "ERROR: unknown mod set in def/config.cfg!\n";
+    exit(1);
+}
+
+$config{'max_players'} = $max;
 
 print "\n";
 print "Welcome to Civ4 Map Cad!\n";

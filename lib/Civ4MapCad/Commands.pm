@@ -6,8 +6,8 @@ use warnings;
 use Exporter::Dispatch;
 use Civ4MapCad::ParamParser;
 
-use Civ4MapCad::Commands::TopLevel qw(
-   set_output_dir write_log
+use Civ4MapCad::Commands::Config qw(
+   set_output_dir set_mod write_log
 );
 use Civ4MapCad::Commands::Weight qw(
     load_terrain new_weight_table import_weight_table_from_file

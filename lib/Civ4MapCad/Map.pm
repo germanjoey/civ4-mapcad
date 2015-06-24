@@ -61,10 +61,9 @@ sub info {
 sub default {
     my ($self, $width, $height) = @_;
     
-    $self->{'Game'} = Civ4MapCad::Map::Game->new_default;
+    $self->{'Game'} = Civ4MapCad::Map::Game->new_default();
     $self->{'MapInfo'} = Civ4MapCad::Map::MapInfo->new_default($width, $height);
     
-    # TODO: num teams is dependent on mod
     foreach my $i (0..$main::config{'max_players'}-1) {
         my $team = Civ4MapCad::Map::Team->new_default($i);
         $self->{'Teams'}{$i} = $team;
@@ -166,7 +165,7 @@ sub overwrite_tiles {
 sub add_player {
     my ($self, $fh) = @_;
     
-    my $player = Civ4MapCad::Map::Player->new;
+    my $player = Civ4MapCad::Map::Player->new();
     $player->parse($fh);
     push @{ $self->{'Players'} }, $player;
 }
@@ -179,7 +178,7 @@ sub get_players {
 sub add_team {
     my ($self, $fh) = @_;
     
-    my $team = Civ4MapCad::Map::Team->new;
+    my $team = Civ4MapCad::Map::Team->new();
     $team->parse($fh);
     my $id = $team->get('TeamID');
     warn "* WARNING: Team $id already exists!" if exists $self->{'Teams'}{$id};
@@ -195,7 +194,7 @@ sub get_teams {
 sub add_sign {
     my ($self, $fh) = @_;
     
-    my $sign = Civ4MapCad::Map::Sign->new;
+    my $sign = Civ4MapCad::Map::Sign->new();
     $sign->parse($fh);
     push @{$self->{'Signs'}}, $sign;
 }
@@ -273,6 +272,14 @@ sub import_map {
         else {
             die "Unidentified block found when importing: '$line'";
         }
+    }
+    
+    my $max_players = @{ $self->{'Players'} };
+    if ($max_players != $main::config{'max_players'}) {
+        print "* WARNING: Converting map from $max_players to $main::config{'max_players'} players.\n";
+        print "           Set 'mod' in def/config.cfg or use the 'set_mod' command to prevent\n";
+        print "           automatic conversion on import.\n\n";
+        $self->set_max_num_players($main::config{'max_players'});
     }
     
     close $fh;
@@ -584,6 +591,7 @@ sub reassign_player {
     foreach my $x (0..$#{$self->{'Tiles'}}) {
         foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
             $self->{'Tiles'}[$x][$y]->reassign_units($from, $to);
+            $self->{'Tiles'}[$x][$y]->reassign_reveals($from, $to);
         }
     }
 }
@@ -611,6 +619,24 @@ sub set_difficulty {
 sub strip_victories {
     my ($self) = @_;
     $self->{'Game'}->strip_victories();
+}
+
+sub set_max_num_players {
+    my ($self, $new_max) = @_;
+    
+    my $old_max = @{ $self->{'Players'} };
+    if ($new_max > $old_max) {
+        foreach my $i ($old_max .. ($new_max-1)) {
+            $self->{'Players'}[$i] = Civ4MapCad::Map::Player->new_default($i);
+            $self->{'Teams'}{$i} = Civ4MapCad::Map::Team->new_default($i);
+        }
+    }
+    else {
+        foreach my $i ($new_max .. ($old_max-1)) {
+            delete $self->{'Players'}[$i];
+            delete $self->{'Teams'}{$i}
+        }
+    }
 }
     
 1;

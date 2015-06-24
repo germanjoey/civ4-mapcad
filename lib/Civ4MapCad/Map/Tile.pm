@@ -148,6 +148,137 @@ sub parse {
     }
 }
 
+sub write {
+    my ($self, $fh) = @_;
+    print $fh "BeginPlot\n";
+    
+    # can't use write_block_data cause this is a special case where we can't have a space between the x and the y =/
+    my $x = $self->get('x'); my $y = $self->get('y');
+    print $fh "\tx=$x,y=$y\n";
+    
+    write_block_data($self, $fh, 1, 'RiverNSDirection');
+    print $fh "\tisNOfRiver\n" if $self->get('isNOfRiver');
+    
+    write_block_data($self, $fh, 1, 'RiverWEDirection');
+    print $fh "\tisWOfRiver\n" if $self->get('isWOfRiver');
+    
+    write_block_data($self, $fh, 1, 'RouteType');
+    write_block_data($self, $fh, 1, 'BonusType');
+    write_block_data($self, $fh, 1, 'ImprovementType');
+    write_block_data($self, $fh, 1, 'FeatureType', 'FeatureVariety');
+    write_block_data($self, $fh, 1, 'TerrainType');
+    write_block_data($self, $fh, 1, 'PlotType');
+    
+    my @units = $self->get_units();
+    foreach my $unit (@units) {
+        $unit->write($fh);
+    }
+    
+    my @revealed = $self->get_revealed();
+    if (@revealed > 0) {
+        $self->set('TeamReveal', join(',', @revealed) . ',');
+        write_block_data($self, $fh, 1, 'TeamReveal');
+    }
+    print $fh "EndPlot\n";
+}
+
+sub fill {
+    my ($self) = @_;
+    my ($x, $y) = ($self->get('x'), $self->get('y'));
+    
+    $self->clear;
+    
+    $self->set('x', $x);
+    $self->set('y', $y);
+    $self->set('TerrainType', 'TERRAIN_GRASS');
+    $self->set('PlotType', 1);
+}
+
+sub is_land {
+    my ($self) = @_;
+    return (($self->{'TerrainType'} eq 'TERRAIN_OCEAN') or ($self->{'TerrainType'} eq 'TERRAIN_COAST')) ? 0 : 1;
+}
+
+sub is_water {
+    my ($self) = @_;
+    return (($self->{'TerrainType'} eq 'TERRAIN_OCEAN') or ($self->{'TerrainType'} eq 'TERRAIN_COAST')) ? 1 : 0;
+}
+
+sub is_blank {
+    my ($self) = @_;
+    return (($self->{'TerrainType'} eq 'TERRAIN_OCEAN') or ($self->{'TerrainType'} eq 'TERRAIN_COAST')) ? 1 : 0;
+}
+
+sub update_tile {
+    my ($self, $terrain) = @_;
+    
+    foreach my $key (%$terrain) {
+        return -1 unless exists $field_names{$key};
+        $self->{$key} = $terrain->{$key};
+    }
+    
+    return 1;
+}
+
+sub set_tile {
+    my ($self, $terrain) = @_;
+    
+    $self->clear();
+    return $self->update_tile($terrain);
+}
+
+sub to_cell {
+    my ($self) = @_;
+    
+    my $river = '';
+    $river .= " isNOfRiver" if $self->get('isNOfRiver');
+    $river .= " isWOfRiver" if $self->get('isWOfRiver'); 
+    my $tt = lc($self->get('TerrainType'));
+    $tt = 'terrain_peak' if $self->get('PlotType') eq '0';
+    
+    my $icon = qq[<img src="doc/icons/none.png" />];
+    my $title = $self->get('x') . ',' . $self->get('y');
+    
+    my $bonus = $self->get('BonusType');
+    if ($bonus) {
+        $bonus = lc($bonus);
+        $bonus =~ s/bonus_//;
+        $title = "$bonus $title";
+        $icon = qq[<img src="doc/icons/$bonus.png" />];
+    }
+    
+    my $variety = '';
+    my $feature = $self->get('FeatureType');
+    if ($feature) {
+        if ($feature =~ /oasis/i) {
+            $icon = qq[<img src="doc/icons/oasis.png" />];
+        }
+        
+        if ($feature =~ /forest/i) {
+            $variety = ($self->get('PlotType') eq '1') ? ' foresthill' : ' forest';
+        }
+        elsif ($feature =~ /jungle/i) {
+            $variety = ($self->get('PlotType') eq '1') ? ' junglehill' : ' jungle';
+        }
+    }
+    elsif ($self->get('PlotType') eq '1') {
+        $variety = ' hill';
+    }
+    
+    my $cell = qq[<a title="$title">$icon</a>];
+    return qq[<td class="$tt$river$variety tooltip">$cell</td>];
+}
+
+sub strip_hidden_strategic {
+    my ($self) = @_;
+    
+    return unless exists $self->{'BonusType'};
+    my $bonus = $self->get('BonusType');
+    if ($bonus =~ /IRON|URANIUM|ALUMINUM|COPPER|HORSE|OIL/) {
+        delete $self->{'BonusType'};
+    }
+}
+
 sub strip_all_units {
     my ($self) = @_;
     $self->{'Units'} = [];
@@ -235,112 +366,6 @@ sub add_scout_if_settler {
     }
     
     $self->{'Units'} = \@added;
-}
-
-sub write {
-    my ($self, $fh) = @_;
-    print $fh "BeginPlot\n";
-    
-    # can't use write_block_data cause this is a special case where we can't have a space between the x and the y =/
-    my $x = $self->get('x'); my $y = $self->get('y');
-    print $fh "\tx=$x,y=$y\n";
-    
-    write_block_data($self, $fh, 1, 'RiverNSDirection');
-    print $fh "\tisNOfRiver\n" if $self->get('isNOfRiver');
-    
-    write_block_data($self, $fh, 1, 'RiverWEDirection');
-    print $fh "\tisWOfRiver\n" if $self->get('isWOfRiver');
-    
-    write_block_data($self, $fh, 1, 'RouteType');
-    write_block_data($self, $fh, 1, 'BonusType');
-    write_block_data($self, $fh, 1, 'ImprovementType');
-    write_block_data($self, $fh, 1, 'FeatureType', 'FeatureVariety');
-    write_block_data($self, $fh, 1, 'TerrainType');
-    write_block_data($self, $fh, 1, 'PlotType');
-    
-    my @units = $self->get_units();
-    foreach my $unit (@units) {
-        $unit->write($fh);
-    }
-    
-    my @revealed = $self->get_revealed();
-    if (@revealed > 0) {
-        $self->set('TeamReveal', join(',', @revealed) . ',');
-        write_block_data($self, $fh, 1, 'TeamReveal');
-    }
-    print $fh "EndPlot\n";
-}
-
-sub fill {
-    my ($self) = @_;
-    my ($x, $y) = ($self->get('x'), $self->get('y'));
-    
-    $self->clear;
-    
-    $self->set('x', $x);
-    $self->set('y', $y);
-    $self->set('TerrainType', 'TERRAIN_GRASS');
-    $self->set('PlotType', 1);
-}
-
-sub is_land {
-    my ($self) = @_;
-    return (($self->{'TerrainType'} eq 'TERRAIN_OCEAN') or ($self->{'TerrainType'} eq 'TERRAIN_COAST')) ? 0 : 1;
-}
-
-sub is_water {
-    my ($self) = @_;
-    return (($self->{'TerrainType'} eq 'TERRAIN_OCEAN') or ($self->{'TerrainType'} eq 'TERRAIN_COAST')) ? 1 : 0;
-}
-
-sub is_blank {
-    my ($self) = @_;
-    return (($self->{'TerrainType'} eq 'TERRAIN_OCEAN') or ($self->{'TerrainType'} eq 'TERRAIN_COAST')) ? 1 : 0;
-}
-
-sub update_tile {
-    my ($self, $terrain) = @_;
-    
-    foreach my $key (%$terrain) {
-        return -1 unless exists $field_names{$key};
-        $self->{$key} = $terrain->{$key};
-    }
-    
-    return 1;
-}
-
-sub set_tile {
-    my ($self, $terrain) = @_;
-    
-    $self->clear();
-    return $self->update_tile($terrain);
-}
-
-sub to_cell {
-    my ($self) = @_;
-    
-    my $river = '';
-    $river .= " isNOfRiver" if $self->get('isNOfRiver');
-    $river .= " isWOfRiver" if $self->get('isWOfRiver'); 
-    my $tt = lc($self->get('TerrainType')) . $self->get('PlotType');
-    $tt = 'terrain_peak' if $self->get('PlotType') eq '0';
-    
-    my $bonus = $self->get('BonusType') ? $self->get('BonusType') : '';
-    $bonus = qq[ title="$bonus"] if $bonus;
-    
-    my $cell = qq[<a$bonus>&nbsp;</a>];
-    
-    return qq[<td class="$tt$river tooltip">$cell</td>];
-}
-
-sub strip_hidden_strategic {
-    my ($self) = @_;
-    
-    return unless exists $self->{'BonusType'};
-    my $bonus = $self->get('BonusType');
-    if ($bonus =~ /IRON|URANIUM|ALUMINUM|COPPER|HORSE|OIL/) {
-        delete $self->{'BonusType'};
-    }
 }
 
 sub reassign_reveals {
