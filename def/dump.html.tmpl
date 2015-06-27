@@ -74,47 +74,60 @@
     
     .hill {
         background-image: url("doc/icons/hill.png");
-        background-repeat: no-repeat;
-        background-position: center; 
     }
     
     .jungle {
         background-image: url("doc/icons/jungle.png");
-        background-repeat: no-repeat;
-        background-position: center;
     }
     
     .junglehill {
         background-image: url("doc/icons/junglehill.png");
-        background-repeat: no-repeat;
-        background-position: center;
     }
     
     .forest {
         background-image: url("doc/icons/forest.png");
-        background-repeat: no-repeat;
-        background-position: center;
     }
     
     .foresthill {
         background-image: url("doc/icons/foresthill.png");
-        background-repeat: no-repeat;
-        background-position: center;
+    }
+    
+    table {
+        border-spacing: 0px !important;
+    }
+    
+    img {
+        border: 0px;
+    }
+    
+    td.div {
+        padding: 0px;
+        border: 0px;
+        margin: 0px;
+        font-size: 0px;
     }
     
     td {
+        background-color: blue;
         border: 0px;
-        padding: 2px;
-        width: 14px;
-        height: 14px;
+        margin: 0px;
+        padding: 0px;
+        width: 19px;
+        height: 19px;
+        font-size: 0px;
     }
     
     .isNOfRiver {
-        border-bottom: 2px solid blue !important;
+        height: 18px !important;
+        margin-bottom: 1px;
+        background-position-y: -1px;
     }
     
+    
     .isWOfRiver {
-        border-right: 2px solid blue !important;
+        height: 18px !important;
+        margin-bottom: 1px;
+        background-position-x: -1px;
     }
 
 	</style>
@@ -122,10 +135,12 @@
 <body>
 
 
-<h2 class="demoHeaders">$$$$HEADER$$$$</h2>
+<h2 class="demoHeaders">$$$$TITLE$$$$</h2>
 <div id="tabs">
 	<ul>
-		$$$$DUMP$$$$
+		<!-- $$$$HEAD$$$$ -->
+    </ul>
+        <!-- $$$$BODY$$$$ -->
 </div>
 
 <script src="doc/jquery-ui-1.11.4/external/jquery/jquery.js"></script>

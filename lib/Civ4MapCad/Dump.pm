@@ -7,16 +7,21 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(dump_out dump_framework dump_single_layer);
 
+use Civ4MapCad::Util qw(slurp);
+
 sub dump_framework {
-    my ($template_filename, $dump_filename, $name, $tabs) = @_;
+    my ($template_filename, $dump_filename, $name, $start_index, $tabs) = @_;
     
     my @tab_heads; my @tab_bodies;
+    
+    
     foreach my $t (0..$#$tabs) {
         my ($name, $info, $rows) = @{ $tabs->[$t] };
         
-        my $head = qq[<li><a href="#tabs-$t">$name</a></li>];
+        my $id = $t + $start_index;
+        my $head = qq[<li><a href="#tabs-$id">$name</a></li>];
         
-        my $body = qq[<div id="tabs-$t">\n];
+        my $body = qq[<div id="tabs-$id">\n];
         #if (@$info > 0) {
         #    
         #}
@@ -37,25 +42,31 @@ sub dump_framework {
         push @tab_bodies, $body;
     }
     
-    my $out;
+    my $head = '';
     foreach my $th (@tab_heads) {
-        $out .= "  $th\n";
-    }
-    $out .= "</ul>\n";
-    foreach my $tb (@tab_bodies) {
-        $out .= $tb;
+        $head .= "  $th\n";
     }
     
-    dump_out($template_filename, $dump_filename, $name, $out);
+    my $body = '';
+    foreach my $tb (@tab_bodies) {
+        $body .= $tb;
+    }
+    
+    dump_out($template_filename, $dump_filename, $name, $head, $body);
 }
 
 sub dump_out {
-    my ($template_filename, $dump_filename, $name, $output) = @_;
+    my ($template_filename, $dump_filename, $name, $head, $body) = @_;
+    
+    $head =~ s/\n/\n    /g;
+    $body =~ s/\n/\n    /g;
+    $head .= "\n		<!-- \$\$\$\$HEAD\$\$\$\$ -->\n";
+    $body .= "\n		<!-- \$\$\$\$BODY\$\$\$\$ -->\n";
     
     my ($template) = slurp($template_filename);
-    $output =~ s/\n/\n    /g;
-    $template =~ s/\$\$\$\$DUMP\$\$\$\$/$output/;
-    $template =~ s/\$\$\$\$HEADER\$\$\$\$/$name/;
+    $template =~ s/\<!--\s+\$\$\$\$HEAD\$\$\$\$\s+\-\-\>/$head/;
+    $template =~ s/\<!--\s+\$\$\$\$BODY\$\$\$\$\s+\-\-\>/$body/;
+    $template =~ s/\$\$\$\$TITLE\$\$\$\$/$name/;
     
     open (my $dump, '>', $dump_filename) or die $!;
     print $dump $template;
@@ -94,15 +105,6 @@ sub dump_single_layer {
 sub dump_layer_info {
     my ($layer) = @_;
     return [];
-}
-
-sub slurp {
-    my $file = shift;
-    open my $fh, '<', $file or die;
-    local $/ = undef;
-    my $cont = <$fh>;
-    close $fh;
-    return $cont;
 }
     
 1;

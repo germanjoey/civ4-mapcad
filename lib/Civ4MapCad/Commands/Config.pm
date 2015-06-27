@@ -43,19 +43,22 @@ sub set_mod {
     my $max = find_max_players($mod);
     
     if ($max == -1) {
-        $state->error("Unknown mod type: '$mod'.");
+        $state->report_error("Unknown mod type: '$mod'.");
         return;
     }
     elsif ($max == $main::config{'max_players'}) {
-        $state->warning("Max players is already set to '$max'.");
+        $state->report_warning("Max players is already set to '$max'.");
         return;
     }
     
-    foreach my $group (@{ $state->{'group'} }) {
-        foreach my $layer (@{ $group->get_layers() }) {
+    foreach my $group_name (keys %{ $state->{'group'} }) {
+        my $group = $state->{'group'}{$group_name};
+        foreach my $layer ($group->get_layers()) {
             $layer->set_players($max);
         }
     }
+    
+    $main::config{'max_players'} = $max;
     
     return 1;
 }

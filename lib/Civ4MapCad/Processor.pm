@@ -54,8 +54,8 @@ sub process_command {
     }
     
     elsif ($command_name eq 'help') {
-        my $com = join ("\n  ", sort (keys %$repl_table));
-        print "\nAvailable commands are:\n  $com\nPlease see commands.txt for more info on each command.\n\n";
+        my $com = join ("\n    ", sort (keys %$repl_table));
+        print "\nAvailable commands are:\n\n    $com\n\nPlease see commands.txt for more info on each command.\n\n";
         return 1;
     }
     

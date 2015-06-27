@@ -158,24 +158,33 @@ sub check_vartype {
 
 # TODO: replace all error printing with this
 sub report_error {
-    my ($state, $msg) = @_;
+    my ($self, $msg) = @_;
     
     $Text::Wrap::columns = 76;
     print "\n";
-    print wrap("", "  ", "** ERROR occurred during command \"$state->{'current_line'}\":\n");
+    print wrap("", "  ", "** ERROR occurred during command \"$self->{'current_line'}\":\n");
     print wrap("  ", "  ", $msg);
     print "\n\n";
 }
 
 sub report_warning {
-    my ($state, $msg) = @_;
+    my ($self, $msg) = @_;
     
     $Text::Wrap::columns = 76;
     print "\n";
-    print wrap("", "  ", "* WARNING for command \"$state->{'current_line'}\":");
+    print wrap("", "  ", "* WARNING for command \"$self->{'current_line'}\":");
     print "\n";
     print wrap("  ", "  ", $msg);
     print "\n\n";
 }
 
+sub list {
+    my ($self, @items) = @_;
+    
+    print "\n  ";
+    print join ("\n  ", @items);
+    print "\n\n";
+    
+    return 1;
+}
 1;

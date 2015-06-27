@@ -9,23 +9,28 @@ use Civ4MapCad::ParamParser;
 use Civ4MapCad::Commands::Config qw(
    set_output_dir set_mod write_log
 );
+
 use Civ4MapCad::Commands::Weight qw(
-    load_terrain new_weight_table import_weight_table_from_file
+    load_terrain new_weight_table import_weight_table_from_file evaluate_weight
 );
+
 use Civ4MapCad::Commands::List qw(
     list_shapes list_groups list_layers list_masks list_weights show_weights
     dump_group dump_mask dump_layer dump_mask_to_console
 );
+
 use Civ4MapCad::Commands::Mask qw(
     import_mask_from_ascii new_mask_from_shape mask_difference mask_union
     mask_intersect mask_invert mask_threshold
 );
+
 use Civ4MapCad::Commands::Layer qw(
     move_layer set_layer_priority cut_layer crop_layer extract_layer find_difference
 );
+
 use Civ4MapCad::Commands::Group qw(
     export_sims find_starts export_group combine_groups flatten_group copy_layer_from_group import_group new_group find_difference
-    extract_starts_as_mask extract_starts_as_layers normalize_starts find_starts strip_nonsettlers add_scouts_to_settlers extract_starts export_sims
+    extract_starts_as_mask normalize_starts find_starts strip_nonsettlers add_scouts_to_settlers extract_starts export_sims
 );
 
 # use Civ4MapCad::Commands::Balance qw();

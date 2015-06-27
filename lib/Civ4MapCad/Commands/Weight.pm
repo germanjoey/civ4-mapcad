@@ -5,7 +5,7 @@ use warnings;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(load_terrain new_weight_table import_weight_table_from_file);
+our @EXPORT_OK = qw(load_terrain new_weight_table import_weight_table_from_file evaluate_weight);
 
 use Civ4MapCad::ParamParser;
 use Civ4MapCad::Object::Weight;
@@ -42,8 +42,23 @@ sub new_weight_table {
     my ($state, @params) = @_;
     return _process_weight_import($state, @params);
 }
- 
-sub import_weight_table_from_file {
+
+sub evaluate_weight {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'required' => ['weight', 'float']
+    });
+    return -1 if $pparams->has_error;
+    
+    my ($weight, $value) = $pparams->get_required();
+    my $result = $weight->evaluate($state, $value);
+    $state->list($result);
+    
+    return 1;
+}
+
+ sub import_weight_table_from_file {
     my ($state, @params) = @_;
 
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
@@ -105,7 +120,7 @@ sub _process_weight_import {
         # >= 1   => grass,
         # >= 0.8 => grass_hill,
         # >= 0.6 => plains_hill
-        my ($operator, $weight, $target) = $pair =~ /^(\>|\<|=|\<=|\>=)([10]|0\.\d+)(?:\=\>)(\%?\w+)$/;
+        my ($operator, $weight, $target) = $pair =~ /^(\>|\<|=|\<=|\>=)([10]|0\.\d+)(?:\=\>)(\%?\w+)(?:,)?$/;
        
         unless (defined($weight) and defined($operator) and defined($target)) {
             $state->report_error("problem parsing weight definition '$pair' in weight definition for '$result_name'.");
@@ -125,8 +140,9 @@ sub _process_weight_import {
        
         push @weights, [$operator, $weight, $target];
     }
-   
-    $state->set_variable($result_name, 'weight', Civ4MapCad::Object::Weight->new_from_pairs($state->{'weight'}, @weights));
+    
+    my $obj = Civ4MapCad::Object::Weight->new_from_pairs(@weights);
+    $state->set_variable($result_name, 'weight', $obj);
     return 1;
 }
 

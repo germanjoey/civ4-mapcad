@@ -7,7 +7,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(
     export_sims find_starts export_group combine_groups flatten_group copy_layer_from_group import_group new_group find_difference
-    extract_starts_as_mask extract_starts_as_layers normalize_starts find_starts strip_nonsettlers add_scouts_to_settlers extract_starts export_sims
+    extract_starts_as_mask normalize_starts find_starts strip_nonsettlers add_scouts_to_settlers extract_starts export_sims
 );
 
 use Civ4MapCad::Util qw(deepcopy);
@@ -170,26 +170,6 @@ sub export_group {
         $flat_layer->export_layer($state->output_dir() . $flat->get_name() . ".flat.CivBeyondSwordWBSave");
     }
         
-    return 1;
-}
-
-sub extract_starts_as_layers {
-    my ($state, @params) = @_;
-    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
-        'required' => ['group'],
-        
-        'optional' => {
-            'settler_only' => 0
-        }
-    });
-    return -1 if $pparams->has_error;
-    
-    my ($group) = $pparams->get_required();
-    my $result_name = $pparams->get_result_name();
-    my $result = $group->find_starts();
-    
-    
-    
     return 1;
 }
 

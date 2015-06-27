@@ -42,13 +42,9 @@ Network Trash Folder
 Temporary Items
 .apdisk
 *.CivBeyondSwordWBSave
-bgpb4_v9.start0.CivBeyondSwordWBSave
-*.CivBeyondSwordWBSave
-*.CivBeyondSwordWBSave
-bgpb4_v9.start0.CivBeyondSwordWBSave
+*.zip
 *.txt
 dump.html
-*.CivBeyondSwordWBSave
 debug.txt
-debug.txt
-bgpb4_v9.start1.CivBeyondSwordWBSave
+output
+log.civ4mc

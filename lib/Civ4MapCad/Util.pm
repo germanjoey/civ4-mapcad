@@ -5,7 +5,7 @@ use warnings;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(write_block_data deepcopy report_error report_warning list find_max_players write_config);
+our @EXPORT_OK = qw(write_block_data deepcopy report_error report_warning find_max_players write_config slurp);
 
 use Data::Dumper;
 use Config::General qw(SaveConfig);
@@ -27,16 +27,6 @@ sub write_block_data {
     }
 }
 
-sub list {
-    my ($state, @items) = @_;
-    
-    print "\n  ";
-    print join ("\n  ", @items);
-    print "\n\n";
-    
-    return 1;
-}
-
 sub deepcopy {
     my ($v) = @_;
     my $d = Data::Dumper->new([$v]);
@@ -48,6 +38,8 @@ sub deepcopy {
 
 sub find_max_players {
     my ($mod) = @_;
+    
+    $mod = lc($mod);
 
     if ($mod eq 'rtr') {
         return 40;
@@ -64,6 +56,15 @@ sub write_config {
     my %config = deepcopy(%main::config);
     delete $config{'max_players'};
     SaveConfig('def/config.cfg', \%config);
+}
+
+sub slurp {
+    my $file = shift;
+    open my $fh, '<', $file or die;
+    local $/ = undef;
+    my $cont = <$fh>;
+    close $fh;
+    return $cont;
 }
 
 1;

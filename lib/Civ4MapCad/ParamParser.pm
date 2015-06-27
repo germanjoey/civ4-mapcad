@@ -39,11 +39,12 @@ sub new {
     my $processed = _process($state, $raw_params, $param_spec);
     return bless $processed, $class;
 }
-    
+
 sub _process {
     my ($state, $raw_params, $param_spec) = @_;
 
-    my $optional = $param_spec->{'optional'};
+    # TODO: universal help option
+    my $optional = $param_spec->{'optional'} || {};
     my $required = $param_spec->{'required'} || [];
     my $has_shape_params = $param_spec->{'has_shape_params'};
     
@@ -118,7 +119,9 @@ sub _process {
         $processed_params{'error'} = 1;
         return \%processed_params;
     }
+    
     $processed_params{'_required'} = [] if @preproc > 0;
+    $processed_params{'_required_names'} = [] if @preproc > 0;
     
     my $i=0;
     my @shape_param_list;
@@ -143,17 +146,19 @@ sub _process {
                 return \%processed_params;
             };
             
+            push @{ $processed_params{'_required_names'} }, '';
             push @{ $processed_params{'_required'} }, $preproc[$i];
             $i++;
             next;
         }
         elsif ($expected_type eq 'float') {
-            unless ($preproc[$i] =~ /^[-+]?\d+(?:\.\d+(?:[eE][-+]?\d+))?$/) {
+            unless ($preproc[$i] =~ /^[-+]?\d+(?:\.\d+(?:[eE][-+]?\d+)?)?$/) {
                 $state->report_error("parameter '$preproc[$i]' was expected to be a floating point value but yet is not.");
                 $processed_params{'error'} = 1;
                 return \%processed_params;
             };
         
+            push @{ $processed_params{'_required_names'} }, '';
             push @{ $processed_params{'_required'} }, $preproc[$i];
             $i++;
             next;
@@ -168,6 +173,7 @@ sub _process {
         
             $preproc[$i] =~ s/^"//;
             $preproc[$i] =~ s/"$//;
+            push @{ $processed_params{'_required_names'} }, '';
             push @{ $processed_params{'_required'} }, $preproc[$i];
             $i++;
             next;
@@ -178,7 +184,7 @@ sub _process {
             $processed_params{'error'} = 1;
             return \%processed_params;
         };
-        
+    
         if (! $state->variable_exists($name, $expected_type)) {
             if ($expected_type eq 'layer') {
                 my ($groupname) = $name =~ /^(\w+)/;
@@ -197,12 +203,13 @@ sub _process {
             }
             else {
                 my %prefix = ('group' => '$', 'mask' => '@', 'weight' => '%', 'shape' => '*');
-                $state->report_error("a variable of type '$expected_type' named '$prefix{$expected_type}$name' does not exist.");
+                $state->report_error("a variable of type '$expected_type' named '$name' does not exist.");
                 $processed_params{'error'} = 1;
                 return \%processed_params;
             }
         }
         
+        push @{ $processed_params{'_required_names'} }, $name;
         push @{ $processed_params{'_required'} }, $state->get_variable($name, $expected_type);
         
         $i ++;
@@ -302,6 +309,11 @@ sub get_result_name {
 sub get_required {
     my ($self) = @_;
     return @{ $self->{'_required'} };
+}
+
+sub get_required_names {
+    my ($self) = @_;
+    return @{ $self->{'_required_names'} };
 }
 
 sub get_named {

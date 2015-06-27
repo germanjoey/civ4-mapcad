@@ -3,6 +3,8 @@ package Civ4MapCad::Object::Mask;
 use strict;
 use warnings;
 
+use List::Util qw(min max);
+
 sub new_blank {
     my ($class, $width, $height) = @_;
     
@@ -34,7 +36,8 @@ sub new_from_shape {
     foreach my $row (0..($height-1)) {
         $obj{'canvas'}[$row] = [];
         foreach my $col (0..($width-1)) {
-            $obj{'canvas'}[$row][$col] = $shape->($shape_params, $col, $row);
+            my $val = $shape->($shape_params, $col, $row);
+            $obj{'canvas'}[$row][$col] = max(0, min(1, $val));
         }
     }
    
@@ -44,13 +47,13 @@ sub new_from_shape {
 sub new_from_ascii {
     my ($class, $filename, $weights) = @_;
    
-    open (ASCII, $filename) || 0;
+    open (my $ascii, $filename) || 0;
    
     # construct the shape
     my @canvas;
     my $max_col = 0;
     while (1) {
-        my ($line) = <ASCII>;
+        my ($line) = <$ascii>;
         last unless defined $line;
         chomp $line;
        
@@ -78,7 +81,7 @@ sub new_from_ascii {
         }
     }
    
-    close ASCII;
+    close $ascii;
    
     my %obj = (
         'width' => $max_col+1, # width of the canvas

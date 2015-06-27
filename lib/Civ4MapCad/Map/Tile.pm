@@ -236,8 +236,13 @@ sub to_cell {
     my $tt = lc($self->get('TerrainType'));
     $tt = 'terrain_peak' if $self->get('PlotType') eq '0';
     
+    my $height = '';
+    $height = 'hill' if $self->get('PlotType') eq '1';
+    my $terrain = $tt;
+    $terrain =~ s/terrain_//;
+    
     my $icon = qq[<img src="doc/icons/none.png" />];
-    my $title = $self->get('x') . ',' . $self->get('y');
+    my $title = "$height$terrain " . $self->get('x') . ',' . $self->get('y');
     
     my $bonus = $self->get('BonusType');
     if ($bonus) {
@@ -265,8 +270,14 @@ sub to_cell {
         $variety = ' hill';
     }
     
+    if ($self->has_settler()) {
+        $icon = qq[<img src="doc/icons/razz.gif" />];
+        my @starts = map { $_->[2] } ($self->get_starts());
+        $title = $title . ", start for player " . join ("/", @starts);
+    }
+    
     my $cell = qq[<a title="$title">$icon</a>];
-    return qq[<td class="$tt$river$variety tooltip">$cell</td>];
+    return qq[<td class="tooltip"><div class="$tt$variety$river">$cell</div></td>];
 }
 
 sub strip_hidden_strategic {
@@ -274,7 +285,7 @@ sub strip_hidden_strategic {
     
     return unless exists $self->{'BonusType'};
     my $bonus = $self->get('BonusType');
-    if ($bonus =~ /IRON|URANIUM|ALUMINUM|COPPER|HORSE|OIL/) {
+    if ($bonus =~ /IRON|URANIUM|ALUMINUM|COPPER|HORSE|OIL|COAL/) {
         delete $self->{'BonusType'};
     }
 }
