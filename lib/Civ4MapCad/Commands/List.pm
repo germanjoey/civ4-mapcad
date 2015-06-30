@@ -28,16 +28,23 @@ sub list_groups {
     return 1;
 }
  
+my $list_layers_help_text = qq[
+    Lists all layers of a group by priority.
+];
 sub list_layers {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
-        'required' => ['group']
+        'required' => ['group'],
+        'help_text' => $list_layers_help_text
     });
     return -1 if $pparams->has_error;
     
     my ($group) = $pparams->get_required();
-    $state->list( $group->get_layer_names() );
+    
+    my @layers = map { sprintf "%2d %s", $group->get_layer_priority($_), $_ } ($group->get_layer_names());
+    
+    $state->list( @layers );
     
     return 1;
 }
@@ -55,14 +62,18 @@ sub list_weights {
     $state->list(sort keys %{$state->{'weight'}} );
     return 1;
 }
- 
+
+my $show_weights_help_text = qq[
+    Shows the definition for a weight. The optional 'flatten' arguments determines whether nested weights are expanded or not. (off by default)
+];
 sub show_weights {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['weight'],
+        'help_text' => $show_weights_help_text,
         'optional' => {
-            'flatten' => 0
+            'flatten' => 'false'
         }
     });
     return -1 if $pparams->has_error;
@@ -85,11 +96,15 @@ sub show_weights {
     return 1;
 }
 
+my $dump_mask_to_console_help_text = qq[
+    Dump a mask as ascii-art for quick debugging.
+];
 sub dump_mask_to_console {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
-        'required' => ['mask']
+        'required' => ['mask'],
+        'help_text' => $dump_mask_to_console_help_text
     });
     return -1 if $pparams->has_error;
     my ($mask) = $pparams->get_required();
@@ -107,13 +122,16 @@ sub dump_mask_to_console {
     print "\n";
 }
 
+my $dump_mask_help_text = qq[
+    Displays a mask into the dump.html debugging window. Mask values closer to zero will appear blue, while those closer to 1 will appear red. If 'add_to_existing' is specified, the dump will appear as a new tab in the existing dump.html.
+];
 sub dump_mask {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['mask'],
         'optional' => {
-            'add_to_existing' => 0
+            'add_to_existing' => 'false'
         }
     });
     return -1 if $pparams->has_error;
@@ -148,14 +166,18 @@ sub dump_mask {
     dump_framework($template, 'dump.html', $mask_name, $start_index, [[$mask_name, [], \@cells]])
 }
 
+my $dump_group_help_text = qq[
+    Displays a group in the dump.html debugging window. Each layer will appear as its own tab. If 'add_to_existing' is specified, the dump will add additional tabs to the existing dump.html. If '--info_too' is specified, all per-layer map information will be specified in a table.
+];
 sub dump_group {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['group'],
+        'help_text' => $dump_group_help_text,
         'optional' => {
-            'info' => 0,
-            'add_to_existing' => 0
+            'info_too' => 'false',
+            'add_to_existing' => 'false'
         }
     });
     return -1 if $pparams->has_error;
@@ -163,7 +185,8 @@ sub dump_group {
     my ($group) = $pparams->get_required();
     my $copy = deepcopy($group);
     
-    my $do_info = $pparams->get_named('info');
+    # TODO
+    my $do_info = $pparams->get_named('info_too');
     
     my @layer_cells;
     foreach my $layer ($copy->get_layers()) {
@@ -178,20 +201,24 @@ sub dump_group {
     dump_framework($template, 'dump.html', $group->get_name(), $start_index, \@layer_cells);
 }
 
+my $dump_layer_help_text = qq[
+    Displays a single layer in the dump.html debugging window. If 'add_to_existing' is specified, the dump will add additional tabs to the existing dump.html. If '--info_too' is specified, all per-layer map information will be specified in a table.
+];
 sub dump_layer {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['layer'],
+        'help_text' => $dump_layer_help_text,
         'optional' => {
-            'info' => 0,
-            'add_to_existing' => 0
+            'info_too' => 'false',
+            'add_to_existing' => 'false'
         }
     });
     return -1 if $pparams->has_error;
     
     my ($layer) = $pparams->get_required();
-    my $do_info = $pparams->get_named('info');
+    my $do_info = $pparams->get_named('info_too');
     my $copy = deepcopy($layer);
     $copy->fix_coasts();
     

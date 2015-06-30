@@ -10,6 +10,10 @@ our @EXPORT_OK = qw(import_mask_from_ascii new_mask_from_shape mask_difference m
 use Civ4MapCad::Object::Mask;
 use Civ4MapCad::ParamParser;
 
+my $new_mask_from_shape_help_text = qq[
+    The 'new_mask_from_shape' command generates a mask by applying a shape function to a blank canvas of size width/height.
+    (the two required integer paramaters). See the 'Shapes and Masks' section of the html documentation for more details.
+];
 sub new_mask_from_shape {
     my ($state, @params) = @_;
     
@@ -17,10 +21,7 @@ sub new_mask_from_shape {
         'has_shape_params' => 1,
         'has_result' => 'mask',
         'required' => ['shape', 'int', 'int'],
-        'optional' => {
-            'width' => 0,
-            'height' => 0
-        }
+        'help_text' => $new_mask_from_shape_help_text
     });
     return -1 if $pparams->has_error;
     
@@ -41,15 +42,23 @@ sub new_mask_from_shape {
     return 1;
 }
 
+# TODO: can weights be specified like this?
+
+my $import_mask_from_ascii_help_text = qq[
+    The 'import_mask_from_ascii' command generates a mask by reading in an ascii art shape and translating the characters
+    into 1's and zeroes, if, for examples, you wanted to create a landmass that looked like some kind of defined shape. By default, a '*' equals a value of 1.0, while a ' ' equals a 0.0.
+];
 sub import_mask_from_ascii {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['filename'],
         'has_result' => 'mask',
+        'help_text' => $import_mask_from_ascii_help_text,
         'optional' => {
             'mask' => '',
-            'weights' => {'.' => 1, ' ' => 0},
+            'one' => '*',
+            'zero' => ' '
         }
     });
     return -1 if $pparams->has_error;
@@ -62,43 +71,65 @@ sub import_mask_from_ascii {
     }
     close $test;
     
+    my %weights = (
+        $pparams->get_named('one') => 1,
+        $pparams->get_named('zero') => 0
+    );
+    
     my $result_name = $pparams->get_result_name();
-    $state->set_variable($result_name, 'mask', Civ4MapCad::Object::Mask->new_from_ascii($filename, $pparams->{'weights'}));
+    $state->set_variable($result_name, 'mask', Civ4MapCad::Object::Mask->new_from_ascii($filename, \%weights));
     
     return 1;
 }
 
+
+my $mask_difference_help_text = qq[
+    Finds the difference between two masks; if mask A has value '1.0' at coordinate X,Y while mask B has value '0.0', the result will have value '1.0', otherwise '0.0'. For masks with decimal values, then the result is max(0, A-B).
+];
 sub mask_difference {
     my ($state, @params) = @_;
-    return _two_op($state, sub { my ($t, @r) = @_; return $t->difference(@r) }, @params);
+    return _two_op($state, $mask_difference_help_text, sub { my ($t, @r) = @_; return $t->difference(@r) }, @params);
 }
 
+my $mask_union_help_text = qq[
+    Finds the union between two masks; if mask A has value '1.0' at coordinate X,Y while mask B has value '0.0', the result will have value '0.0', otherwise '0.0'. For masks with decimal values, then the result is min(1, A+B).
+];
 sub mask_union {
     my ($state, @params) = @_;
-    return _two_op($state, sub { my ($t, @r) = @_; return $t->union(@r) }, @params);
+    return _two_op($state, $mask_union_help_text, sub { my ($t, @r) = @_; return $t->union(@r) }, @params);
 }
 
+my $mask_intersect_help_text = qq[
+    Finds the intersection between two masks; if mask A has value '1.0' at coordinate X,Y while mask B has value '0.0', the result will have value '0.0', otherwise '0.0'. For masks with decimal values, then the result is A*B.
+];
 sub mask_intersect {
     my ($state, @params) = @_;
-    return _two_op($state, sub { my ($t, @r) = @_; return $t->intersection(@r) }, @params);
+    return _two_op($state, $mask_intersect_help_text, sub { my ($t, @r) = @_; return $t->intersection(@r) }, @params);
 }
 
+my $mask_invert_help_text = qq[
+    Inverts a mask; that is, '1's become '0's and vice versa. For masks with decimal values, then the result is 1-value.
+];
 sub mask_invert {
     my ($state, @params) = @_;
-    return _one_op($state, sub { my ($t, @r) = @_; return $t->invert(@r) }, @params);
+    return _one_op($state, $mask_invert_help_text, '', sub { my ($t, @r) = @_; return $t->invert(@r) }, @params);
 }
 
+my $mask_threshold_help_text = qq[
+    Swings values to either a '1' or a '0' depending on the threshold value, which is the second parameter to this command. Mask values below this value become a '0', and values above or equal become a '1'.
+];
 sub mask_threshold {
     my ($state, @params) = @_;
-    return _one_op($state, sub { my ($t, @r) = @_; return $t->threshold(@r) }, @params);
+    return _one_op($state, $mask_threshold_help_text, 'float', sub { my ($t, @r) = @_; return $t->threshold(@r) }, @params);
 }
 
 sub _one_op {
-    my ($state, $sub, @params) = @_;
+    my ($state, $help_text, $has_other_arg, $sub, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'has_result' => 'mask',
-        'required' => ['mask']
+        'required' => ($has_other_arg ne '') ? ['mask', $has_other_arg] : ['mask'],
+        'help_text' => $help_text
     });
     return -1 if $pparams->has_error;
     
@@ -111,11 +142,12 @@ sub _one_op {
 }
 
 sub _two_op {
-    my ($state, $sub, @params) = @_;
+    my ($state, $help_text, $sub, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'has_result' => 'mask',
         'required' => ['mask', 'mask'],
+        'help_text' => $help_text,
         'optional' => {
             'offsetX' => 0,
             'offsetY' => 0
@@ -136,12 +168,16 @@ sub _two_op {
     return 1;
 }
 
+my $generate_layer_from_mask_help_text = qq[
+    
+];
 sub generate_layer_from_mask {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'has_result' => 'layer',
         'required' => ['group', 'mask', 'weight'],
+        'help_text' => $generate_layer_from_mask_help_text,
         'optional' => {
             'offsetX' => '0',
             'offsetY' => '0'
@@ -215,7 +251,7 @@ sub cutout_layer_with_mask {
         'has_result' => 'layer',
         'required' => ['layer', 'mask'],
         'optional' => {
-            'copy' => 0,
+            'copy' => 'false',
             'offsetX' => '0',
             'offsetY' => '0'
         }
@@ -252,7 +288,7 @@ sub apply_shape_to_mask {
         'allow_implied_result' => 1,
         'required' => ['mask', 'layer'],
         'optional' => {
-            'copy' => 0,
+            'copy' => 'false',
             'offsetX' => '0',
             'offsetY' => '0'
         }

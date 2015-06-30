@@ -178,6 +178,19 @@ sub report_warning {
     print "\n\n";
 }
 
+sub report_message {
+    my ($self, $msg) = @_;
+    
+    $Text::Wrap::columns = 76;
+    $Text::Wrap::separator="\n  ";
+    $msg =~ s/\r|\n/ /g;
+    $msg =~ s/\s+/ /;
+    $msg =~ s/^\s+//;
+    $msg =~ s/\s+$//;
+    
+    print wrap("  ", "  ", $msg);
+}
+
 sub list {
     my ($self, @items) = @_;
     

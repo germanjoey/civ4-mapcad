@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="us">
+<head>
+	<meta charset="utf-8">
+	<title>Civ4 Map Cad Debugging Window</title>
+	<link href="doc/jquery-ui-1.11.4/jquery-ui.css" rel="stylesheet">
+	<style>
+	body{
+		font: 62.5% "Trebuchet MS", sans-serif;
+		margin: 50px;
+	}
+	.demoHeaders {
+		margin-top: 2em;
+	}
+	#dialog-link {
+		padding: .4em 1em .4em 20px;
+		text-decoration: none;
+		position: relative;
+	}
+	#dialog-link span.ui-icon {
+		margin: 0 5px 0 0;
+		position: absolute;
+		left: .2em;
+		top: 50%;
+		margin-top: -8px;
+	}
+	#icons {
+		margin: 0;
+		padding: 0;
+	}
+	#icons li {
+		margin: 2px;
+		position: relative;
+		padding: 4px 0;
+		cursor: pointer;
+		float: left;
+		list-style: none;
+	}
+	#icons span.ui-icon {
+		float: left;
+		margin: 0 4px;
+	}
+	.fakewindowcontain .ui-widget-overlay {
+		position: absolute;
+	}
+    
+    .terrain_coast {
+        background-color: aqua;
+    }
+
+    .terrain_ocean {
+        background-color: #70B8FF;
+    }
+    
+   .terrain_plains {
+        background-color: #EAE8D0;
+    }
+    
+   .terrain_grass {
+        background-color: #9FDB9F;
+    }
+
+   .terrain_tundra {
+        background-color: #BABABA;
+    }
+    
+   .terrain_desert {
+        background-color: #FFF9E0;
+    }
+    
+   .terrain_peak {
+        background-color: brown;
+    }
+    
+    .hill {
+        background-image: url("doc/icons/hill.png");
+    }
+    
+    .jungle {
+        background-image: url("doc/icons/jungle.png");
+    }
+    
+    .junglehill {
+        background-image: url("doc/icons/junglehill.png");
+    }
+    
+    .forest {
+        background-image: url("doc/icons/forest.png");
+    }
+    
+    .foresthill {
+        background-image: url("doc/icons/foresthill.png");
+    }
+    
+    table {
+        border-spacing: 0px !important;
+    }
+    
+    img {
+        border: 0px;
+    }
+    
+    td.div {
+        padding: 0px;
+        border: 0px;
+        margin: 0px;
+        font-size: 0px;
+    }
+    
+    td {
+        background-color: blue;
+        border: 0px;
+        margin: 0px;
+        padding: 0px;
+        width: 19px;
+        height: 19px;
+        font-size: 0px;
+    }
+    
+    .isNOfRiver {
+        height: 18px !important;
+        margin-bottom: 1px;
+        background-position-y: -1px;
+    }
+    
+    
+    .isWOfRiver {
+        height: 18px !important;
+        margin-bottom: 1px;
+        background-position-x: -1px;
+    }
+
+	</style>
+</head>
+<body>
+
+
+<h2 class="demoHeaders">@soft</h2>
+<div id="tabs">
+	<ul>
+		  <li><a href="#tabs-0">@soft</a></li>
+    
+		  <li><a href="#tabs-1">@soft</a></li>
+    
+		  <li><a href="#tabs-2">@soft</a></li>
+    
+		<!-- $$$$HEAD$$$$ -->
+
+
+
+    </ul>
+        <div id="tabs-0">
+        <table>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 10: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="1, 10: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="2, 10: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="3, 10: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="4, 10: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="5, 10: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="6, 10: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="7, 10: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="8, 10: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="9, 10: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 10: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 9: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="1, 9: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="2, 9: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #2100dd;"><a title="3, 9: 0.131966011250105"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3700c7;"><a title="4, 9: 0.219223593595585"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3f00bf;"><a title="5, 9: 0.25"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3700c7;"><a title="6, 9: 0.219223593595585"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #2100dd;"><a title="7, 9: 0.131966011250105"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="8, 9: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="9, 9: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 9: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 8: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="1, 8: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3000ce;"><a title="2, 8: 0.189339828220179"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5800a6;"><a title="3, 8: 0.348612181134003"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #750089;"><a title="4, 8: 0.459430584957905"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #7f007f;"><a title="5, 8: 0.5"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #750089;"><a title="6, 8: 0.459430584957905"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5800a6;"><a title="7, 8: 0.348612181134003"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3000ce;"><a title="8, 8: 0.189339828220179"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="9, 8: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 8: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 7: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #2100dd;"><a title="1, 7: 0.131966011250105"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5800a6;"><a title="2, 7: 0.348612181134003"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #8a0074;"><a title="3, 7: 0.542893218813452"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #b0004e;"><a title="4, 7: 0.690983005625053"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #bf003f;"><a title="5, 7: 0.75"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #b0004e;"><a title="6, 7: 0.690983005625053"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #8a0074;"><a title="7, 7: 0.542893218813452"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5800a6;"><a title="8, 7: 0.348612181134003"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #2100dd;"><a title="9, 7: 0.131966011250105"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 7: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 6: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3700c7;"><a title="1, 6: 0.219223593595585"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #750089;"><a title="2, 6: 0.459430584957905"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #b0004e;"><a title="3, 6: 0.690983005625053"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #e4001a;"><a title="4, 6: 0.896446609406726"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="5, 6: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #e4001a;"><a title="6, 6: 0.896446609406726"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #b0004e;"><a title="7, 6: 0.690983005625053"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #750089;"><a title="8, 6: 0.459430584957905"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3700c7;"><a title="9, 6: 0.219223593595585"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 6: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 5: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3f00bf;"><a title="1, 5: 0.25"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #7f007f;"><a title="2, 5: 0.5"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #bf003f;"><a title="3, 5: 0.75"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="4, 5: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="5, 5: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="6, 5: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #bf003f;"><a title="7, 5: 0.75"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #7f007f;"><a title="8, 5: 0.5"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3f00bf;"><a title="9, 5: 0.25"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 5: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 4: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3700c7;"><a title="1, 4: 0.219223593595585"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #750089;"><a title="2, 4: 0.459430584957905"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #b0004e;"><a title="3, 4: 0.690983005625053"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #e4001a;"><a title="4, 4: 0.896446609406726"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="5, 4: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #e4001a;"><a title="6, 4: 0.896446609406726"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #b0004e;"><a title="7, 4: 0.690983005625053"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #750089;"><a title="8, 4: 0.459430584957905"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3700c7;"><a title="9, 4: 0.219223593595585"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 4: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 3: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #2100dd;"><a title="1, 3: 0.131966011250105"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5800a6;"><a title="2, 3: 0.348612181134003"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #8a0074;"><a title="3, 3: 0.542893218813452"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #b0004e;"><a title="4, 3: 0.690983005625053"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #bf003f;"><a title="5, 3: 0.75"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #b0004e;"><a title="6, 3: 0.690983005625053"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #8a0074;"><a title="7, 3: 0.542893218813452"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5800a6;"><a title="8, 3: 0.348612181134003"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #2100dd;"><a title="9, 3: 0.131966011250105"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 3: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 2: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="1, 2: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3000ce;"><a title="2, 2: 0.189339828220179"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5800a6;"><a title="3, 2: 0.348612181134003"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #750089;"><a title="4, 2: 0.459430584957905"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #7f007f;"><a title="5, 2: 0.5"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #750089;"><a title="6, 2: 0.459430584957905"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5800a6;"><a title="7, 2: 0.348612181134003"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3000ce;"><a title="8, 2: 0.189339828220179"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="9, 2: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 2: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 1: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="1, 1: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="2, 1: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #2100dd;"><a title="3, 1: 0.131966011250105"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3700c7;"><a title="4, 1: 0.219223593595585"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3f00bf;"><a title="5, 1: 0.25"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3700c7;"><a title="6, 1: 0.219223593595585"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #2100dd;"><a title="7, 1: 0.131966011250105"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="8, 1: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="9, 1: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 1: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 0: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="1, 0: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="2, 0: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="3, 0: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="4, 0: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="5, 0: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="6, 0: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="7, 0: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="8, 0: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="9, 0: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 0: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+        </table>
+    </div>
+    
+		<div id="tabs-1">
+        <table>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 10: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="1, 10: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="2, 10: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="3, 10: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="4, 10: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="5, 10: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="6, 10: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="7, 10: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="8, 10: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="9, 10: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 10: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 9: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="1, 9: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="2, 9: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #2100dd;"><a title="3, 9: 0.131966011250105"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3700c7;"><a title="4, 9: 0.219223593595585"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3f00bf;"><a title="5, 9: 0.25"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3700c7;"><a title="6, 9: 0.219223593595585"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #2100dd;"><a title="7, 9: 0.131966011250105"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="8, 9: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="9, 9: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 9: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 8: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="1, 8: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3000ce;"><a title="2, 8: 0.189339828220179"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5800a6;"><a title="3, 8: 0.348612181134003"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #750089;"><a title="4, 8: 0.459430584957905"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #7f007f;"><a title="5, 8: 0.5"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #750089;"><a title="6, 8: 0.459430584957905"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5800a6;"><a title="7, 8: 0.348612181134003"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3000ce;"><a title="8, 8: 0.189339828220179"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="9, 8: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 8: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 7: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #2100dd;"><a title="1, 7: 0.131966011250105"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5800a6;"><a title="2, 7: 0.348612181134003"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #8a0074;"><a title="3, 7: 0.542893218813452"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #b0004e;"><a title="4, 7: 0.690983005625053"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #bf003f;"><a title="5, 7: 0.75"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #b0004e;"><a title="6, 7: 0.690983005625053"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #8a0074;"><a title="7, 7: 0.542893218813452"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5800a6;"><a title="8, 7: 0.348612181134003"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #2100dd;"><a title="9, 7: 0.131966011250105"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 7: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 6: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3700c7;"><a title="1, 6: 0.219223593595585"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #750089;"><a title="2, 6: 0.459430584957905"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #b0004e;"><a title="3, 6: 0.690983005625053"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #e4001a;"><a title="4, 6: 0.896446609406726"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="5, 6: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #e4001a;"><a title="6, 6: 0.896446609406726"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #b0004e;"><a title="7, 6: 0.690983005625053"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #750089;"><a title="8, 6: 0.459430584957905"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3700c7;"><a title="9, 6: 0.219223593595585"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 6: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 5: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3f00bf;"><a title="1, 5: 0.25"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #7f007f;"><a title="2, 5: 0.5"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #bf003f;"><a title="3, 5: 0.75"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="4, 5: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="5, 5: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="6, 5: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #bf003f;"><a title="7, 5: 0.75"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #7f007f;"><a title="8, 5: 0.5"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3f00bf;"><a title="9, 5: 0.25"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 5: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 4: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3700c7;"><a title="1, 4: 0.219223593595585"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #750089;"><a title="2, 4: 0.459430584957905"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #b0004e;"><a title="3, 4: 0.690983005625053"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #e4001a;"><a title="4, 4: 0.896446609406726"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="5, 4: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #e4001a;"><a title="6, 4: 0.896446609406726"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #b0004e;"><a title="7, 4: 0.690983005625053"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #750089;"><a title="8, 4: 0.459430584957905"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3700c7;"><a title="9, 4: 0.219223593595585"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 4: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 3: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #2100dd;"><a title="1, 3: 0.131966011250105"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5800a6;"><a title="2, 3: 0.348612181134003"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #8a0074;"><a title="3, 3: 0.542893218813452"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #b0004e;"><a title="4, 3: 0.690983005625053"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #bf003f;"><a title="5, 3: 0.75"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #b0004e;"><a title="6, 3: 0.690983005625053"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #8a0074;"><a title="7, 3: 0.542893218813452"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5800a6;"><a title="8, 3: 0.348612181134003"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #2100dd;"><a title="9, 3: 0.131966011250105"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 3: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 2: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="1, 2: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3000ce;"><a title="2, 2: 0.189339828220179"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5800a6;"><a title="3, 2: 0.348612181134003"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #750089;"><a title="4, 2: 0.459430584957905"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #7f007f;"><a title="5, 2: 0.5"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #750089;"><a title="6, 2: 0.459430584957905"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5800a6;"><a title="7, 2: 0.348612181134003"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3000ce;"><a title="8, 2: 0.189339828220179"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="9, 2: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 2: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 1: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="1, 1: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="2, 1: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #2100dd;"><a title="3, 1: 0.131966011250105"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3700c7;"><a title="4, 1: 0.219223593595585"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3f00bf;"><a title="5, 1: 0.25"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3700c7;"><a title="6, 1: 0.219223593595585"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #2100dd;"><a title="7, 1: 0.131966011250105"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="8, 1: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="9, 1: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 1: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 0: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="1, 0: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="2, 0: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="3, 0: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="4, 0: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="5, 0: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="6, 0: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="7, 0: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="8, 0: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="9, 0: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 0: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+        </table>
+    </div>
+    
+		<div id="tabs-2">
+        <table>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 10: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #1e00e0;"><a title="1, 10: 0.11937515251343"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3b00c3;"><a title="2, 10: 0.23380962103094"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5200ac;"><a title="3, 10: 0.322967038573099"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #60009e;"><a title="4, 10: 0.380196097281443"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #660099;"><a title="5, 10: 0.4"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #60009e;"><a title="6, 10: 0.380196097281443"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5200ac;"><a title="7, 10: 0.322967038573099"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3b00c3;"><a title="8, 10: 0.23380962103094"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #1e00e0;"><a title="9, 10: 0.11937515251343"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 10: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #1e00e0;"><a title="0, 9: 0.11937515251343"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #4400ba;"><a title="1, 9: 0.268629150101524"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #660099;"><a title="2, 9: 0.4"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #80007e;"><a title="3, 9: 0.505572809000084"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #92006c;"><a title="4, 9: 0.575378874876468"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #990066;"><a title="5, 9: 0.6"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #92006c;"><a title="6, 9: 0.575378874876468"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #80007e;"><a title="7, 9: 0.505572809000084"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #660099;"><a title="8, 9: 0.4"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #4400ba;"><a title="9, 9: 0.268629150101524"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #1e00e0;"><a title="10, 9: 0.11937515251343"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #3b00c3;"><a title="0, 8: 0.23380962103094"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #660099;"><a title="1, 8: 0.4"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #8c0072;"><a title="2, 8: 0.551471862576143"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ad0051;"><a title="3, 8: 0.678889744907202"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #c3003b;"><a title="4, 8: 0.767544467966324"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #cc0033;"><a title="5, 8: 0.8"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #c3003b;"><a title="6, 8: 0.767544467966324"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ad0051;"><a title="7, 8: 0.678889744907202"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #8c0072;"><a title="8, 8: 0.551471862576143"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #660099;"><a title="9, 8: 0.4"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3b00c3;"><a title="10, 8: 0.23380962103094"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #5200ac;"><a title="0, 7: 0.322967038573099"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #80007e;"><a title="1, 7: 0.505572809000084"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ad0051;"><a title="2, 7: 0.678889744907202"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #d4002a;"><a title="3, 7: 0.834314575050762"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #f2000c;"><a title="4, 7: 0.952786404500042"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="5, 7: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #f2000c;"><a title="6, 7: 0.952786404500042"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #d4002a;"><a title="7, 7: 0.834314575050762"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ad0051;"><a title="8, 7: 0.678889744907202"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #80007e;"><a title="9, 7: 0.505572809000084"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5200ac;"><a title="10, 7: 0.322967038573099"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #60009e;"><a title="0, 6: 0.380196097281443"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #92006c;"><a title="1, 6: 0.575378874876468"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #c3003b;"><a title="2, 6: 0.767544467966324"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #f2000c;"><a title="3, 6: 0.952786404500042"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="4, 6: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="5, 6: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="6, 6: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #f2000c;"><a title="7, 6: 0.952786404500042"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #c3003b;"><a title="8, 6: 0.767544467966324"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #92006c;"><a title="9, 6: 0.575378874876468"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #60009e;"><a title="10, 6: 0.380196097281443"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #660099;"><a title="0, 5: 0.4"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #990066;"><a title="1, 5: 0.6"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #cc0033;"><a title="2, 5: 0.8"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="3, 5: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="4, 5: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="5, 5: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="6, 5: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="7, 5: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #cc0033;"><a title="8, 5: 0.8"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #990066;"><a title="9, 5: 0.6"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #660099;"><a title="10, 5: 0.4"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #60009e;"><a title="0, 4: 0.380196097281443"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #92006c;"><a title="1, 4: 0.575378874876468"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #c3003b;"><a title="2, 4: 0.767544467966324"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #f2000c;"><a title="3, 4: 0.952786404500042"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="4, 4: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="5, 4: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="6, 4: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #f2000c;"><a title="7, 4: 0.952786404500042"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #c3003b;"><a title="8, 4: 0.767544467966324"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #92006c;"><a title="9, 4: 0.575378874876468"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #60009e;"><a title="10, 4: 0.380196097281443"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #5200ac;"><a title="0, 3: 0.322967038573099"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #80007e;"><a title="1, 3: 0.505572809000084"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ad0051;"><a title="2, 3: 0.678889744907202"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #d4002a;"><a title="3, 3: 0.834314575050762"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #f2000c;"><a title="4, 3: 0.952786404500042"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ff0000;"><a title="5, 3: 1"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #f2000c;"><a title="6, 3: 0.952786404500042"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #d4002a;"><a title="7, 3: 0.834314575050762"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ad0051;"><a title="8, 3: 0.678889744907202"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #80007e;"><a title="9, 3: 0.505572809000084"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5200ac;"><a title="10, 3: 0.322967038573099"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #3b00c3;"><a title="0, 2: 0.23380962103094"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #660099;"><a title="1, 2: 0.4"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #8c0072;"><a title="2, 2: 0.551471862576143"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ad0051;"><a title="3, 2: 0.678889744907202"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #c3003b;"><a title="4, 2: 0.767544467966324"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #cc0033;"><a title="5, 2: 0.8"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #c3003b;"><a title="6, 2: 0.767544467966324"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #ad0051;"><a title="7, 2: 0.678889744907202"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #8c0072;"><a title="8, 2: 0.551471862576143"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #660099;"><a title="9, 2: 0.4"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3b00c3;"><a title="10, 2: 0.23380962103094"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #1e00e0;"><a title="0, 1: 0.11937515251343"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #4400ba;"><a title="1, 1: 0.268629150101524"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #660099;"><a title="2, 1: 0.4"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #80007e;"><a title="3, 1: 0.505572809000084"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #92006c;"><a title="4, 1: 0.575378874876468"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #990066;"><a title="5, 1: 0.6"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #92006c;"><a title="6, 1: 0.575378874876468"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #80007e;"><a title="7, 1: 0.505572809000084"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #660099;"><a title="8, 1: 0.4"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #4400ba;"><a title="9, 1: 0.268629150101524"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #1e00e0;"><a title="10, 1: 0.11937515251343"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+            <tr>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="0, 0: 0"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #1e00e0;"><a title="1, 0: 0.11937515251343"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3b00c3;"><a title="2, 0: 0.23380962103094"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5200ac;"><a title="3, 0: 0.322967038573099"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #60009e;"><a title="4, 0: 0.380196097281443"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #660099;"><a title="5, 0: 0.4"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #60009e;"><a title="6, 0: 0.380196097281443"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #5200ac;"><a title="7, 0: 0.322967038573099"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #3b00c3;"><a title="8, 0: 0.23380962103094"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #1e00e0;"><a title="9, 0: 0.11937515251343"><img src="doc/icons/none.png" /></a></td>
+                <td class="tooltip" style="background-color: #0000ff;"><a title="10, 0: 0"><img src="doc/icons/none.png" /></a></td>
+            </tr>
+        </table>
+    </div>
+    
+		<!-- $$$$BODY$$$$ -->
+
+
+
+</div>
+
+<script src="doc/jquery-ui-1.11.4/external/jquery/jquery.js"></script>
+<script src="doc/jquery-ui-1.11.4/jquery-ui.js"></script>
+<script>
+$( "#tabs" ).tabs();
+$( ".tooltip" ).tooltip();
+
+// Hover states on the static widgets
+$( "#dialog-link, #icons li" ).hover(
+	function() {
+		$( this ).addClass( "ui-state-hover" );
+	},
+	function() {
+		$( this ).removeClass( "ui-state-hover" );
+	}
+);
+</script>
+</body>
+</html>

@@ -181,6 +181,12 @@ sub set_layer_priority {
    
     return 1;
 }
+
+sub get_layer_priority {
+    my ($self, $layer_name) = @_;
+ 
+    return $self->{'priority'}{$layer_name};
+}
  
 sub merge_two_and_replace {
     my ($self, $layer1_name, $layer2_name) = @_;

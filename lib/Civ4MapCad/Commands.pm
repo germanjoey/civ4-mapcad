@@ -7,7 +7,7 @@ use Exporter::Dispatch;
 use Civ4MapCad::ParamParser;
 
 use Civ4MapCad::Commands::Config qw(
-   set_output_dir set_mod write_log
+   set_output_dir set_mod write_log history
 );
 
 use Civ4MapCad::Commands::Weight qw(
@@ -31,6 +31,7 @@ use Civ4MapCad::Commands::Layer qw(
 use Civ4MapCad::Commands::Group qw(
     export_sims find_starts export_group combine_groups flatten_group copy_layer_from_group import_group new_group find_difference
     extract_starts_as_mask normalize_starts find_starts strip_nonsettlers add_scouts_to_settlers extract_starts export_sims
+    copy_group
 );
 
 # use Civ4MapCad::Commands::Balance qw();

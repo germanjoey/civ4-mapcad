@@ -159,12 +159,12 @@ sub intersection {
  
 sub union {
     my ($self, $other, $offsetX, $offsetY) = @_;
-    return $self->_set_opt($other, $offsetX, $offsetY, sub { my ($x,$y) = @_; return max(1, $x+$y) }) 
+    return $self->_set_opt($other, $offsetX, $offsetY, sub { my ($x,$y) = @_; return min(1, $x+$y) }) 
 }
  
 sub difference {
     my ($self, $other, $offsetX, $offsetY) = @_;
-    return $self->_set_opt($other, $offsetX, $offsetY, sub { my ($x,$y) = @_; return min(0, $x-$y) }) 
+    return $self->_set_opt($other, $offsetX, $offsetY, sub { my ($x,$y) = @_; return max(0, $x-$y) }) 
 }
  
 sub invert {

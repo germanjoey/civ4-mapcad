@@ -22,9 +22,9 @@ if ($max < 0) {
 $config{'max_players'} = $max;
 
 print "\n";
-print "Welcome to Civ4 Map Cad!\n";
-print "Create a new map with the command 'new name width height'\n";
-print "type 'help' to see a command list; read commands.txt for more info about the commands.\n";
+print "Welcome to Civ4 Map Cad!\n\n";
+print "Type 'help' to see a command list.\n";
+print "Type 'commandname --help' for more info on a particular command.\n";
 print "\n";
 
 process_command($state, 'run_script "def/init.civ4mc"');
