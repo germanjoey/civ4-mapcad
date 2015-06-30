@@ -15,39 +15,6 @@ use Civ4MapCad::Util qw(deepcopy);
 use Civ4MapCad::Object::Layer;
 use Civ4MapCad::Object::Group;
 
-my $find_difference_help_text = qq[
-    Take positive difference between mapobj a and mapobj b to create a new mapobj c, such that merging c onto a creates b
-    ocean means "nothing", fallout over ocean means actual ocean. Basically, this is useful if you're creating a map in
-    pieces and want to do hand-edits in the middle. That way, you can regenerate the map from scratch while still including
-    your hand-edits. This command acts on two flat groups, so merge all layers first if you need to.
-];
-sub find_difference {
-    my ($state, @params) = @_;
-    
-    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
-        'has_result' => ['group'],
-        'required' => ['group', 'group'],
-        'help_text' => $find_difference_help_text
-    });
-    return -1 if $pparams->has_error;
-    
-    my $result_name = $pparams->get_result_name();
-    my ($flat1, $flat2) = $pparams->get_required();
-    
-    my @layers1 = $flat1->get_layer_names();
-    my @layers2 = $flat2->get_layer_names();
-    
-    if ((@layers1 > 1) or (@layers2 > 1)) {
-        $state->report_error("find_difference requires that both groups first be flattened.");
-        return -1;
-    }
-    
-    my $result = $flat1->find_difference($flat2);
-    $state->set_variable($result_name, 'group', $result);
-    
-    return 1;
-}
-
 my $new_group_help_text = qq[
     Create a new group with a blank canvas with a size of width/height. The new group will have a single layer with the same name as the result group.
 ];
@@ -181,7 +148,7 @@ sub combine_groups {
         'required' => ['group', 'group'],
         'has_result' => 'group',
         'allow_implied_result' => 1,
-        'help_text' => $combine_groups_help_text,
+        'help_text' => $combine_groups_help_text
     });
     return -1 if $pparams->has_error;
     
@@ -209,11 +176,12 @@ sub export_group {
     
     my $flat = $group->merge_all();
     my ($flat_layer) = $flat->get_layers();
+    my $output_dir = $main::config{'output_dir'};
     
-    $flat_layer->export_layer($state->output_dir() . $flat->get_name() . ".flat.CivBeyondSwordWBSave");
+    $flat_layer->export_layer($output_dir . $flat->get_name() . ".flat.CivBeyondSwordWBSave");
     
     foreach my $layer ($group->get_layers()) {
-        $flat_layer->export_layer($state->output_dir() . $flat->get_name() . ".flat.CivBeyondSwordWBSave");
+        $flat_layer->export_layer($output_dir . $flat->get_name() . ".flat.CivBeyondSwordWBSave");
     }
         
     return 1;
@@ -363,13 +331,12 @@ sub export_sims {
         'required' => ['group'],
         'help_text' => $export_sims_help_text,
         'optional' => {
-            'output_dir' => '.',
             'delete_existing' => 'false'
         }
     });
     return -1 if $pparams->has_error;
     
-    my $output_dir = $pparams->get_named('output_dir');
+    my $output_dir = $main::config{'output_dir'};
     my $delete_existing = $pparams->get_named('delete_existing');
     my ($group) = $pparams->get_required();
     my $copy = deepcopy($group);
@@ -382,3 +349,38 @@ sub export_sims {
     
     return 1;
 }
+
+my $find_difference_help_text = qq[
+    Take positive difference between mapobj a and mapobj b to create a new mapobj c, such that merging c onto a creates b
+    ocean means "nothing", fallout over ocean means actual ocean. Basically, this is useful if you're creating a map in
+    pieces and want to do hand-edits in the middle. That way, you can regenerate the map from scratch while still including
+    your hand-edits. This command acts on two flat groups, so merge all layers first if you need to.
+];
+sub find_difference {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'has_result' => ['group'],
+        'required' => ['group', 'group'],
+        'help_text' => $find_difference_help_text
+    });
+    return -1 if $pparams->has_error;
+    
+    my $result_name = $pparams->get_result_name();
+    my ($flat1, $flat2) = $pparams->get_required();
+    
+    my @layers1 = $flat1->get_layer_names();
+    my @layers2 = $flat2->get_layer_names();
+    
+    if ((@layers1 > 1) or (@layers2 > 1)) {
+        $state->report_error("find_difference requires that both groups first be flattened.");
+        return -1;
+    }
+    
+    my $result = $flat1->find_difference($flat2);
+    $state->set_variable($result_name, 'group', $result);
+    
+    return 1;
+}
+
+1;

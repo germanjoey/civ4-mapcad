@@ -27,7 +27,7 @@ sub new_from_import {
     my $proto = shift;
     my $class = ref $proto || $proto;
     my ($name, $filename) = @_;
-    my $map = Civ4MapCad::Map->new;
+    my $map = Civ4MapCad::Map->new();
     $map->import_map($filename);
     
     my $obj = {
@@ -167,14 +167,7 @@ sub translate_mask_coords {
 sub apply_mask {
     my ($self, $mask, $weight, $mask_offsetX, $mask_offsetY, $overwrite) = @_;
     
-    my $left = min(0, $mask_offsetX);
-    my $right = max($self->get_width(), $mask_offsetX + $mask->get_width()); 
-    my $bottom = min(0, $mask_offsetY);
-    my $top = max($self->get_height(), $mask_offsetY + $mask->get_height()); 
-    
-    $self->{'map'}->clear_map();
-    
-    for my $x ($0 .. $mask->get_width()-1) {
+    for my $x (0 .. $mask->get_width()-1) {
         for my $y (0 .. $mask->get_height()-1) {
             my ($tx, $ty) = $self->translate_mask_coords($x, $y, $mask_offsetX, $mask_offsetY);
             next if ($tx < 0) or ($tx >= $self->get_width());
@@ -191,11 +184,11 @@ sub apply_mask {
         }
     }
     
-    return 1;
+    $weight->deflate();
 }
 
 sub select_with_mask {
-    my ($self, $mask, $mask_offsetX, $mask_offsetY) = @_;
+    my ($self, $mask, $mask_offsetX, $mask_offsetY, $clear_selected) = @_;
     
     my $sel_name = $self->get_name() . "_" . $self->{'d'};
     $self->{'d'} ++;
@@ -213,6 +206,11 @@ sub select_with_mask {
                 $selection->{'map'}{'Tiles'}[$x][$y] = deepcopy($self->{'map'}{'Tiles'}[$tx][$ty]);
                 $selection->{'map'}{'Tiles'}[$x][$y]->set('x', $x);
                 $selection->{'map'}{'Tiles'}[$x][$y]->set('y', $y);
+                
+                if ($clear_selected) {
+                    $self->{'map'}{'Tiles'}[$tx][$ty]->clear();
+                    $self->{'map'}{'Tiles'}[$tx][$ty]->default($tx, $ty);
+                }
             }
         }
     }
@@ -226,7 +224,6 @@ sub set_difficulty {
     my ($self, $level) = @_;
     $self->{'map'}->set_difficulty($level);
 }
-
 
 sub set_player_from_layer {
     my ($self, $player, $other_layer) = @_;

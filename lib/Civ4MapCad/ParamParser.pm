@@ -43,8 +43,9 @@ sub new {
     my $calling_format = _report_calling_format($state, $param_spec);
     
     if ($processed->{'error'} and (@$raw_params == 1) and ($raw_params->[0] eq '--help')) {
-        print "\n  Command format:\n";
-        print "\n    $calling_format\n\n";
+        print "\n  Command format:\n\n";
+        $state->report_message($calling_format, 2);
+        print "\n\n";
         $state->report_message($param_spec->{'help_text'}) if exists $param_spec->{'help_text'};
         print "\n\n";
         
@@ -57,8 +58,9 @@ sub new {
     
     if ($processed->{'help'} or $processed->{'help_anyways'}) {
         print "\n\n" unless $processed->{'error'};
-        print "  Command format:\n";
-        print "\n    $calling_format\n\n";
+        print "  Command format:\n\n";
+        $state->report_message($calling_format);
+        print "\n\n";
         $state->report_message($param_spec->{'help_text'}) if (exists $param_spec->{'help_text'}) and ($processed->{'help'});
         print "\n\n";
     }
@@ -90,6 +92,8 @@ sub _report_calling_format {
     my @optional_list;
     my $optional = $param_spec->{'optional'};
     foreach my $opt (keys %$optional) {
+        next if $opt eq 'help';
+    
         if ($optional->{$opt} =~ /^(?:true|false)$/) {
             push @optional_list, "--$opt";
         }
@@ -115,7 +119,7 @@ sub _report_calling_format {
     }
     
     my $shape = '';
-    $shape = " --shape_param1 value1 --shape_param2 value2";
+    $shape = " --shape_param1 value1 --shape_param2 value2" if exists $param_spec->{'has_shape_params'};
     
     my $optional_str = '';
     $optional_str = " [ @optional_list ]" if @optional_list > 0;

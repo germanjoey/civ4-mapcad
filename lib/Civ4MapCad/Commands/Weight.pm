@@ -183,7 +183,7 @@ sub _process_weight_import {
         push @weights, [$operator, $weight, $target];
     }
     
-    my $obj = Civ4MapCad::Object::Weight->new_from_pairs(@weights);
+    my $obj = Civ4MapCad::Object::Weight->new_from_pairs($state, @weights);
     $state->set_variable($result_name, 'weight', $obj);
     return 1;
 }
@@ -204,8 +204,9 @@ sub evaluate_weight {
     return -1 if $pparams->has_error;
     
     my ($weight, $value) = $pparams->get_required();
-    my $result = $weight->evaluate($state, $value);
+    my $result = $weight->evaluate($value);
     $state->list($result);
+    $weight->deflate();
     
     return 1;
 }

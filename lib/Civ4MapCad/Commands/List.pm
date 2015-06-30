@@ -84,7 +84,7 @@ sub show_weights {
     my @to_show;
     
     if ($flatten) {
-        @to_show = map { "$_->[0] $_->[1] => $_->[2]," } ( $weight->flatten($state, 1) );
+        @to_show = map { "$_->[0] $_->[1] => $_->[2]," } ( $weight->flatten(1) );
     }
     else {
         @to_show = map { "$_->[0] $_->[1] => $_->[2]," } (@{ $weight->{'pairs'} });

@@ -5,10 +5,12 @@ use warnings;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(import_mask_from_ascii new_mask_from_shape mask_difference mask_union mask_intersect mask_invert mask_threshold);
+our @EXPORT_OK = qw(import_mask_from_ascii new_mask_from_shape mask_difference mask_union mask_intersect mask_invert mask_threshold
+                    modify_layer_with_mask cutout_layer_with_mask apply_shape_to_mask generate_layer_from_mask);
 
-use Civ4MapCad::Object::Mask;
+use Civ4MapCad::Util qw(deepcopy);
 use Civ4MapCad::ParamParser;
+use Civ4MapCad::Object::Mask;
 
 my $new_mask_from_shape_help_text = qq[
     The 'new_mask_from_shape' command generates a mask by applying a shape function to a blank canvas of size width/height.
@@ -82,9 +84,8 @@ sub import_mask_from_ascii {
     return 1;
 }
 
-
 my $mask_difference_help_text = qq[
-    Finds the difference between two masks; if mask A has value '1.0' at coordinate X,Y while mask B has value '0.0', the result will have value '1.0', otherwise '0.0'. For masks with decimal values, then the result is max(0, A-B).
+    Finds the difference between two masks; if mask A has value '1' at coordinate X,Y while mask B has value '0' at the same coordinate (after applying the offset), then the result will have value '1', and otherwise '0'. For masks with decimal values, then the result is max(0, A-B). '--offsetX' and '--offsetY' specify how much to move B before the difference is taken; at any rate, the resulting mask will be stretched to encompass both A and B, including the offset.
 ];
 sub mask_difference {
     my ($state, @params) = @_;
@@ -92,7 +93,7 @@ sub mask_difference {
 }
 
 my $mask_union_help_text = qq[
-    Finds the union between two masks; if mask A has value '1.0' at coordinate X,Y while mask B has value '0.0', the result will have value '0.0', otherwise '0.0'. For masks with decimal values, then the result is min(1, A+B).
+    Finds the union between two masks; if mask A has value '1' at coordinate X,Y while mask B has value '0' at the same coordinate (after applying the offset), then the result will have value '0', and otherwise '0'. For masks with decimal values, then the result is min(1, A+B). '--offsetX' and '--offsetY' specify how much to move B before the difference is taken; at any rate, the resulting mask will be stretched to encompass both A and B, including the offset.
 ];
 sub mask_union {
     my ($state, @params) = @_;
@@ -100,7 +101,7 @@ sub mask_union {
 }
 
 my $mask_intersect_help_text = qq[
-    Finds the intersection between two masks; if mask A has value '1.0' at coordinate X,Y while mask B has value '0.0', the result will have value '0.0', otherwise '0.0'. For masks with decimal values, then the result is A*B.
+    Finds the intersection between two masks; if mask A has value '1' at coordinate X,Y and mask B has value '1', the result will have value '1'; otherwise, if either value is '0', then the result will also be '0'. For masks with decimal values, then the result is A*B. offsetX and offsetY specify how much to move B before the difference is taken, while wrapX and wrapY determine whether B wraps. '--offsetX' and '--offsetY' specify how much to move B before the difference is taken; at any rate, the resulting mask will be stretched to encompass both A and B, including the offset.
 ];
 sub mask_intersect {
     my ($state, @params) = @_;
@@ -156,10 +157,8 @@ sub _two_op {
     return -1 if $pparams->has_error;
     
     my ($target, $with) = $pparams->get_required();
-    
     my $offsetX = $pparams->get_named('offsetX');
     my $offsetY = $pparams->get_named('offsetY');
-    
     my $result = $sub->($target, $with, $offsetX, $offsetY);
     
     my $result_name = $pparams->get_result_name();
@@ -176,7 +175,7 @@ sub generate_layer_from_mask {
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'has_result' => 'layer',
-        'required' => ['group', 'mask', 'weight'],
+        'required' => ['mask', 'weight'],
         'help_text' => $generate_layer_from_mask_help_text,
         'optional' => {
             'offsetX' => '0',
@@ -185,30 +184,26 @@ sub generate_layer_from_mask {
     });
     return -1 if $pparams->has_error;
     
-    my ($mask, $weight) = $pparams->get_required();
-    my ($width, $height) = ($mask->get_width(), $mask->get_height());
-    my ($layer) = Civ4MapCad::Object::Layer->new_default($width, $height);
-    my $masked_layer = $layer->apply_mask($mask, $weight, 0);
-    
     my $result_name = $pparams->get_result_name();
-    my ($group_name) = $result_name =~ /^(\w+)/;
+    my ($group_name) = $result_name =~ /^(\$\w+)/;
     my ($layer_name) = $result_name =~ /(\w+)$/;
     my $group = $state->get_variable($group_name, 'group');
     
-    my $result = $group->add_layer($layer_name, $masked_layer);
+    my ($mask, $weight) = $pparams->get_required();
+    my ($width, $height) = ($mask->get_width(), $mask->get_height());
+    my $offsetX = $pparams->get_named('offsetX');
+    my $offsetY = $pparams->get_named('offsetY');
+    
+    my ($layer) = Civ4MapCad::Object::Layer->new_default($layer_name, $width + abs($offsetX), $height + abs($offsetY));
+    $layer->apply_mask($mask, $weight, $offsetX, $offsetY, 1);
+    
+    my $result = $group->add_layer($layer);
     if ($result != 1) {
         $state->report_warning("layer named $layer_name already exists in group '$group_name'.");
         return -1;
     }
     
-    $state->set_variable("\$$group_name.$layer_name", 'layer', $masked_layer);
-    
-    # create blank new layer with the same dimensions
-    # call apply mask, with layer as argument
-    #   apply mask loops through each tile coordinate
-    #   mask value at coordinate is evaluated by weight, terrain is returned
-    #   calls either "merge_with_terrain" or "overwrite_from_terrain" on the tile - generate_layer_with_mask will use overwrite, modify_layer_with-mask uses merge
-    #   
+    $state->set_variable("\$$group_name.$layer_name", 'layer', $layer);
 }
 
 sub modify_layer_with_mask {
@@ -225,21 +220,25 @@ sub modify_layer_with_mask {
     });
     return -1 if $pparams->has_error;
     
-    my ($layer, $mask, $weight) = $pparams->get_required();
     my $result_name = $pparams->get_result_name();
-    my $masked_layer = $layer->apply_mask($mask, $weight, 1);
-    
-    my ($group_name) = $result_name =~ /^(\w+)/;
+    my ($group_name) = $result_name =~ /^(\$\w+)/;
     my ($layer_name) = $result_name =~ /(\w+)$/;
     my $group = $state->get_variable($group_name, 'group');
     
-    my $result = $group->add_layer($layer_name, $masked_layer);
+    my ($layer, $mask, $weight) = $pparams->get_required();
+    my $offsetX = $pparams->get_named('offsetX');
+    my $offsetY = $pparams->get_named('offsetY');
+    my $copy = deepcopy($layer);
+    
+    $copy->apply_mask($mask, $weight, $offsetX, $offsetY, 0);
+    
+    my $result = $group->add_layer($copy);
     if ($result != 1) {
-        $state->report_warning("layer named $layer_name already exists in group '$group_name'.");
+        $state->report_warning("copy named $layer_name already exists in group '$group_name'.");
         return -1;
     }
     
-    $state->set_variable("\$$group_name.$layer_name", 'layer', $masked_layer);
+    $state->set_variable("\$$group_name.$layer_name", 'layer', $copy);
     
     return 1;
 }
@@ -258,25 +257,25 @@ sub cutout_layer_with_mask {
     });
     return -1 if $pparams->has_error;
     
-    my ($layer, $mask, $weight) = $pparams->get_required();
     my $result_name = $pparams->get_result_name();
-    my $masked_layer = $layer->select_with_mask($mask);
-    
-    if (!$pparams->get_named('copy')) {
-        $layer->apply_mask($mask,  [['0', '<', 'null']]);
-    }
-    
-    my ($group_name) = $result_name =~ /^(\w+)/;
+    my ($group_name) = $result_name =~ /^(\$\w+)/;
     my ($layer_name) = $result_name =~ /(\w+)$/;
     my $group = $state->get_variable($group_name, 'group');
     
-    my $result = $group->add_layer($layer_name, $masked_layer);
+    my ($layer, $mask) = $pparams->get_required();
+    my $copy = $pparams->get_named('copy');
+    my $clear = ($copy) ? 0 : 1;
+    my $offsetX = $pparams->get_named('offsetX');
+    my $offsetY = $pparams->get_named('offsetY');
+    my $selected = $layer->select_with_mask($mask, $offsetX, $offsetY, $clear) = @_;
+    
+    my $result = $group->add_layer($selected);
     if ($result != 1) {
         $state->report_warning("layer named $layer_name already exists in group '$group_name'.");
         return -1;
     }
     
-    $state->set_variable("\$$group_name.$layer_name", 'layer', $masked_layer);
+    $state->set_variable("\$$group_name.$layer_name", 'layer', $selected);
 }
 
 sub apply_shape_to_mask {

@@ -348,7 +348,7 @@ sub extract_starts_with_mask {
         my $offsetX = $x - int($mask->get_width()/2);
         my $offsetY = $y - int($mask->get_height()/2);
         
-        my $start_layer = $self->{'layers'}{$layer_name}->select_with_mask($mask, $offsetX, $offsetY);
+        my $start_layer = $self->{'layers'}{$layer_name}->select_with_mask($mask, $offsetX, $offsetY, 0);
         $start_layer->set_player_from_layer($owner, $self->{'layers'}{$layer_name});
         $start_layer->rename("start" . $owner);
         $start_layer->strip_hidden_strategic();

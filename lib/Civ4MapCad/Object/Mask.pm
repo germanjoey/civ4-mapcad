@@ -14,10 +14,10 @@ sub new_blank {
         'canvas' => [],
     );
     
-    foreach my $row (0..($height-1)) {
-        $obj{'canvas'}[$row] = [];
-        foreach my $col (0..($width-1)) {
-            $obj{'canvas'}[$row][$col] = 0;
+    foreach my $x (0..($width-1)) {
+        $obj{'canvas'}[$x] = [];
+        foreach my $y (0..($height-1)) {
+            $obj{'canvas'}[$x][$y] = 0;
         }
     }
    
@@ -33,17 +33,18 @@ sub new_from_shape {
         'canvas' => [],
     );
     
-    foreach my $row (0..($height-1)) {
-        $obj{'canvas'}[$row] = [];
-        foreach my $col (0..($width-1)) {
-            my $val = $shape->($shape_params, $col, $row);
-            $obj{'canvas'}[$row][$col] = max(0, min(1, $val));
+    foreach my $x (0..($width-1)) {
+        $obj{'canvas'}[$x] = [];
+        foreach my $y (0..($height-1)) {
+            my $val = $shape->($shape_params, $x, $y);
+            $obj{'canvas'}[$x][$y] = max(0, min(1, $val));
         }
     }
    
     return bless \%obj, $class;
 }
 
+# TODO: test this
 sub new_from_ascii {
     my ($class, $filename, $weights) = @_;
    
@@ -75,9 +76,9 @@ sub new_from_ascii {
     }
    
     # now fill out zeroes
-    foreach my $row (0..$#canvas) {
-        foreach my $col (0..$max_col) {
-            $canvas[$row][$col] = 0 unless defined $canvas[$row][$col];
+    foreach my $x (0..$#canvas) {
+        foreach my $y (0..$max_col) {
+            $canvas[$x][$y] = 0 unless defined $canvas[$x][$y];
         }
     }
    
@@ -125,56 +126,65 @@ sub _max_size {
 }
 
 sub _set_opt {
-    my ($self, $other, $offsetX, $offsetY, $subopt) = @_;
+    my ($self, $othr, $offsetX, $offsetY, $subopt) = @_;
     
-    my $new = Civ4MapCad::Mask->new_blank(_max_size(($self, $other, $offsetX, $offsetY)));
+    my ($width, $height) = _max_size($self, $othr, $offsetX, $offsetY);
+    my $new = Civ4MapCad::Object::Mask->new_blank($width, $height);
     
-    foreach my $row (0..$self->{'height'}-1) {
-        foreach my $col (0..$self->{'width'}-1) {
-            $new->{'canvas'}[$row][$col] = $subopt->($self->{'canvas'}[$row][$col], $other->{'canvas'}[$row+$offsetY][$col+$offsetX]);
-        }
+    foreach my $x (0..$width-1) {
+        foreach my $y (0..$height-1) {
+            my $aX = ($offsetX >= 0) ? $x : ($x + $offsetX);
+            my $aY = ($offsetY >= 0) ? $y : ($y + $offsetY);
+            my $bX = ($offsetX >= 0) ? ($x - $offsetX) : $x;
+            my $bY = ($offsetY >= 0) ? ($y - $offsetY) : $y;
+            
+            my $a_val = (($aX >=0) and ($aX < $self->{'width'}) and ($aY >=0) and ($aY < $self->{'height'})) ? $self->{'canvas'}[$aX][$aY] : 0;
+            my $b_val = (($bX >=0) and ($bX < $othr->{'width'}) and ($bY >=0) and ($bY < $othr->{'height'})) ? $othr->{'canvas'}[$bX][$bY] : 0;
+            
+            $new->{'canvas'}[$x][$y] = max(0, min(1, $subopt->($a_val, $b_val)));
+        }        
     }
     
     return $new;
 }
 
 sub _self_opt {
-    my ($self, $other, $offsetX, $offsetY, $subopt) = @_;
+    my ($self, $subopt) = @_;
     
-    my $new = Civ4MapCad::Mask->new_blank($self->{'width'}, $self->{'height'});
+    my $new = Civ4MapCad::Object::Mask->new_blank($self->{'width'}, $self->{'height'});
     
-    foreach my $row (0..$self->{'height'}-1) {
-        foreach my $col (0..$self->{'width'}-1) {
-            $new->{'canvas'}[$row][$col] = $subopt->($self->{'canvas'}[$row][$col]);
+    foreach my $x (0..$self->{'width'}-1) {
+        foreach my $y (0..$self->{'height'}-1) {
+            $new->{'canvas'}[$x][$y] = max(0, min(1, $subopt->($self->{'canvas'}[$x][$y])));
         }
     }
     
     return $new;
 }
- 
+
 sub intersection {
     my ($self, $other, $offsetX, $offsetY) = @_;
     return $self->_set_opt($other, $offsetX, $offsetY, sub { my ($x,$y) = @_; return $x*$y })
 }
- 
+
 sub union {
     my ($self, $other, $offsetX, $offsetY) = @_;
     return $self->_set_opt($other, $offsetX, $offsetY, sub { my ($x,$y) = @_; return min(1, $x+$y) }) 
 }
- 
+
 sub difference {
     my ($self, $other, $offsetX, $offsetY) = @_;
     return $self->_set_opt($other, $offsetX, $offsetY, sub { my ($x,$y) = @_; return max(0, $x-$y) }) 
 }
- 
+
 sub invert {
     my ($self) = @_;
-    return $self->_set_opt(sub { return 1 - $_[0] }) 
+    return $self->_self_opt(sub { return 1 - $_[0] }) 
 }
 
 sub threshold {
     my ($self, $level) = @_;
-    return $self->_set_opt(sub { return (($_[0] > $level) ? 1 : 0) })
+    return $self->_self_opt(sub { return (($_[0] > $level) ? 1 : 0) })
 }
 
 1;

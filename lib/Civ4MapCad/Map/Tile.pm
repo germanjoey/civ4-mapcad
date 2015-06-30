@@ -212,7 +212,8 @@ sub is_blank {
 sub update_tile {
     my ($self, $terrain) = @_;
     
-    foreach my $key (%$terrain) {
+    use Data::Dumper;
+    foreach my $key (keys %$terrain) {
         return -1 unless exists $field_names{$key};
         $self->{$key} = $terrain->{$key};
     }
@@ -223,8 +224,15 @@ sub update_tile {
 sub set_tile {
     my ($self, $terrain) = @_;
     
+    my $x = $self->get('x');
+    my $y = $self->get('y');
     $self->clear();
-    return $self->update_tile($terrain);
+    
+    $self->update_tile($terrain);
+    $self->set('x', $x);
+    $self->set('y', $y);
+    
+    return 1;
 }
 
 sub to_cell {
@@ -234,6 +242,10 @@ sub to_cell {
     $river .= " isNOfRiver" if $self->get('isNOfRiver');
     $river .= " isWOfRiver" if $self->get('isWOfRiver'); 
     my $tt = lc($self->get('TerrainType'));
+    
+    use Data::Dumper;
+    die Dumper $self unless defined $self->get('PlotType');
+    
     $tt = 'terrain_peak' if $self->get('PlotType') eq '0';
     
     my $height = '';
@@ -242,13 +254,11 @@ sub to_cell {
     $terrain =~ s/terrain_//;
     
     my $icon = qq[<img src="doc/icons/none.png" />];
-    my $title = "$height$terrain " . $self->get('x') . ',' . $self->get('y');
     
     my $bonus = $self->get('BonusType');
     if ($bonus) {
         $bonus = lc($bonus);
         $bonus =~ s/bonus_//;
-        $title = "$bonus $title";
         $icon = qq[<img src="doc/icons/$bonus.png" />];
     }
     
@@ -269,6 +279,10 @@ sub to_cell {
     elsif ($self->get('PlotType') eq '1') {
         $variety = ' hill';
     }
+    
+    $bonus = (defined $bonus) ? "$bonus, " : '';
+    $variety = ($variety ne '') ? "$variety " : '';
+    my $title = "$bonus$height $terrain $variety" . $self->get('x') . ',' . $self->get('y');
     
     if ($self->has_settler()) {
         $icon = qq[<img src="doc/icons/razz.gif" />];
@@ -387,6 +401,5 @@ sub reassign_reveals {
         $self->{'Revealed'}{$new} = 1;
     }
 }
-
 
 1;

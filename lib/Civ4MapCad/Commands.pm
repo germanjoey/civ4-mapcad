@@ -20,8 +20,8 @@ use Civ4MapCad::Commands::List qw(
 );
 
 use Civ4MapCad::Commands::Mask qw(
-    import_mask_from_ascii new_mask_from_shape mask_difference mask_union
-    mask_intersect mask_invert mask_threshold
+    import_mask_from_ascii new_mask_from_shape mask_difference mask_union mask_intersect mask_invert
+    mask_threshold modify_layer_with_mask cutout_layer_with_mask apply_shape_to_mask generate_layer_from_mask
 );
 
 use Civ4MapCad::Commands::Layer qw(
@@ -29,9 +29,9 @@ use Civ4MapCad::Commands::Layer qw(
 );
 
 use Civ4MapCad::Commands::Group qw(
-    export_sims find_starts export_group combine_groups flatten_group copy_layer_from_group import_group new_group find_difference
-    extract_starts_as_mask normalize_starts find_starts strip_nonsettlers add_scouts_to_settlers extract_starts export_sims
-    copy_group
+    export_sims find_starts export_group combine_groups flatten_group copy_layer_from_group import_group
+    new_group find_difference extract_starts_as_mask normalize_starts find_starts strip_nonsettlers
+    add_scouts_to_settlers extract_starts export_sims copy_group
 );
 
 # use Civ4MapCad::Commands::Balance qw();

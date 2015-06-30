@@ -5,13 +5,23 @@ use warnings;
 
 # tableref is a reference to $state's tableref, which we need to lookup nested weights
 sub new_from_pairs {
-    my ($class, @pairs) = @_;
+    my ($class, $state, @pairs) = @_;
  
     my %obj = (
+        'state' => $state, # we keep a reference to state because we need to flatten a weight when it is evaluated
         'pairs' => \@pairs,
+        'flat_pairs' => [],
+        'flattened' => 0
     );
    
     return bless \%obj, $class;
+}
+
+# call this when you're done with evaluation to clear the cached flat pairs
+sub deflate { 
+    my ($self) = @_;
+    $self->{'flat_pairs'} = [];
+    $self->{'flattened'} = 0;
 }
 
 sub check_op {
@@ -28,9 +38,13 @@ sub check_op {
 
 # TODO: check value to make sure its between 0 and 1
 sub evaluate {
-    my ($self, $state, $value) = @_;
+    my ($self, $value) = @_;
+    my $state = $self->{'state'};
     
-    my @flat_pairs = $self->flatten($state, 1);
+    unless ($self->{'flattened'}) {
+        $self->{'flat_pairs'} = [$self->flatten(1)];
+        $self->{'flattened'} = 1;
+    }
     
     my %optable = (
         '<'  => sub { return ($_[0] < $_[1]) },
@@ -40,7 +54,7 @@ sub evaluate {
         '>'  => sub { return ($_[0] > $_[1]) },
     );
     
-    foreach my $pair (@flat_pairs) {
+    foreach my $pair (@{ $self->{'flat_pairs'} }) {
         my ($op, $thresh, $result) = @$pair;
         
         if (! exists $optable{$op}) {
@@ -49,7 +63,7 @@ sub evaluate {
         }
         
         if ($optable{$op}->($value, $thresh)) {
-            return $result;
+            return $state->get_variable($result, 'terrain');
         }
     }
     
@@ -57,15 +71,19 @@ sub evaluate {
 }
 
 sub evaluate_inverse {
-    my ($self, $state, $tile) = @_;
+    my ($self, $tile) = @_;
+    my $state = $self->{'state'};
     
-    my $flat_pairs = $self->flatten($state, 1);
+    unless ($self->{'flattened'}) {
+        $self->{'flat_pairs'} = [$self->flatten(1)];
+        $self->{'flattened'} = 1;
+    }
     
     my %optable = (
         '==' => sub { return $_[0]->compare($state->{'terrain'}{$_[1]} ) },
     );
     
-    foreach my $pair (@$flat_pairs) {
+    foreach my $pair (@{ $self->{'flat_pairs'} }) {
         my ($op, $result, $to_match) = @_;
         
         if (! exists $optable{$op}) {
@@ -81,7 +99,8 @@ sub evaluate_inverse {
 }
 
 sub flatten {
-    my ($self, $state, $start) = @_;
+    my ($self, $start) = @_;
+    my $state = $self->{'state'};
     
     my @to_show;
     my $current_prev = $start;
@@ -93,7 +112,7 @@ sub flatten {
         if ($result =~ /^\%/) {
             my $result_weight = $state->get_variable($result, 'weight');
             
-            my @sub_show = $result_weight->flatten($state, $current_prev);
+            my @sub_show = $result_weight->flatten($current_prev);
             
             foreach my $sub_pair (@sub_show) {
                 my ($sub_op, $sub_value, $sub_result) = @$sub_pair;

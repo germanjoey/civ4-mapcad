@@ -66,7 +66,7 @@ sub dump_out {
     my ($template) = slurp($template_filename);
     $template =~ s/\<!--\s+\$\$\$\$HEAD\$\$\$\$\s+\-\-\>/$head/;
     $template =~ s/\<!--\s+\$\$\$\$BODY\$\$\$\$\s+\-\-\>/$body/;
-    $template =~ s/\$\$\$\$TITLE\$\$\$\$/$name/;
+    $template =~ s/(<!--\s+\$\$\$\$TITLE\$\$\$\$\s+\-\-\>).*(?:\1)/$1$name$1/;
     
     open (my $dump, '>', $dump_filename) or die $!;
     print $dump $template;

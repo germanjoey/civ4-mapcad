@@ -179,7 +179,10 @@ sub report_warning {
 }
 
 sub report_message {
-    my ($self, $msg) = @_;
+    my ($self, $msg, $extra_indent) = @_;
+    
+    my $ei = 0;
+    $ei = $extra_indent if defined $extra_indent;
     
     $Text::Wrap::columns = 76;
     $Text::Wrap::separator="\n  ";
@@ -188,7 +191,7 @@ sub report_message {
     $msg =~ s/^\s+//;
     $msg =~ s/\s+$//;
     
-    print wrap("  ", "  ", $msg);
+    print wrap("  " . (" " x $ei), "" . (" " x $ei) , $msg);
 }
 
 sub list {
