@@ -161,7 +161,7 @@ sub report_error {
     my ($self, $msg) = @_;
     
     $Text::Wrap::columns = 76;
-    print "\n";
+    print "\n\n";
     print wrap("", "  ", "** ERROR occurred during command \"$self->{'current_line'}\":\n");
     print wrap("  ", "  ", $msg);
     print "\n\n";
@@ -171,7 +171,7 @@ sub report_warning {
     my ($self, $msg) = @_;
     
     $Text::Wrap::columns = 76;
-    print "\n";
+    print "\n\n";
     print wrap("", "  ", "* WARNING for command \"$self->{'current_line'}\":");
     print "\n";
     print wrap("  ", "  ", $msg);

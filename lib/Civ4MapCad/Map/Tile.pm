@@ -248,8 +248,6 @@ sub to_cell {
     
     $tt = 'terrain_peak' if $self->get('PlotType') eq '0';
     
-    my $height = '';
-    $height = 'hill' if $self->get('PlotType') eq '1';
     my $terrain = $tt;
     $terrain =~ s/terrain_//;
     
@@ -281,14 +279,15 @@ sub to_cell {
     }
     
     $bonus = (defined $bonus) ? "$bonus, " : '';
-    $variety = ($variety ne '') ? "$variety " : '';
-    my $title = "$bonus$height $terrain $variety" . $self->get('x') . ',' . $self->get('y');
+    my $title = " $bonus $terrain $variety";
     
     if ($self->has_settler()) {
         $icon = qq[<img src="doc/icons/razz.gif" />];
         my @starts = map { $_->[2] } ($self->get_starts());
-        $title = $title . ", start for player " . join ("/", @starts);
+        $title = " start for player " . join ("/", @starts) . ", " . $title;
     }
+    
+    $title =  $self->get('x') . ',' . $self->get('y') . $title;
     
     my $cell = qq[<a title="$title">$icon</a>];
     return qq[<td class="tooltip"><div class="$tt$variety$river">$cell</div></td>];

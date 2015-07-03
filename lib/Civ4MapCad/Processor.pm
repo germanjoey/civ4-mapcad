@@ -26,6 +26,7 @@ sub process_command {
     my ($command_name, @params) = split ' ', $command;    
     $command_name = lc $command_name;
     
+    # TODO: create a "return" command to allow run_script to return a result
     if ($command_name eq 'run_script') {
         if (@params != 1) {
             my $n = @params;
@@ -54,8 +55,23 @@ sub process_command {
     }
     
     elsif ($command_name eq 'help') {
-        my $com = join ("\n    ", sort (keys %$repl_table));
-        print "\nAvailable commands are:\n\n    $com\n\nPlease see commands.txt for more info on each command.\n\n";
+        my @com_list = keys %$repl_table;
+        push @com_list, ('exit', 'help', 'run_script');
+        @com_list = sort @com_list;
+        
+        if (@params == 1) {
+            if ($params[0] eq '--help') {
+                print "\n...\n\n";
+                return -1;
+            }
+        
+            @com_list = grep { $_ =~ /$params[0]/ } @com_list;
+        }
+    
+        my $com = join ("\n    ", @com_list);
+        print qq[\nAvailable commands are:\n\n    $com\n\n];
+        print qq[You can filter this list with a phrase, e.g. "help weight" to show all commands with "weight" in their name.\n\n] if @params == 0;
+        print qq[For more info about a specific command, type its name plus --help, e.g. "evaluate_weight --help".\n\n];
         return 1;
     }
     
@@ -90,11 +106,32 @@ sub process_script {
     my @lines = <$script>;
     close $script;
     
-    foreach my $i (0..$#lines) {
+    my @filtered_lines;
+    my $current_line = '';
+    foreach my $i (0 .. $#lines) {
         my $line = $lines[$i];
-        $line =~ s/^\*//;
-        next if $line =~ /^#/;
+        chomp $line;
+        
+        $line =~ s/\/\/.*//;
         next unless $line =~ /\w/;
+        
+        if ($line =~ /^\s|\t/) {
+            $line =~ s/^[\t\s]+//;
+            $current_line = $current_line . " " . $line;
+            next;
+        }
+        elsif ($current_line ne '') {
+            push @filtered_lines, [$i, $current_line];
+            $current_line = '';
+        }
+        
+        $current_line = $line;
+    }
+    
+    push @filtered_lines, [$#lines, $current_line] if $current_line ne '';
+    
+    foreach my $l (@filtered_lines) {
+        my ($i, $line) = @$l;
         
         my $ret = process_command($state, $line);
         

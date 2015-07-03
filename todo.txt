@@ -1,14 +1,46 @@
-TODO:
+Big Ticket TODO:
 
-- finish layer functionality
-- implement layer commands
-- implement Group class
-- implement Group commands
-- generate mask from map using a filter
 - method of assigning a fixed set of resources/weights to a mask, one at a time - allocation function
-- balance shit
-- bfc shape
+- is there a good way of applying a mask to a bunch of starts? a "apply_mask_to_starts" command or something like that? 
+- balance commands
 - documentation
 - tutorials
-- implement state as a real class
-- implement pparams as a real class
+- apply_shape_to_mask
+- new_mask_from_magic_wand
+- test difference/merge
+- tests
+
+
+1.) find starts
+2.) for each start:
+    - calculate distance between them to calculate average distance
+    - assign tiles
+        - 1.) generate a soft circle mask around them based on average distance somehow
+        - 2.) calculate a "path distance" to each tile
+            - e.g. coast tiles have a distance of "2", hills 1.4, or something
+            - need a* search
+            - allocate one tile at a time per civ
+        - 3.) bfc assignment
+            - evaluate_bfc value function
+            - tiles allocated in chunks
+        - 4.) breadth-first search, like novice's tool
+        - 5.) weighted average of all 4 approaches
+        
+        
+
+weights to do:
+
+terrains:
+    standard versions of each resource
+    variant versions of each resource, tagged as such
+    "bare" versions of each resource
+    plain land
+weights:
+    %landfood
+    %seafood
+    %any_strategic
+    %standard_coast
+    %standard_ocean
+    %standard_land
+    %ancient_luxury
+    %classical_luxury

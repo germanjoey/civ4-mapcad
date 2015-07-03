@@ -6,11 +6,28 @@ use warnings;
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(import_mask_from_ascii new_mask_from_shape mask_difference mask_union mask_intersect mask_invert mask_threshold
-                    modify_layer_with_mask cutout_layer_with_mask apply_shape_to_mask generate_layer_from_mask);
+                    modify_layer_with_mask cutout_layer_with_mask apply_shape_to_mask generate_layer_from_mask new_mask_from_magic_wand);
 
 use Civ4MapCad::Util qw(deepcopy);
 use Civ4MapCad::ParamParser;
 use Civ4MapCad::Object::Mask;
+
+my $new_mask_from_magic_wand_help_text = qq[
+
+];
+sub new_mask_from_magic_wand {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'has_shape_params' => 1,
+        'has_result' => 'mask',
+        'required' => ['layer', 'weight', 'int', 'int'],
+        'help_text' => $new_mask_from_magic_wand_help_text
+    });
+    return -1 if $pparams->has_error;
+    
+    die "not yet implemented";
+}
 
 my $new_mask_from_shape_help_text = qq[
     The 'new_mask_from_shape' command generates a mask by applying a shape function to a blank canvas of size width/height.

@@ -5,8 +5,8 @@ use warnings;
  
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(list_shapes list_groups list_layers list_masks list_weights show_weights
-                    dump_mask_to_console dump_group dump_mask dump_layer);
+our @EXPORT_OK = qw(list_shapes list_groups list_layers list_masks list_weights list_terrain 
+                    show_weights dump_mask_to_console dump_group dump_mask dump_layer);
  
 use Config::General;
 
@@ -16,15 +16,25 @@ use Civ4MapCad::Dump qw(dump_out dump_framework dump_single_layer);
  
 sub list_shapes {
     my ($state, @params) = @_;
+    
+    my @shapes = sort keys %{$state->{'shape'}};
+    if (@params == 1) {
+        @shapes = grep { $_ =~ /$params[0]/ } @shapes;
+    }
    
-    $state->list( sort keys %{$state->{'shape'}} );
+    $state->list( @shapes );
     return 1;
 }
  
 sub list_groups {
     my ($state, @params) = @_;
    
-    $state->list( sort keys %{$state->{'group'}} );
+    my @groups = sort keys %{$state->{'group'}};
+    if (@params == 1) {
+        @groups = grep { $_ =~ /$params[0]/ } @groups;
+    }
+    
+    $state->list( @groups );
     return 1;
 }
  
@@ -52,14 +62,34 @@ sub list_layers {
 sub list_masks {
     my ($state, @params) = @_;
    
-    $state->list( sort keys %{$state->{'mask'}} );
+    my @masks = sort keys %{$state->{'mask'}};
+    if (@params == 1) {
+        @masks = grep { $_ =~ /$params[0]/ } @masks;
+    }
+    
+    $state->list( @masks );
     return 1;
 }
- 
+
+sub list_terrain {
+    my ($state, @params) = @_;
+   
+    my @terrains = sort keys %{$state->{'terrain'}};
+    if (@params == 1) {
+        @terrains = grep { $_ =~ /$params[0]/ } @terrains;
+    }
+    $state->list( @terrains );
+    return 1;
+}
+
 sub list_weights {
     my ($state, @params) = @_;
    
-    $state->list(sort keys %{$state->{'weight'}} );
+    my @weights = sort keys %{$state->{'weight'}};
+    if (@params == 1) {
+        @weights = grep { $_ =~ /$params[0]/ } @weights;
+    }
+    $state->list( @weights );
     return 1;
 }
 

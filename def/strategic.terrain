@@ -1,0 +1,140 @@
+<grasshill_marble>
+	BonusType=BONUS_MARBLE
+	TerrainType=TERRAIN_GRASS
+	PlotType=1
+</grasshill_marble>
+<plainshill_copper>
+	BonusType=BONUS_MARBLE
+	TerrainType=TERRAIN_PLAINS
+	PlotType=1
+</plainshill_copper>
+<tundrahill_marble>
+	BonusType=BONUS_COPPER
+	TerrainType=TERRAIN_TUNDRA
+	PlotType=2
+</tundrahill_marble>
+<icehill_marble>
+	BonusType=BONUS_MARBLE
+	TerrainType=TERRAIN_ICE
+	PlotType=1
+</icehill_marble>
+
+<grasshill_stone>
+	BonusType=BONUS_STONE
+	TerrainType=TERRAIN_GRASS
+	PlotType=1
+</grasshill_stone>
+<plainshill_stone>
+	BonusType=BONUS_STONE
+	TerrainType=TERRAIN_PLAINS
+	PlotType=1
+</plainshill_stone>
+<deserthill_stone>
+	BonusType=BONUS_STONE
+	TerrainType=TERRAIN_DESERT
+	PlotType=1
+</deserthill_stone>
+
+<grass_copper>
+	BonusType=BONUS_COPPER
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grass_copper>
+<grasshill_copper>
+	BonusType=BONUS_COPPER
+	TerrainType=TERRAIN_GRASS
+	PlotType=1
+</grasshill_copper>
+<plains_copper>
+	BonusType=BONUS_COPPER
+	TerrainType=TERRAIN_PLAINS
+	PlotType=2
+</plains_copper>
+<plainshill_copper>
+	BonusType=BONUS_COPPER
+	TerrainType=TERRAIN_PLAINS
+	PlotType=1
+</plainshill_copper>
+<bare_copper>
+	BonusType=BONUS_COPPER
+</bare_copper>
+
+<grass_iron>
+	BonusType=BONUS_IRON
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grass_iron>
+<grasshill_iron>
+	BonusType=BONUS_IRON
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grasshill_iron>
+<plains_iron>
+	BonusType=BONUS_IRON
+	TerrainType=TERRAIN_PLAINS
+	PlotType=2
+</plains_iron>
+<plainshill_iron>
+	BonusType=BONUS_IRON
+	TerrainType=TERRAIN_PLAINS
+	PlotType=1
+</plainshill_iron>
+<bare_iron>
+	BonusType=BONUS_IRON
+</bare_iron>
+
+<grasshill_aluminum>
+	BonusType=BONUS_ALUMINIUM
+	TerrainType=TERRAIN_GRASS
+	PlotType=1
+</grasshill_aluminum>
+<plainshill_aluminum>
+	BonusType=BONUS_ALUMINIUM
+	TerrainType=TERRAIN_PLAINS
+	PlotType=1
+</plainshill_aluminum>
+<bare_aluminum>
+	BonusType=BONUS_ALUMINIUM
+</bare_aluminum>
+
+<grasshill_coal>
+	BonusType=BONUS_COAL
+	TerrainType=TERRAIN_GRASS
+	PlotType=1
+</grasshill_coal>
+<plainshill_coal>
+	BonusType=BONUS_COAL
+	TerrainType=TERRAIN_PLAINS
+	PlotType=1
+</plainshill_coal>
+<bare_coal>
+	BonusType=BONUS_COAL
+</bare_coal>
+
+<grass_uranium>
+	BonusType=BONUS_URANIUM
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grass_uranium>
+<grasshill_uranium>
+	BonusType=BONUS_URANIUM
+	TerrainType=TERRAIN_GRASS
+	PlotType=1
+</grasshill_uranium>
+<jungle_grass_uranium>
+	BonusType=BONUS_URANIUM
+	TerrainType=TERRAIN_GRASS
+	FeatureType=FEATURE_JUNGLE
+    FeatureVariety=0
+	PlotType=2
+</jungle_grass_uranium>
+<jungle_grasshill_uranium>
+	BonusType=BONUS_URANIUM
+	TerrainType=TERRAIN_GRASS
+	FeatureType=FEATURE_JUNGLE
+    FeatureVariety=0
+	PlotType=1
+</jungle_grasshill_uranium>
+<bare_uranium>
+	BonusType=BONUS_URANIUM
+</bare_uranium>

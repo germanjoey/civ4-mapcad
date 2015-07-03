@@ -15,13 +15,14 @@ use Civ4MapCad::Commands::Weight qw(
 );
 
 use Civ4MapCad::Commands::List qw(
-    list_shapes list_groups list_layers list_masks list_weights show_weights
-    dump_group dump_mask dump_layer dump_mask_to_console
+    list_shapes list_groups list_layers list_masks list_weights list_terrain
+    show_weights dump_group dump_mask dump_layer dump_mask_to_console
 );
 
 use Civ4MapCad::Commands::Mask qw(
     import_mask_from_ascii new_mask_from_shape mask_difference mask_union mask_intersect mask_invert
     mask_threshold modify_layer_with_mask cutout_layer_with_mask apply_shape_to_mask generate_layer_from_mask
+    new_mask_from_magic_wand
 );
 
 use Civ4MapCad::Commands::Layer qw(

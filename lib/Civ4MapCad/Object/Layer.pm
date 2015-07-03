@@ -338,4 +338,78 @@ sub set_max_num_players {
     return $self->{'map'}->set_max_num_players();
 }
 
+
+sub get_surrounding {
+    my ($self, $x, $y) = @_;
+    
+    my $width = $self->get_width();
+    my $height = $self->get_height();
+    
+    # setup the standard surrounding coordinates
+    my %coords = (
+        '-1' => {
+            '-1' => [$x-1, $y-1],
+            '0' => [$x-1, $y],
+            '+1' => [$x-1, $y+1],
+        },
+        '0' => {
+            '-1' => [$x, $y-1],
+            '+1' => [$x, $y+1],
+        },
+        '+1' => {
+            '-1' => [$x+-1, $y-1],
+            '0' => [$x+1, $y],
+            '+1' => [$x+1, $y+1],
+        }
+    );
+    my $xp1 = $x + 1;
+    my $xm1 = $x - 1;
+    
+    # wrap X, or filter out these coords if we don't wrap X
+    if ($x == 0) {
+        $coords{'-1'}{'-1'}[0] = $width-1;
+        $coords{'-1'}{'0'}[0] = $width-1;
+        $coords{'-1'}{'+1'}[0] = $width-1;
+        delete $coords{'-1'} unless $self->wrapsX();
+    }
+    elsif ($x == $width-1) {
+        $coords{'+1'}{'-1'}[0] = 0;
+        $coords{'+1'}{'0'}[0] = 0;
+        $coords{'+1'}{'+1'}[0] = 0;
+        delete $coords{'-1'} unless $self->wrapsX();
+    }
+    
+    # wrap Y, or filter out these coords if we don't wrap Y
+    if ($y == 0) {
+        $coords{'-1'}{'-1'}[0] = $height-1;
+        $coords{'0'}{'-1'}[0] = $height-1;
+        $coords{'+1'}{'-1'}[0] = $height-1;
+        
+        delete $coords{'-1'}{'-1'} if (exists $coords{'-1'}) and (!$self->wrapsY());
+        delete $coords{'0'}{'-1'} if (exists $coords{'0'}) and (!$self->wrapsY());
+        delete $coords{'+1'}{'-1'} if (exists $coords{'+1'}) and (!$self->wrapsY());
+    }
+    elsif ($y == $height-1) {
+        $coords{'-1'}{'-1'}[0] = 0;
+        $coords{'0'}{'-1'}[0] = 0;
+        $coords{'+1'}{'-1'}[0] = 0;
+        
+        delete $coords{'-1'}{'-1'} if (exists $coords{'-1'}) and (!$self->wrapsY());
+        delete $coords{'0'}{'-1'} if (exists $coords{'0'}) and (!$self->wrapsY());
+        delete $coords{'+1'}{'-1'} if (exists $coords{'+1'}) and (!$self->wrapsY());
+    }
+    
+    # now, just gather what we have left
+    my @surrounding;
+    my $tiles = $self->{'map'}{'Tiles'};
+    foreach my $xd (keys %coords) {
+        foreach my $yd (keys %{ $coords{$xd} }) {
+            my ($x, $y) = @{ $coords{$xd}{$yd} };
+            push @surrounding, $tiles->[$x][$y];
+        }
+    }
+    
+    return \@surrounding;
+}
+
 1;

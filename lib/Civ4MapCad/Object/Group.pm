@@ -366,13 +366,16 @@ sub extract_starts_with_mask {
 sub export {
     my ($self, $output_dir) = @_;
 
+    my $group_name = $self->get_name();
+    $group_name =~ s/\$//;
+    
     foreach my $layer ($self->get_layers()) {
         my $path = $output_dir . "/" . $self->get_name() . "." . $layer->get_name() . ".CivBeyondSwordWBSave";
         
         my $strip = 1;
         if ($self->get_name() eq $layer->get_name()) {
             $strip = 0;
-            $path = $output_dir . "/" . $self->get_name() . ".CivBeyondSwordWBSave" ;
+            $path = $output_dir . "/" . $group_name . ".CivBeyondSwordWBSave" ;
             $path =~ s/\.CivBeyondSwordWBSave/.out.CivBeyondSwordWBSave/ if -e $path;
         }
         
