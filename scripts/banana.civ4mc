@@ -1,3 +1,4 @@
+# generate our banana!
 new_mask_from_shape *circle 17 17 --centerX 8 --centerY 8 --radius 7 => @seed
 mask_union @seed @seed --offsetX 3 => @banana
 
@@ -5,13 +6,28 @@ new_mask_from_shape *random 17 17 => @rand_field
 mask_intersection @banana @rand_field => @random_banana
 
 new_weight_table >= 0.90 => %banana,
-                 >= 0.85 => %ancient_luxury,
-                 >= 0.80 => %classical_luxury,
-                 >= 0.75 => %any_strategic,
-                 >= 0.65 => %standard_food,
+                 >= 0.85 => %luxury,
+                 >= 0.80 => %plantation,
+                 >= 0.75 => %strategic,
+                 >= 0.65 => %land_food,
                  >= 0.60 => coast
                  >= 0.00 => %standard_land,
                  => %bananaland
 
 new_group 25 25 => $test
 generate_layer_from_mask @softest %anyforest => $test.soft
+
+1.) finish standard weight table
+2.) generate the banana :dancing:
+3.) make BFC
+4.) import BFC as layer
+5.) copy it into banana group
+6.) move it
+7.) merge down
+8.) move into script with dump_log
+9.) add return statement
+10.) generate 6 bananas
+11.) fix up final, add rivers
+
+
+return statement can return a layer or group or mask or weight

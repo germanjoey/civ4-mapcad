@@ -3,13 +3,13 @@
 	TerrainType=TERRAIN_GRASS
 	PlotType=1
 </grasshill_marble>
-<plainshill_copper>
+<plainshill_marble>
 	BonusType=BONUS_MARBLE
 	TerrainType=TERRAIN_PLAINS
 	PlotType=1
-</plainshill_copper>
+</plainshill_marble>
 <tundrahill_marble>
-	BonusType=BONUS_COPPER
+	BonusType=BONUS_MARBLE
 	TerrainType=TERRAIN_TUNDRA
 	PlotType=2
 </tundrahill_marble>
@@ -18,22 +18,38 @@
 	TerrainType=TERRAIN_ICE
 	PlotType=1
 </icehill_marble>
+<bare_marble>
+	BonusType=BONUS_MARBLE
+</bare_marble>
 
 <grasshill_stone>
 	BonusType=BONUS_STONE
 	TerrainType=TERRAIN_GRASS
 	PlotType=1
 </grasshill_stone>
+<plains_stone>
+	BonusType=BONUS_STONE
+	TerrainType=TERRAIN_PLAINS
+	PlotType=2
+</plains_stone>
 <plainshill_stone>
 	BonusType=BONUS_STONE
 	TerrainType=TERRAIN_PLAINS
 	PlotType=1
 </plainshill_stone>
+<desert_stone>
+	BonusType=BONUS_STONE
+	TerrainType=TERRAIN_DESERT
+	PlotType=2
+</desert_stone>
 <deserthill_stone>
 	BonusType=BONUS_STONE
 	TerrainType=TERRAIN_DESERT
 	PlotType=1
 </deserthill_stone>
+<bare_stone>
+	BonusType=BONUS_STONE
+</bare_stone>
 
 <grass_copper>
 	BonusType=BONUS_COPPER
@@ -110,6 +126,25 @@
 <bare_coal>
 	BonusType=BONUS_COAL
 </bare_coal>
+
+<grass_landoil>
+	BonusType=BONUS_OIL
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grass_landoil>
+<plains_landoil>
+	BonusType=BONUS_OIL
+	TerrainType=TERRAIN_PLAINS
+	PlotType=2
+</plains_landoil>
+<tundra_landoil>
+	BonusType=BONUS_OIL
+	TerrainType=TERRAIN_PLAINS
+	PlotType=2
+</tundra_landoil>
+<bare_landoil>
+	BonusType=BONUS_OIL
+</bare_landoil>
 
 <grass_uranium>
 	BonusType=BONUS_URANIUM

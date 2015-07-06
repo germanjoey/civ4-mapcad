@@ -39,7 +39,7 @@ sub default {
     my ($self, $teamID) = @_;
     $self->clear();
     $self->set('TeamID', $teamID);
-    # $self->add_contact($teamID);
+    $self->add_contact($teamID);
     $self->set('RevealMap', 0);
 }
 

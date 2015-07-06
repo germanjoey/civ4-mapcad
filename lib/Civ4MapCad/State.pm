@@ -68,9 +68,6 @@ sub get_shape_params {
 sub set_shape_params {
     my ($self, $shape_name, $params) = @_;
     
-    use Data::Dumper;
-    die Dumper $self->{'shape'}, $self->{'shape_param'};
-    
     $self->{'shape_param'}{$shape_name} = $params;
 }
 
@@ -162,8 +159,11 @@ sub report_error {
     
     $Text::Wrap::columns = 76;
     print "\n\n";
-    print wrap("", "  ", "** ERROR occurred during command \"$self->{'current_line'}\":\n");
-    print wrap("  ", "  ", $msg);
+    print wrap("", "  ", "** ERROR occurred during command:");
+    print "\n\n";
+    print wrap("    ", "    ", $self->{'current_line'});
+    print "\n\n";
+    print wrap(" ", "  ", "* " . $msg);
     print "\n\n";
 }
 
@@ -172,9 +172,11 @@ sub report_warning {
     
     $Text::Wrap::columns = 76;
     print "\n\n";
-    print wrap("", "  ", "* WARNING for command \"$self->{'current_line'}\":");
-    print "\n";
-    print wrap("  ", "  ", $msg);
+    print wrap("", "  ", "* WARNING for command:");
+    print "\n\n";
+    print wrap("    ", "    ", $self->{'current_line'});
+    print "\n\n";
+    print wrap(" ", "  ", "* " . $msg);
     print "\n\n";
 }
 

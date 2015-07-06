@@ -149,35 +149,3 @@
 ###########
 # seafood #
 ###########
-
-<coast_crab>
-	BonusType=BONUS_CRAB
-	TerrainType=TERRAIN_COAST
-	PlotType=3
-</coast_crab>
-<bare_crab>
-	BonusType=BONUS_CRAB
-</bare_crab>
-
-<coast_clam>
-	BonusType=BONUS_CLAM
-	TerrainType=TERRAIN_COAST
-	PlotType=3
-</coast_clam>
-<bare_clam>
-	BonusType=BONUS_CLAM
-</bare_clam>
-
-<coast_fish>
-	BonusType=BONUS_FISH
-	TerrainType=TERRAIN_COAST
-	PlotType=3
-</coast_fish>
-<ocean_fish>
-	BonusType=BONUS_FISH
-	TerrainType=TERRAIN_OCEAN
-	PlotType=3
-</ocean_fish>
-<bare_fish>
-	BonusType=BONUS_FISH
-</bare_fish>

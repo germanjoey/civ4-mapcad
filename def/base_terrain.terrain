@@ -249,6 +249,12 @@
     TerrainType = TERRAIN_DESERT
     PlotType = 1
 </deserthill>
+<oasis>
+    TerrainType = TERRAIN_DESERT
+    PlotType = 2
+	FeatureType=FEATURE_OASIS
+    FeatureVariety=0
+</oasis>
  
  
  

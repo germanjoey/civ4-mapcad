@@ -28,7 +28,10 @@ sub new_from_import {
     my $class = ref $proto || $proto;
     my ($name, $filename) = @_;
     my $map = Civ4MapCad::Map->new();
-    $map->import_map($filename);
+    my $ret = $map->import_map($filename);
+    if ($ret ne '') {
+        return $ret;
+    }
     
     my $obj = {
         'd' => 0,
@@ -334,8 +337,8 @@ sub strip_victories {
 }
 
 sub set_max_num_players {
-    my ($self) = @_;
-    return $self->{'map'}->set_max_num_players();
+    my ($self, $new_max) = @_;
+    return $self->{'map'}->set_max_num_players($new_max);
 }
 
 

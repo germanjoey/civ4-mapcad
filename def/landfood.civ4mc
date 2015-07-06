@@ -1,0 +1,52 @@
+new_weight_table >= 0.00 => grass_corn
+                 => %corn
+
+new_weight_table >= 0.50 => grass_cow,
+                 >= 0.00 => plains_cow
+                 => %cow
+
+new_weight_table >= 0.83 => grass_deer,
+                 >= 0.66 => grassforest_deer,
+                 >= 0.49 => plains_deer,
+                 >= 0.32 => plainsforest_deer,
+                 >= 0.15 => tundra_deer,
+                 >= 0.00 => tundraforest_deer
+                 => %deer
+
+new_weight_table >= 0.67 => grass_pig,
+                 >= 0.34 => grasshill_pig,
+                 >= 0.00 => jungle_pig
+                 => %pig
+
+new_weight_table >= 0.50 => grass_rice,
+                 >= 0.00 => jungle_rice
+                 => %rice
+
+new_weight_table >= 0.75 => grass_sheep,
+                 >= 0.50 => grasshill_sheep,
+                 >= 0.25 => plains_sheep,
+                 >= 0.00 => plainshill_sheep
+                 => %sheep
+
+new_weight_table >= 0.50 => grass_wheat,
+                 >= 0.00 => plains_wheat
+                 => %wheat
+
+new_weight_table >= 0.86 => %corn,
+                 >= 0.72 => %cow,
+                 >= 0.58 => %deer,
+                 >= 0.44 => %pig,
+                 >= 0.30 => %rice,
+                 >= 0.16 => %sheep,
+                 >= 0.00 => %wheat
+                 => %landfood
+
+new_weight_table >= 0.86 => bare_corn,
+                 >= 0.72 => bare_cow,
+                 >= 0.58 => bare_deer,
+                 >= 0.44 => bare_pig,
+                 >= 0.30 => bare_rice,
+                 >= 0.16 => bare_sheep,
+                 >= 0.00 => bare_wheat
+                 => %landfood
+

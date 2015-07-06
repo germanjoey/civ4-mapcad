@@ -83,3 +83,21 @@
 	BonusType=BONUS_BANANA
 </bare_banana>
 
+<grass_wine>
+	BonusType=BONUS_WINE
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grass_wine>
+<grasshill_wine>
+	BonusType=BONUS_WINE
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grasshill_wine>
+<plains_wine>
+	BonusType=BONUS_WINE
+	TerrainType=TERRAIN_PLAINS
+	PlotType=2
+</plains_wine>
+<bare_wine>
+	BonusType=BONUS_WINE
+</bare_wine>

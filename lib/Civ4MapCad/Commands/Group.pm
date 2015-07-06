@@ -56,6 +56,11 @@ sub import_group {
     $filename =~ s/"//g;
     
     my $result = Civ4MapCad::Object::Group->new_from_import($filename);
+    if (ref($result) eq '') {
+        $state->report_error($result);
+        return -1;
+    }
+    
     $state->set_variable($result_name, 'group', $result);
     
     return 1;
@@ -173,16 +178,16 @@ sub export_group {
     return -1 if $pparams->has_error;
     
     my ($group) = $pparams->get_required();
-    
-    my $flat = $group->merge_all();
-    my ($flat_layer) = $flat->get_layers();
     my $output_dir = $main::config{'output_dir'};
+    my @layers = $group->get_layer_names();
     
-    $flat_layer->export_layer($output_dir . $flat->get_name() . ".flat.CivBeyondSwordWBSave");
-    
-    foreach my $layer ($group->get_layers()) {
-        $flat_layer->export_layer($output_dir . $flat->get_name() . ".flat.CivBeyondSwordWBSave");
+    if (@layers > 0) {
+        my $flat = $group->merge_all();
+        my ($flat_layer) = $flat->get_layers();
+        $flat_layer->export_layer($output_dir . '/' . $flat->get_name() . ".flat.CivBeyondSwordWBSave");
     }
+    
+    $group->export($output_dir);
         
     return 1;
 }

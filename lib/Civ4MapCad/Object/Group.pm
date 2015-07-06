@@ -38,8 +38,14 @@ sub new_from_import {
     my $self = bless $obj, $class;
     my ($name) = $filename =~ /(\w+)\.\w+$/;
     $self->{'name'} = $name;
+    my $layer = Civ4MapCad::Object::Layer->new_from_import($name, $filename);
     
-    $self->add_layer(Civ4MapCad::Object::Layer->new_from_import($name, $filename));
+    # error!
+    if (ref($layer) eq '') {
+        return $layer;
+    };
+    
+    $self->add_layer($layer);
     $self->{'width'} = $self->{'layers'}{$name}->get_width;
     $self->{'height'} = $self->{'layers'}{$name}->get_height;
     
@@ -369,8 +375,13 @@ sub export {
     my $group_name = $self->get_name();
     $group_name =~ s/\$//;
     
-    foreach my $layer ($self->get_layers()) {
-        my $path = $output_dir . "/" . $self->get_name() . "." . $layer->get_name() . ".CivBeyondSwordWBSave";
+    my @layers = $self->get_layers();
+    
+    print "\n" if @layers > 1;
+    
+    foreach my $layer (sort @layers) {
+        my $layer_name = $layer->get_name();
+        my $path = $output_dir . "/" . $self->get_name() . "." . $layer_name . ".CivBeyondSwordWBSave";
         
         my $strip = 1;
         if ($self->get_name() eq $layer->get_name()) {
@@ -382,7 +393,11 @@ sub export {
         $layer->reduce_players();
         $layer->add_dummy_start() if $layer->num_players() == 1;
         $layer->export_layer($path);
+        
+        print "  Exported layer $layer_name.\n";
     }
+    
+    print "\n" if @layers > 1;
     
     return 1;
 }

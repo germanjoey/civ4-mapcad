@@ -243,9 +243,6 @@ sub to_cell {
     $river .= " isWOfRiver" if $self->get('isWOfRiver'); 
     my $tt = lc($self->get('TerrainType'));
     
-    use Data::Dumper;
-    die Dumper $self unless defined $self->get('PlotType');
-    
     $tt = 'terrain_peak' if $self->get('PlotType') eq '0';
     
     my $terrain = $tt;

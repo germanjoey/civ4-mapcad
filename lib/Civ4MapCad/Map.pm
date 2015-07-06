@@ -237,7 +237,7 @@ sub set_map_info {
 sub import_map {
     my ($self, $filename, $strip_nonsettlers) = @_;
     
-    open (my $fh, $filename) or die $!;
+    open (my $fh, $filename) or return "$!";
     $self->{'Version'} = <$fh>;
     chomp $self->{'Version'};
     
@@ -270,19 +270,20 @@ sub import_map {
             $self->add_sign($fh);
         }
         else {
-            die "Unidentified block found when importing: '$line'";
+            return "Unidentified block found when importing: '$line'";
         }
     }
     
     my $max_players = @{ $self->{'Players'} };
     if ($max_players != $main::config{'max_players'}) {
-        print "* WARNING: Converting map from $max_players to $main::config{'max_players'} players.\n";
+        print "\n* WARNING: Converting map from $max_players to $main::config{'max_players'} players.\n";
         print "           Set 'mod' in def/config.cfg or use the 'set_mod' command to prevent\n";
         print "           automatic conversion on import.\n\n";
         $self->set_max_num_players($main::config{'max_players'});
     }
     
     close $fh;
+    return '';
 }
 
 sub export_map {

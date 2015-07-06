@@ -13,8 +13,8 @@ use Civ4MapCad::Commands::Config qw(
 use Civ4MapCad::Commands::Weight qw(
     load_terrain new_weight_table import_weight_table_from_file evaluate_weight
 );
-
 use Civ4MapCad::Commands::List qw(
+
     list_shapes list_groups list_layers list_masks list_weights list_terrain
     show_weights dump_group dump_mask dump_layer dump_mask_to_console
 );

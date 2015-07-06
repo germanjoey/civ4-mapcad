@@ -83,6 +83,9 @@ sub _report_calling_format {
             if (exists $prefix{$type}) {
                 push @required_list, $prefix{$type} . $type . "name";
             }
+            elsif ($type eq 'str') {
+                push @required_list, qq["string"];
+            }
             else {
                 push @required_list, $type;
             }

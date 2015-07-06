@@ -1,4 +1,0 @@
->= 0.75 => %anyforest_grass,
->= 0.50 => %anyforest_plains,
->= 0.25 => %anyforest_grasshill,
->= 0.00 => %anyforest_plainshill

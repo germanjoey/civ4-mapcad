@@ -112,7 +112,7 @@ sub process_script {
         my $line = $lines[$i];
         chomp $line;
         
-        $line =~ s/\/\/.*//;
+        $line =~ s/#.*//; # strip comments
         next unless $line =~ /\w/;
         
         if ($line =~ /^\s|\t/) {

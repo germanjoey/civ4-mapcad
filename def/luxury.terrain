@@ -75,9 +75,9 @@
 	TerrainType=TERRAIN_TUNDRA
 	PlotType=1
 </tundra_silver>
-<bare_incense>
+<bare_silver>
 	BonusType=BONUS_SILVER
-</bare_incense>
+</bare_silver>
 
 <plainshill_gold>
 	BonusType=BONUS_GOLD
@@ -89,15 +89,6 @@
 	TerrainType=TERRAIN_DESERT
 	PlotType=1
 </deserthill_gold>
-<bare_incense>
+<bare_gold>
 	BonusType=BONUS_GOLD
-</bare_incense>
-
-<coast_whales>
-	BonusType=BONUS_WHALES
-	TerrainType=TERRAIN_COAST
-	PlotType=3
-</coast_whales>
-<bare_whales>
-	BonusType=BONUS_WHALES
-</bare_whales>
+</bare_gold>

@@ -34,7 +34,7 @@ sub set_output_dir {
 }
 
 my $set_mod_help_text = qq[
-    'set_mod' sets the current mod to set the maximum number of players recognized by the save. This value can be either 'RtR' (which allows a maximum of 40 players) or 'none' (maximum allowed is 18 players). All existing groups will be converted to this mod and any newly created/imported groups will be automatically converted as well.
+    'set_mod' sets the current mod to set the maximum number of players recognized by the save. This value can be either "RtR" (which allows a maximum of 40 players) or "none" (maximum allowed is 18 players). All existing groups will be converted to this mod and any newly created/imported groups will be automatically converted as well.
 ];
 sub set_mod {
     my ($state, @params) = @_;
@@ -57,11 +57,20 @@ sub set_mod {
         return;
     }
     
-    foreach my $group_name (keys %{ $state->{'group'} }) {
-        my $group = $state->{'group'}{$group_name};
-        foreach my $layer ($group->get_layers()) {
-            $layer->set_players($max);
+    my @groups = sort keys %{ $state->{'group'} };
+    if (@groups > 0) {
+        print "\n";
+        
+        foreach my $group_name (@groups) {
+            my $group = $state->{'group'}{$group_name};
+            print " * Setting $group_name to $max players\n";
+            
+            foreach my $layer ($group->get_layers()) {
+                $layer->set_max_num_players($max);
+            }
         }
+        
+        print "\n";
     }
     
     $main::config{'max_players'} = $max;
