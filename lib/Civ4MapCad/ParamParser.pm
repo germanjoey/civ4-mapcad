@@ -40,11 +40,15 @@ sub new {
     my ($state, $raw_params, $param_spec) = @_;
     
     my $processed = _process($state, $raw_params, $param_spec);
-    my $calling_format = _report_calling_format($state, $param_spec);
+    my @calling_format = _report_calling_format($state, $param_spec);
     
     if ($processed->{'error'} and (@$raw_params == 1) and ($raw_params->[0] eq '--help')) {
-        print "\n  Command format:\n\n";
-        $state->report_message($calling_format, 2);
+        print "  Command format:\n\n";
+        $state->report_message($calling_format[0], 2);
+        foreach my $i (1..$#calling_format) {
+            print "\n    $calling_format[$i]";
+        }
+        
         print "\n\n";
         $state->report_message($param_spec->{'help_text'}) if exists $param_spec->{'help_text'};
         print "\n\n";
@@ -57,9 +61,13 @@ sub new {
     }
     
     if ($processed->{'help'} or $processed->{'help_anyways'}) {
-        print "\n\n" unless $processed->{'error'};
+        print "\n" unless $processed->{'error'};
         print "  Command format:\n\n";
-        $state->report_message($calling_format);
+        $state->report_message($calling_format[0]);
+        foreach my $i (1..$#calling_format) {
+            print "\n    $calling_format[$i]";
+        }
+        
         print "\n\n";
         $state->report_message($param_spec->{'help_text'}) if (exists $param_spec->{'help_text'}) and ($processed->{'help'});
         print "\n\n";
@@ -127,7 +135,15 @@ sub _report_calling_format {
     my $optional_str = '';
     $optional_str = " [ @optional_list ]" if @optional_list > 0;
     
-    return "$command_name @required_list$optional_str$shape$result";
+    my @format = ("$command_name @required_list$optional_str$shape$result");
+    if ((@required_list > 0) and exists($param_spec->{'required_descriptions'})) {
+        foreach my $i (1 .. @{ $param_spec->{'required_descriptions'} }) {
+            my $desc = $param_spec->{'required_descriptions'}[$i-1];
+            push @format, "  param $i: $desc";
+        }
+    }
+    
+    return @format;
 }
 
 sub _process {
@@ -140,6 +156,7 @@ sub _process {
     # TODO: universal help option
     my $optional = $param_spec->{'optional'} || {};
     my $required = $param_spec->{'required'} || [];
+    my $required_descriptions = $param_spec->{'required_descriptions'} || [];
     my $has_shape_params = $param_spec->{'has_shape_params'};
     my $help_text = $param_spec->{'help_text'} || '';
     
@@ -284,16 +301,18 @@ sub _process {
             next;
         }
         
-        my $name = $state->check_vartype($preproc[$i], $expected_type);
-        unless ($name ne '-1') {
+        my $check_result = $state->check_vartype($preproc[$i], $expected_type);
+        if ($check_result->{'error'} == 1) {
+            $processed_params{'error_msg'} = $check_result->{'error_msg'};
             $processed_params{'error'} = 1;
             return \%processed_params;
         };
+        my $name = $check_result->{'name'};
     
         if (! $state->variable_exists($name, $expected_type)) {
             if ($expected_type eq 'layer') {
-                my ($groupname) = $name =~ /^(\w+)/;
-                my ($layername) = $name =~ /^\w+\.(\w+)/;
+                my ($groupname) = $name =~ /^(\$\w+)/;
+                my ($layername) = $name =~ /^\$\w+\.(\w+)/;
                 
                 if (! $state->variable_exists($groupname, 'group')) {
                     $processed_params{'error_msg'} = "a variable of type group named '\$$groupname' does not exist.";
@@ -322,11 +341,13 @@ sub _process {
     
     # finally, if we have an implied_result, set that to be the command's destination
     if ($has_result && $implied_result) {
-        my $result_name = $state->check_vartype($preproc[0], $required->[0]);
-        unless ($result_name ne '-1') {
+        my $check_result = $state->check_vartype($preproc[0], $required->[0]);
+        if ($check_result->{'error'} == 1) {
+            $processed_params{'error_msg'} = $check_result->{'error_msg'};
             $processed_params{'error'} = 1;
             return \%processed_params;
         };
+        my $result_name = $check_result->{'name'};
         
         $processed_params{'_result'} = $result_name;
         $processed_params{'_result_type'} = $required->[0];
@@ -334,14 +355,15 @@ sub _process {
     
     # otherwise, we set it to the new destination
     elsif ($has_result and exists($processed_params{'_result'})) {
-        my $name = $state->check_vartype($processed_params{'_result'}, $has_result);
-        
-        unless ($name ne '-1') {
+        my $check_result = $state->check_vartype($processed_params{'_result'}, $has_result);
+        if ($check_result->{'error'} == 1) {
+            $processed_params{'error_msg'} = $check_result->{'error_msg'};
             $processed_params{'error'} = 1;
             return \%processed_params;
         };
+        my $result_name = $check_result->{'name'};
         
-        $processed_params{'_result'} = $name;
+        $processed_params{'_result'} = $result_name;
         $processed_params{'_result_type'} = $has_result;
     }
     
@@ -359,7 +381,6 @@ sub _process {
     
         my %shape_args;
         my $shape_param_spec = $state->get_shape_params($preproc[0]);
-        
         my $shape_opts = _make_opt_list($shape_param_spec, \%shape_args);
         
         GetOptionsFromArray(\@shape_param_list, \%shape_args, @$shape_opts);
@@ -370,6 +391,7 @@ sub _process {
         'command' => $calling_command,
         'optional' => $optional,
         'required' => $required,
+        'required_descriptions' => $required_descriptions,
         'has_shape_params' => $has_shape_params,
         'has_result' => $has_result,
         'help_text' => $help_text,

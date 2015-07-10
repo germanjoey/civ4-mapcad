@@ -5,10 +5,11 @@ use warnings;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(move_layer set_layer_priority cut_layer crop_layer extract_layer find_difference);
+our @EXPORT_OK = qw(move_layer set_layer_priority cut_layer crop_layer extract_layer find_difference
+                    flip_layer_tb flip_layer_lr copy_layer_from_group);
 
 use Civ4MapCad::ParamParser;
-use Civ4MapCad::Object::Layer;
+use Civ4MapCad::Util qw(deepcopy);
 
 my $recenter_help_text = qq[
     The specified layer's offset is set back to 0,0 within its group.
@@ -18,6 +19,7 @@ sub recenter {
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['layer'],
+        'required_descriptions' => ['layer to move'],
         'help_text' => $recenter_help_text
     });
     return -1 if $pparams->has_error;
@@ -35,6 +37,7 @@ sub move_layer {
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['layer', 'int', 'int'],
+        'required_descriptions' => ['layer to move', 'x coordinate', 'y coordinate'],
         'help_text' => $move_layer_help_text
     });
     return -1 if $pparams->has_error;
@@ -52,6 +55,7 @@ sub set_layer_priority {
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['layer', 'int'],
+        'required_descriptions' => ['layer to set', 'priority'],
         'help_text' => $set_layer_priority_help_text
     });
     return -1 if $pparams->has_error;
@@ -60,27 +64,140 @@ sub set_layer_priority {
     my $group = $layer->get_group();
     
     $group->set_priority($layer->get_name(), $priority);
-    
     return 1;
 }
 
 # apply a mask to a layer, delete everything outside of it, then resize the layer
-
-
-my $crop_layer_priority_help_text = qq[
-    The specified layer's priority is set to the specified value; 0 is the highest priority. Layers with equal or lower priority will be moved down.
+my $crop_layer_help_text = qq[
+    This layer's dimensions are trimmed to left/bottom/right/top, from the nominal dimensions of 0 / 0 / width-1 / height-1
 ];
 sub crop_layer {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
-        'required' => ['layer', 'mask', 'int', 'int'],
-        'help_text' => $crop_layer_priority_help_text
+        'required' => ['layer', 'int', 'int', 'int', 'int'],
+        'required_descriptions' => ['layer to crop', 'left', 'bottom', 'right', 'top'],
+        'help_text' => $crop_layer_help_text,
+        'has_result' => 'layer',
+        'allow_implied_result' => 1
     });
     return -1 if $pparams->has_error;
     
-    my ($layer, $mask, $mask_offsetX, $mask_offsetY) = $pparams->get_required();
+    my ($layer, $left, $bottom, $right, $top) = $pparams->get_required();
     
-    die "crop_layer command not yet implemented\n\n";
+    my $width = $layer->get_width();
+    my $height = $layer->get_height();
+    
+    my $x_ok = (($left >= 0) and ($right > $left) and ($right < $width));
+    my $y_ok = (($bottom >= 0) and ($top > $bottom) and ($bottom < $height));
+    
+    unless ($x_ok and $y_ok) {
+        $state->report_error("Dimensions are either out of bounds or crossed.");
+        return -1;
+    }
+    
+    my $copy = deepcopy($layer);
+    $copy->crop($left, $bottom, $right, $top);
+    
+    my ($result_name) = $pparams->get_result_name();
+    _assign_layer_result($state, $result_name, $copy);
+        
     return 1;
 }
+
+my $flip_layer_lr_help_text = qq[
+    Flip a layer horizontally.
+];
+sub flip_layer_lr {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'required' => ['layer'],
+        'required_descriptions' => ['layer to flip'],
+        'help_text' => $flip_layer_lr_help_text,
+        'has_result' => 'layer',
+        'allow_implied_result' => 1
+    });
+    return -1 if $pparams->has_error;
+    
+    my ($layer) = $pparams->get_required();
+    my $copy = deepcopy($layer);
+    $copy->fliplr();
+    
+    my ($result_name) = $pparams->get_result_name();
+    _assign_layer_result($state, $result_name, $copy);
+    
+    return 1;
+}
+
+my $flip_layer_tb_help_text = qq[
+    Flip a layer horizontally.
+];
+sub flip_layer_tb {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'required' => ['layer'],
+        'required_descriptions' => ['layer to flip'],
+        'help_text' => $flip_layer_tb_help_text,
+        'has_result' => 'layer',
+        'allow_implied_result' => 1
+    });
+    return -1 if $pparams->has_error;
+    
+    my ($layer) = $pparams->get_required();
+    my $copy = deepcopy($layer);
+    $copy->fliptb();
+    
+    my ($result_name) = $pparams->get_result_name();
+    _assign_layer_result($state, $result_name, $copy);
+    
+    return 1;
+}
+
+my $copy_layer_from_group_help_text = qq[
+    Copy a layer from one group to another (or the same) group. If a new name is not specified, the same name is used.
+];
+sub copy_layer_from_group {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'required' => ['layer'],
+        'required_descriptions' => ['layer to copy'],
+        'has_result' => 1,
+        'help_text' => $copy_layer_from_group_help_text
+    });
+    return -1 if $pparams->has_error;
+    
+    my $result_name = $pparams->get_result_name();
+    my ($layer) = $pparams->get_required();
+    my $copy = deepcopy($layer);
+    _assign_layer_result($state, $result_name, $copy);
+    
+    return 1;
+}
+
+sub _assign_layer_result {
+    my ($state, $result_name, $result_layer) = @_;
+    
+    my ($result_group_name, $result_layer_name) = $result_name =~ /\$(\w+)\.(\w+)/;
+    my $group = $state->get_variable('$' . $result_group_name, 'group');
+    $result_layer->rename($result_layer_name);
+        
+    if ($group->layer_exists($result_layer_name)) {
+        $group->set_layer($result_layer_name, $result_layer);
+    }
+    else {
+        my $result = $group->add_layer($result_layer);
+        
+        if ($result != 1) {
+            $state->report_warning("layer named $result_layer_name already exists in group '$result_group_name'... overwriting.");
+            return -1;
+        }
+    }
+    
+    $result_layer->set_membership($group);
+    $state->set_variable('$' . $result_name, 'layer', $result_layer);
+}
+
+1;

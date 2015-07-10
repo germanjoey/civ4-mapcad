@@ -24,6 +24,7 @@ sub new_group {
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'has_result' => 'group',
         'required' => ['int', 'int'],
+        'required_descriptions' => ['width', 'height'],
         'help_text' => $new_group_help_text
     });
     return -1 if $pparams->has_error;
@@ -47,6 +48,7 @@ sub import_group {
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'has_result' => 'group',
         'required' => ['str'],
+        'required_descriptions' => ['filename'],
         'help_text' => $import_group_help_text
     });
     return -1 if $pparams->has_error;
@@ -66,39 +68,6 @@ sub import_group {
     return 1;
 }
 
-my $copy_layer_from_group_help_text = qq[
-    Copy a layer from one group to another (or the same) group. If a new name is not specified, the same name is used.
-];
-sub copy_layer_from_group {
-    my ($state, @params) = @_;
-    
-    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
-        'required' => ['layer', 'group'],
-        'help_text' => $copy_layer_from_group_help_text,
-        'optional' => {
-            'new_name' => '',
-        },
-    });
-    return -1 if $pparams->has_error;
-    
-    my $result_name = $pparams->get_result_name();
-    my ($layer, $group) = $pparams->get_required();
-    my $new_name = $pparams->get_named('new_name');
-    my $copy = deepcopy($layer);
-    $copy->rename($new_name) if $new_name eq '';
-    
-    my $group_name = $group->get_name();
-    my $result = $group->add_layer($copy);
-    
-    if ($result != 1) {
-        $state->report_warning("layer named $new_name already exists in group '$group_name'... overwriting.");
-        return -1;
-    }
-    
-    $state->set_variable("\$$group_name.$new_name", 'layer', $copy);
-    return 1;
-}
-
 my $copy_group_help_text = qq[
     Copy one group into another.
 ];
@@ -107,6 +76,7 @@ sub copy_group {
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['group'],
+        'required_descriptions' => ['group to copy'],
         'has_result' => 'group',
         'help_text' => $copy_group_help_text
     });
@@ -129,6 +99,7 @@ sub flatten_group {
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['group'],
+        'required_descriptions' => ['group to flatten'],
         'allow_implied_result' => 1,
         'help_text' => $flatten_group_help_text,
     });
@@ -151,6 +122,7 @@ sub combine_groups {
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['group', 'group'],
+        'required_descriptions' => ['group A', 'group B'],
         'has_result' => 'group',
         'allow_implied_result' => 1,
         'help_text' => $combine_groups_help_text
@@ -173,6 +145,7 @@ sub export_group {
     my ($state, @params) = @_;
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['group'],
+        'required_descriptions' => ['group to export'],
         'help_text' => $export_group_help_text
     });
     return -1 if $pparams->has_error;
@@ -201,6 +174,7 @@ sub extract_starts_as_mask {
     my ($state, @params) = @_;
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['group'],
+        'required_descriptions' => ['group to extract from'],
         'has_result' => 'mask',
         'help_text' => $extract_starts_as_mask_help_text
     });
@@ -224,6 +198,7 @@ sub normalize_starts {
     my ($state, @params) = @_;
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['group'],
+        'required_descriptions' => ['group to normalize'],
         'help_text' => $normalize_starts_help_text
     });
     return -1 if $pparams->has_error;
@@ -241,39 +216,34 @@ sub add_scouts_to_settlers {
     my ($state, @params) = @_;
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['group'],
+        'required_descriptions' => ['group to add to'],
         'help_text' => $add_scouts_to_settlers_help_text
     });
     return -1 if $pparams->has_error;
     
     my $result_name = $pparams->get_result_name();
     my ($group) = $pparams->get_required();
-    my $copy = deepcopy($group);
     
-    $copy->add_scouts_to_settlers();
-    $state->set_variable($result_name, 'group', $copy);
+    $group->add_scouts_to_settlers();
     
     return 1;
 }
 
 my $strip_all_units_help_text = qq[
-    All units are removed from all layers. If a result is not specified, this command modifies the group.
+    All units are removed from all layers. This command modifies the group.
 ];
 sub strip_all_units {
     my ($state, @params) = @_;
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['group'],
-        'has_result' => 'group',
-        'allow_implied_result' => 1,
+        'required_descriptions' => ['group to strip from'],
         'help_text' => $strip_all_units_help_text
     });
     return -1 if $pparams->has_error;
     
     my $result_name = $pparams->get_result_name();
     my ($group) = $pparams->get_required();
-    my $copy = deepcopy($group);
-    
-    $copy->strip_all_units();
-    $state->set_variable($result_name, 'group', $copy);
+    $group->strip_all_units();
     
     return 1;
 }
@@ -285,18 +255,14 @@ sub strip_nonsettlers {
     my ($state, @params) = @_;
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['group'],
-        'has_result' => 'group',
-        'allow_implied_result' => 1,
+        'required_descriptions' => ['group to strip from'],
         'help_text' => $strip_nonsettlers_help_text
     });
     return -1 if $pparams->has_error;
     
     my $result_name = $pparams->get_result_name();
     my ($group) = $pparams->get_required();
-    my $copy = deepcopy($group);
-    
-    $copy->strip_nonsettlers();
-    $state->set_variable($result_name, 'group', $copy);
+    $group->strip_nonsettlers();
     
     return 1;
 }
@@ -308,6 +274,7 @@ sub extract_starts {
     my ($state, @params) = @_;
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['group'],
+        'required_descriptions' => ['group to extract from'],
         'has_result' => 'group',
         'allow_implied_result' => 1,
         'help_text' => $extract_starts_help_text
@@ -334,6 +301,7 @@ sub export_sims {
     my ($state, @params) = @_;
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['group'],
+        'required_descriptions' => ['group to extract from'],
         'help_text' => $export_sims_help_text,
         'optional' => {
             'delete_existing' => 'false'
@@ -367,6 +335,7 @@ sub find_difference {
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'has_result' => ['group'],
         'required' => ['group', 'group'],
+        'required_descriptions' => ['group A', 'group B'],
         'help_text' => $find_difference_help_text
     });
     return -1 if $pparams->has_error;

@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use List::Util qw(min max);
+use Civ4MapCad::Ascii qw(import_ascii_mask export_ascii_mask);
 
 sub new_blank {
     my ($class, $width, $height) = @_;
@@ -44,64 +45,91 @@ sub new_from_shape {
     return bless \%obj, $class;
 }
 
-# TODO: test this
 sub new_from_ascii {
-    my ($class, $filename, $weights) = @_;
+    my ($class, $filename, $mapping) = @_;
    
-    open (my $ascii, $filename) || 0;
-   
-    # construct the shape
-    my @canvas;
-    my $max_col = 0;
-    while (1) {
-        my ($line) = <$ascii>;
-        last unless defined $line;
-        chomp $line;
-       
-        my @chars = split '', $line;
-        my @filtered;
-        foreach my $i (0..$#chars) {
-            foreach my $m (keys %$weights) {
-                if ($chars[$i] eq $m) {
-                    push @filtered, $weights->{$m};
-                }
-                else {
-                    push @filtered, 0;
-                }
-            }
-        }
-       
-        $max_col = ($max_col > $#filtered) ? $max_col : $#filtered+0;
-        push @canvas, \@filtered;
+    my $result = import_ascii_mask($filename, $mapping);
+    if (exists $result->{'error'}) {
+        return $result;
     }
-   
-    # now fill out zeroes
-    foreach my $x (0..$#canvas) {
-        foreach my $y (0..$max_col) {
-            $canvas[$x][$y] = 0 unless defined $canvas[$x][$y];
-        }
-    }
-   
-    close $ascii;
-   
+    
+    # TODO: are these two right?
+    my $height = @{ $result->{'canvas'} } + 0;
+    my $width = @{ $result->{'canvas'}[0] } + 0;
+    
     my %obj = (
-        'width' => $max_col+1, # width of the canvas
-        'height' => @canvas+0, # height of the canvas
+        'width' => $width, # width of the canvas
+        'height' => $height, # height of the canvas
+        'canvas' => $result->{'canvas'}
+    );
+   
+    return bless \%obj, $class;
+}
+
+sub export_to_ascii {
+    my ($self, $filename, $mapping) = @_;
+    
+    my %reversed;
+    while ( my($k,$v) = each %$mapping ) {
+        $reversed{$v} = $k;
+    }
+    
+    export_ascii_mask($filename, $self->{'canvas'}, $self->{'width'}, $self->{'height'}, \%reversed);
+}
+
+# TODO!
+sub new_from_layer {
+    die "TODO: new from layer";
+}
+
+# e.g. this is a file w/ each line being x y value
+sub new_from_file {
+    my ($class, $filename) = @_;
+    
+    open (my $file, $filename);
+    my @lines = <$file>;
+    close $file;
+    
+    my @canvas;
+    my ($maxX, $maxY) = (-1, -1);
+    foreach my $line (@lines) {
+        next unless $line =~ /\w/;
+        my ($x, $y, $value) = split ' ', $line;
+        unless (defined($x) and defined($y) and defined($value)) {
+            return {
+                'error' => 1,
+                'error_msg' => "Parse error attempting to import mask from file '$filename'"
+            };
+        }
+        
+        $maxX = $x if $x > $maxX;
+        $maxY = $y if $y > $maxY;
+        
+        $canvas[$x][$y] = $value;
+    }
+    
+    my %obj = (
+        'width' => ($maxX+1), # width of the canvas
+        'height' => ($maxY+1), # height of the canvas
         'canvas' => \@canvas
     );
    
     return bless \%obj, $class;
 }
 
-# TODO!
-sub new_from_layer {
-    "die TODO: new from layer";
-}
-
-# TODO!
-# e.g. this is a file w/ each line being x y value
-sub new_from_file {
-    "die TODO: new from layer";
+sub export_to_file {
+    my ($self, $filename) = @_;
+    
+    open (my $file, '>', $filename) or die $!;
+    
+    foreach my $x (0..($self->{'width'}-1)) {
+        foreach my $y (0..($self->{'height'}-1)) {
+            my $out = sprintf "%3d %3d %6.4f\n", $x, $y, $self->{'canvas'}[$x][$y];
+            print $file $out;
+        }
+    }
+    
+    close $file;
 }
 
 sub get_width {

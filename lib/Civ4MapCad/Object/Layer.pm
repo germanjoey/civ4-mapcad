@@ -415,4 +415,19 @@ sub get_surrounding {
     return \@surrounding;
 }
 
+sub crop {
+    my ($self, $left, $bottom, $top, $right) = @_;
+    $self->{'map'}->crop($left, $bottom, $top, $right);
+}
+
+sub fliplr {
+    my ($self) = @_;
+    $self->{'map'}->fliplr();
+}
+
+sub fliptb {
+    my ($self) = @_;
+    $self->{'map'}->fliptb();
+}
+
 1;

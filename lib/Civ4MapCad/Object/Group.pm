@@ -40,7 +40,6 @@ sub new_from_import {
     $self->{'name'} = $name;
     my $layer = Civ4MapCad::Object::Layer->new_from_import($name, $filename);
     
-    # error!
     if (ref($layer) eq '') {
         return $layer;
     };
@@ -50,6 +49,32 @@ sub new_from_import {
     $self->{'height'} = $self->{'layers'}{$name}->get_height;
     
     return $self;
+}
+
+sub get_width {
+    my ($self) = @_;
+    return $self->{'width'};
+}
+
+sub get_height {
+    my ($self) = @_;
+    return $self->{'height'};
+}
+
+sub set_layer {
+    my ($self, $name, $new_layer) = @_;
+    $self->{'layers'}{$name} = $new_layer;
+}
+
+sub layer_exists {
+    my ($self, $name) = @_;
+    return 1 if exists $self->{'layers'}{$name};
+    return 0;
+}
+
+sub rename {
+    my ($self, $new_name) = @_;
+    $self->{'name'} = $new_name;
 }
 
 sub get_name {
@@ -100,25 +125,6 @@ sub add_layer {
     return 1;
 }
 
-sub add_groups {
-    my ($self, $other_group) = @_;
-    
-    my $copy = deepcopy($self);
-    my $othername = $other_group->get_name();
-    
-    my @layers = $other_group->get_layers();
-    foreach my $layer (@layers) {
-        my $name = $layer->get_name();
-        if (exists $copy->{'layers'}{$name}) {
-            $name = $othername . "_" . $name;
-            $layer->rename($name);
-        }
-        $copy->add_layer($layer);
-    }
-    
-    return $copy;
-}
-
 # expand numbers can be negative
 sub change_canvas_size {
     my ($self, $expand_top_by, $expand_left_by, $expand_bottom_by, $expand_right_by) = @_;
@@ -133,7 +139,6 @@ sub change_canvas_size {
     }
 }
  
-
 sub rename_layer {
     my ($self, $old_layer_name, $new_layer_name) = @_;
     
@@ -379,7 +384,7 @@ sub export {
     
     print "\n" if @layers > 1;
     
-    foreach my $layer (sort @layers) {
+    foreach my $layer (@layers) {
         my $layer_name = $layer->get_name();
         my $path = $output_dir . "/" . $self->get_name() . "." . $layer_name . ".CivBeyondSwordWBSave";
         

@@ -10,6 +10,9 @@ our @EXPORT_OK = qw(write_block_data deepcopy report_error report_warning find_m
 use Data::Dumper;
 use Config::General qw(SaveConfig);
 
+use Civ4MapCad::Object::Group;
+use Civ4MapCad::Object::Layer;
+
 sub write_block_data {
     my ($obj, $fh, $indent, $name1, $name2) = @_;
     
@@ -27,13 +30,39 @@ sub write_block_data {
     }
 }
 
+# for some reason, objects that get repeatedly copied get fucked up somehow
 sub deepcopy {
     my ($v) = @_;
+    
+    if (ref($v) =~ /Group/) {
+        my $copy = Civ4MapCad::Object::Group->new_blank($v->get_width(), $v->get_height());
+        foreach my $k (keys %$v) {
+            $copy->{$k} = deepcopy($v->{$k});
+        }
+        return $copy;
+    }
+    elsif (ref($v) =~ /Layer/) {
+        my $width = $v->get_width();
+        my $height = $v->get_height();
+        
+        my $copy = Civ4MapCad::Object::Layer->new_default($v->get_name(), $width, $height);
+        
+        foreach my $k (keys %$v) {
+            next if $k eq 'member_of';
+            $copy->{$k} = deepcopy($v->{$k});
+        }
+        
+        $copy->{'member_of'} = $v->{'member_of'};
+        return $copy;
+    }
+    
     my $d = Data::Dumper->new([$v]);
     $d->Purity(1)->Terse(1)->Deepcopy(1);
     
     no strict;
     my $x = eval $d->Dump;
+    
+    return $x;
 }
 
 sub find_max_players {

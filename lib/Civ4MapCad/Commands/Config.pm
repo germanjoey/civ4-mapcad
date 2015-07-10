@@ -20,6 +20,7 @@ sub set_output_dir {
 
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['str'],
+        'required_descriptions' => ['directory path'],
         'help_text' => $set_output_dir_help_text,
         'optional' => {
             'delete_existing' => 'false'
@@ -41,6 +42,7 @@ sub set_mod {
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['str'],
+        'required_descriptions' => ['mod name'],
         'help_text' => $set_mod_help_text
     });
     return -1 if $pparams->has_error;

@@ -1,14 +1,27 @@
 Big Ticket TODO:
 
-- method of assigning a fixed set of resources/weights to a mask, one at a time - allocation function
-- is there a good way of applying a mask to a bunch of starts? a "apply_mask_to_starts" command or something like that? 
-- balance commands
-- documentation
-- tutorials
-- apply_shape_to_mask
-- new_mask_from_magic_wand
-- test difference/merge
-- tests
+    - method of assigning a fixed set of resources/weights to a mask, one at a time - allocation function
+    - is there a good way of applying a mask to a bunch of starts? a "apply_mask_to_starts" command or something like that? 
+    - balance commands
+    - documentation
+    - tutorials
+    - test difference/merge
+    - tests
+
+Medium Ticket TODO:
+
+    - decide how to handle width/height of group vs individual layers
+        - should groups have a fixed size? should size be based on background?
+        - two different merge modes?
+    - merge_all
+    - apply_shape_to_mask
+    - new_mask_from_magic_wand
+    - cleanup_ascii
+
+Tonight:
+    - parameter descriptions
+    - finish ascii
+    - try to finish banana
 
 land allocation method
 1.) find starts
@@ -53,6 +66,7 @@ BFC assignment method for land allocation pseudocode:
                     total_allocation.tile.civ += local_allocation.tile.civ
                     
         # take our 1000 guesses to get a true estimate on how likely it is a particular civ will gain a particular tile
+        # in later revisions, later passes should get weighted more highly because they should be influenced by good results from previous passes
         foreach tile in total_allocation
             foreach civ
                 total_allocation.tile.civ /= 1000
@@ -70,6 +84,9 @@ BFC assignment method for land allocation pseudocode:
                 break 
                 
             num_allocated = 0
+            
+            # looping through civs like this is fine for the first revision, but eventually this should be a priority queue based on
+            # "settling power", which is the result of the sum of a civ's bfc-power, which new cities get added to on a time delay
             foreach civ
                 potential_sites = all tiles between 3 and 6 away of any of this civ's cities
                 filter potential_sites of any tiles that are less than 3 away of any other civ's cities
@@ -100,6 +117,7 @@ BFC assignment method for land allocation pseudocode:
                             - do we do this based on capitals or what rivals have settled already? not sure. later way is more
                               computationally intensive for sure.
                         - cities on hills are valued more highly if they are closer to rivals
+                        - eventually, for later revisions, sites from previous passes that were found to be good should be weighted higher
                         
                 # now we have a score for each potential site
                 

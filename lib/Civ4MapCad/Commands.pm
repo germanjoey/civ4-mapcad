@@ -14,25 +14,26 @@ use Civ4MapCad::Commands::Weight qw(
     load_terrain new_weight_table import_weight_table_from_file evaluate_weight
 );
 use Civ4MapCad::Commands::List qw(
-
     list_shapes list_groups list_layers list_masks list_weights list_terrain
     show_weights dump_group dump_mask dump_layer dump_mask_to_console
 );
 
 use Civ4MapCad::Commands::Mask qw(
-    import_mask_from_ascii new_mask_from_shape mask_difference mask_union mask_intersect mask_invert
-    mask_threshold modify_layer_with_mask cutout_layer_with_mask apply_shape_to_mask generate_layer_from_mask
-    new_mask_from_magic_wand
+    new_mask_from_magic_wand new_mask_from_shape mask_difference mask_union mask_intersect
+    mask_invert mask_threshold modify_layer_with_mask cutout_layer_with_mask apply_shape_to_mask
+    generate_layer_from_mask import_mask_from_ascii export_mask_to_ascii export_mask_to_table
+    import_mask_from_table
 );
 
 use Civ4MapCad::Commands::Layer qw(
-    move_layer set_layer_priority cut_layer crop_layer extract_layer find_difference
+    move_layer set_layer_priority cut_layer crop_layer extract_layer find_difference flip_layer_tb
+    flip_layer_lr copy_layer_from_group
 );
 
 use Civ4MapCad::Commands::Group qw(
-    export_sims find_starts export_group combine_groups flatten_group copy_layer_from_group import_group
-    new_group find_difference extract_starts_as_mask normalize_starts find_starts strip_nonsettlers
-    add_scouts_to_settlers extract_starts export_sims copy_group
+    export_sims find_starts export_group combine_groups flatten_group import_group
+    new_group find_difference extract_starts_as_mask normalize_starts find_starts 
+    strip_nonsettlers add_scouts_to_settlers extract_starts export_sims copy_group
 );
 
 # use Civ4MapCad::Commands::Balance qw();

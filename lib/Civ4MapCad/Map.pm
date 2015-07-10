@@ -639,5 +639,59 @@ sub set_max_num_players {
         }
     }
 }
+
+sub crop {
+    my ($self, $left, $bottom, $top, $right) = @_;
+    
+    my @new;
+    
+    foreach my $x (0..$#{$self->{'Tiles'}}) {
+        next if $x < $left;
+        next if $x >= $right;
+        $new[$x-$left] = [];
+        
+        foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
+            next if $x < $bottom;
+            next if $x >= $top;
+            $new[$x-$left][$y-$bottom] = $self->{'Tiles'}[$x][$y];
+        }
+    }
+    
+    $self->{'Tiles'} = \@new;
+}
+
+sub fliplr {
+    my ($self) = @_;
+    
+    my @new;
+    foreach my $xx (0..$#{$self->{'Tiles'}}) {
+        my $x = $#{$self->{'Tiles'}} - $xx;
+        $new[$x] = [];
+        
+        foreach my $y (0..$#{$self->{'Tiles'}[$xx]}) {
+            $new[$x][$y] = $self->{'Tiles'}[$xx][$y];
+            $new[$x][$y]->set('x', $x);
+        }
+    }
+    
+    $self->{'Tiles'} = \@new;
+}
+
+sub fliptb {
+    my ($self) = @_;
+    
+    my @new;
+    foreach my $x (0..$#{$self->{'Tiles'}}) {
+        $new[$x] = [];
+        
+        foreach my $yy (0..$#{$self->{'Tiles'}[$x]}) {
+            my $y = $#{$self->{'Tiles'}[$x]} - $yy;
+            
+            $new[$x][$y] = $self->{'Tiles'}[$x][$yy];
+        }
+    }
+    
+    $self->{'Tiles'} = \@new;
+}
     
 1;

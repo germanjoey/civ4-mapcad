@@ -22,6 +22,7 @@ sub load_terrain {
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['str'],
+        'required_descriptions' => ['terrain filename'],
         'help_text' => $load_terrain_help_text
     });
     return -1 if $pparams->has_error;
@@ -104,6 +105,7 @@ sub import_weight_table_from_file {
 
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['str'],
+        'required_descriptions' => ['weight definition filename'],
         'has_result' => 'weight',
         'help_text' => $import_weight_table_from_file_help_text
     });
@@ -162,9 +164,9 @@ sub _process_weight_import {
         # >= 1   => grass,
         # >= 0.8 => grass_hill,
         # >= 0.6 => plains_hill
-        my ($operator, $weight, $target) = $pair =~ /^(\>|\<|=|\<=|\>=)([10]|0\.\d+)(?:\=\>)(\%?\w+)(?:,)?$/;
+        my ($operator, $weight, $target) = $pair =~ /^(\>|\<|=|\<=|\>=)([10]|[10]\.\d+)(?:\=\>)(\%?\w+)(?:,)?$/;
        
-        unless (defined($weight) and defined($operator) and defined($target)) {
+        unless ((defined($weight) and defined($operator) and defined($target)) or ($weight >= 1.01)) {
             $state->report_error("problem parsing weight definition '$pair' in weight definition for '$result_name'.");
             return -1;
         }
@@ -199,6 +201,7 @@ sub evaluate_weight {
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['weight', 'float'],
+        'required_descriptions' => ['weight', 'value to evaluate'],
         'help_text' => $evaluate_weight_help_text
     });
     return -1 if $pparams->has_error;

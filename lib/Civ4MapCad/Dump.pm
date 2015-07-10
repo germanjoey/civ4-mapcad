@@ -14,7 +14,6 @@ sub dump_framework {
     
     my @tab_heads; my @tab_bodies;
     
-    
     foreach my $t (0..$#$tabs) {
         my ($name, $info, $rows) = @{ $tabs->[$t] };
         

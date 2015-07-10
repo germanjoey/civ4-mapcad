@@ -10,7 +10,7 @@ Anyways, now we're ready to go! Double click mapcad.pl (or run it as "perl mapca
 
 ![tutorial1-img1](t1/i1.png)
 
-and enter this command to load the tutorial map:
+and enter the following line to load the tutorial map. "import_group" is the name of the command, "tutorials/t1/tutorial1.CivBeyondSwordWBSave" is a string containing the path, and the "=> $tutorial1" part says that the result of the command will be stored as the object named "$tutorial1". (it'd be kinda like assigning the result of a function to a variable, if this were a programming language)
 
     > import_group "tutorials/t1/tutorial1.CivBeyondSwordWBSave" => $tutorial1
 
@@ -45,7 +45,7 @@ Alright, sounds good. We can set our mod to RtR very easily; as soon as we switc
 
 Alright, cool. Our map is now an object that we can manipulate with other commands. Specifically, it is a "Group" type object. We'll talk more about groups, layers, and the other object types in the second tutorial. For now, let's just take a look at our map with the "dump_group" command:
 
-    > dump_group $tutorial
+    > dump_group $tutorial1
 
 Nothing happened, huh? Civ4 MC doesn't have a gui of its own, but there's still two other guis we can use - the Map Editor for Civ4 Beyond the Sword, and your handy internet browser. In this case, dump_group generates an html file that you can look at as a webpage. Go back to your Civ4 Map Cad directory and drag the "dump.html" file into your browser. You should see something like this:
 
