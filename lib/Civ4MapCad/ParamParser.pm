@@ -337,11 +337,11 @@ sub _process {
                 my ($layername) = $name =~ /^\$\w+\.(\w+)/;
                 
                 if (! $state->variable_exists($groupname, 'group')) {
-                    $processed_params{'error_msg'} = "a variable of type group named '\$$groupname' does not exist.";
+                    $processed_params{'error_msg'} = "a variable of type group named '$groupname' does not exist.";
                     return \%processed_params;
                 }
                 else {
-                    $processed_params{'error_msg'} = "group '\$$groupname' does not contain a layer named '$layername'.";
+                    $processed_params{'error_msg'} = "group '$groupname' does not contain a layer named '$layername'.";
                     return \%processed_params;
                 }
             }

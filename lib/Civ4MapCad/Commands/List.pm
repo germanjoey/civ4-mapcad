@@ -52,8 +52,10 @@ sub list_layers {
     
     my ($group) = $pparams->get_required();
     
-    print "\n  Lower priority numbers means the layer is \"above\" those\n  with higher priority numbers.\n";
-    my @layers = map { sprintf "priority %2d, %s", $group->get_layer_priority($_), $_ } ($group->get_layer_names());
+    print "\n  Higher priority numbers means the layer is \"above\" those\n  with lower priority numbers.\n";
+    
+    # layers' priorities are actually stored internally with the highest priority being '0', so we adjust the display
+    my @layers = map { sprintf "priority %2d, %s", 1 + $group->{'max_priority'} - $group->get_layer_priority($_), $_ } ($group->get_layer_names());
     
     $state->list( @layers );
     return 1;

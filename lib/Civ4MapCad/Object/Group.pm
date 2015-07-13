@@ -96,7 +96,7 @@ sub get_height {
     return $self->{'height'};
 }
 
-sub expand_dimensions {
+sub expand_dim {
     my ($self, $width, $height) = @_;
     $self->{'width'} = $width;
     $self->{'height'} = $height;
@@ -251,17 +251,31 @@ sub set_layer_priority {
     my ($self, $layer_name, $new_priority) = @_;
    
     foreach my $name (keys %{ $self->{'layers'} }) {
+        next if $name eq $layer_name;
         if ($self->{'priority'}{$name} >= $new_priority) {
             $self->{'priority'}{$name} = $self->{'priority'}{$name} + 1;
-            if (($self->{'priority'}{$name}) >= $self->{'max_priority'}) {
+            if (($self->{'priority'}{$name}) > $self->{'max_priority'}) {
                 $self->{'max_priority'} = $self->{'priority'}{$name};
             }
         }        
     }
    
     $self->{'priority'}{$layer_name} = $new_priority;
-    if (($self->{'priority'}{$layer_name}) >= $self->{'max_priority'}) {
+    if (($self->{'priority'}{$layer_name}) > $self->{'max_priority'}) {
         $self->{'max_priority'} = $self->{'priority'}{$layer_name};
+    }
+    
+    # readjust so that '0' is always the top priority
+    my $min = 100000;
+    foreach my $name (keys %{ $self->{'layers'} }) {
+        $min = $self->{'priority'}{$name} if $self->{'priority'}{$name} < $min;
+    }
+    
+    if ($min > 0) {
+        $self->{'max_priority'} -= $min;
+        foreach my $name (keys %{ $self->{'layers'} }) {
+            $self->{'priority'}{$name} -= $min;
+        }
     }
    
     return 1;

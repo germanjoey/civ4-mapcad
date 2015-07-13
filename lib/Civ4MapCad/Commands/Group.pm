@@ -8,7 +8,7 @@ our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(
     export_sims find_starts export_group combine_groups flatten_group import_group new_group find_difference
     extract_starts_as_mask normalize_starts find_starts strip_nonsettlers add_scouts_to_settlers extract_starts export_sims
-    copy_group
+    copy_group crop_group expand_group_canvas set_wrap
 );
 
 use Civ4MapCad::Util qw(deepcopy);
@@ -16,7 +16,7 @@ use Civ4MapCad::Object::Layer;
 use Civ4MapCad::Object::Group;
 
 my $set_wrap_help_text = qq[
-    
+    Sets wrap properties for a group and all its member layers. By default, all new blank groups wrap in both the X and Y dimensions; use this command in combination with the '--nowrapX' and/or '--nowrapY' flags to turn off wrap in the X and/or Y dimensions, respectively. If one of these flags is missing, the wrap value will default to 'true' for that direction.
 ];
 sub set_wrap {
     my ($state, @params) = @_;
@@ -25,16 +25,47 @@ sub set_wrap {
         'required' => ['group'],
         'required_descriptions' => ['group to set'],
         'optional' => {
-            'wrapX' => 'true',
-            'wrapY' => 'true'
+            'nowrapX' => 'false',
+            'nowrapY' => 'false'
         },
         'help_text' => $set_wrap_help_text
     });
     return -1 if $pparams->has_error;
+    
+    my ($group) = $pparams->get_required();
+    my $nowrapX = $pparams->get_named('nowrapX');
+    my $nowrapY = $pparams->get_named('nowrapY');
+    
+    $group->set_wrapX(($nowrapX) ? 0 : 1);
+    $group->set_wrapX(($nowrapY) ? 0 : 1);
+    
+    return 1;
+}
+
+my $expand_group_canvas_help_text = qq[
+    Expands a group's dimensions.
+];
+sub expand_group_canvas {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'required' => ['group', 'int', 'int'],
+        'required_descriptions' => ['group to expand', 'expand width by', 'expand height by'],
+        'help_text' => $expand_group_canvas_help_text
+    });
+    return -1 if $pparams->has_error;
+    
+    my ($group, $by_width, $by_height) = $pparams->get_required();
+    
+    my $width = $group->get_width();
+    my $height = $group->get_height();
+    
+    $group->expand_dim($width + $by_width, $height + $by_height);
+    return 1;
 }
 
 my $crop_group_help_text = qq[
-    
+    The group's dimensions are trimmed to left/bottom/right/top, from the nominal dimensions of 0 / 0 / width-1 / height-1. Any member layers that exceed these dimensions are cropped as well.
 ];
 sub crop_group {
     my ($state, @params) = @_;
@@ -47,6 +78,26 @@ sub crop_group {
         'help_text' => $crop_group_help_text
     });
     return -1 if $pparams->has_error;
+    
+    my ($group, $left, $bottom, $right, $top) = $pparams->get_required();
+    
+    my $width = $group->get_width();
+    my $height = $group->get_height();
+    
+    my $x_ok = (($left >= 0) and ($right > $left) and ($right < $width));
+    my $y_ok = (($bottom >= 0) and ($top > $bottom) and ($bottom < $height));
+    
+    unless ($x_ok and $y_ok) {
+        $state->report_error("Dimensions are either out of bounds or crossed.");
+        return -1;
+    }
+    
+    my $copy = deepcopy($group);
+    $copy->crop($left, $bottom, $right, $top);
+    
+    my ($result_name) = $pparams->get_result_name();
+    $state->set_variable($result_name, 'group', $copy);
+        
 }
 
 my $new_group_help_text = qq[
@@ -126,7 +177,7 @@ sub copy_group {
 
 # TODO: allow transparent tile to be specified as an optional argument via a terrain
 my $flatten_group_help_text = qq[
-    Flattens a group by merging all layers down, starting with the highest priority. Tiles at the same coordinates in an 'upper' layer will overwrite ones on a 'lower' layer. Ocean tiles are counted as "transparent" in the upper layer. If you do not specify a result, the group will be overwritten. If the '--rename_final' flag is set, the final layer will be renamed to the same name as the group's name.
+    Flattens a group by merging all layers down, starting with the highest priority. Tiles at the same coordinates in an 'upper' layer will overwrite ones on a 'lower' layer. Ocean tiles are counted as "transparent" in the upper layer. If you do not specify a result, the group will be overwritten. If the '--rename_final' flag is set, the final layer will be renamed to the same name as the group's name. Use the 'list_layers' command to see layer priorities.
 ];
 sub flatten_group {
     my ($state, @params) = @_;

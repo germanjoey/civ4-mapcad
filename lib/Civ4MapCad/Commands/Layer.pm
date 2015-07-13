@@ -6,10 +6,36 @@ use warnings;
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(move_layer set_layer_priority cut_layer crop_layer extract_layer find_difference
-                    flip_layer_tb flip_layer_lr copy_layer_from_group);
+                    flip_layer_tb flip_layer_lr copy_layer_from_group merge_two_layers expand_layer_canvas
+                    increase_layer_priority decrease_layer_priority
+                   );
 
 use Civ4MapCad::ParamParser;
 use Civ4MapCad::Util qw(deepcopy);
+
+my $merge_two_layers_help_text = qq[
+    Merges two layers based on their order when calling this command, rather than based on priority in the group (like with the 'flatten_group' command). The first layer wll be considered on top and be the remaining layer after flattening, while the second layer is considered the "background." Both layers must be members of the same group.
+];
+sub merge_two_layers {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'required' => ['layer', 'layer'],
+        'required_descriptions' => ['top layer', 'bottom layer'],
+        'help_text' => $merge_two_layers_help_text
+    });
+    return -1 if $pparams->has_error;
+    
+    my ($layer_top, $layer_bottom) = $pparams->get_required();
+    
+    if ($layer_top->get_group()->get_name() ne $layer_bottom->get_group()->get_name()) {
+        $state->report_error("Both layers must be members of the same group.");
+        return -1;
+    }
+    
+    $layer_top->get_group()->merge_two_and_replace($layer_top->get_name(), $layer_bottom->get_name());;
+    return 1;
+}
 
 my $expand_layer_canvas_help_text = qq[
     Expands a layer's dimensions; attempting to expand the layer to be bigger than its containing group will cause an error.
@@ -18,11 +44,19 @@ sub expand_layer_canvas {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
-        'required' => ['int', 'int'],
-        'required_descriptions' => ['expand width by', 'expand height by'],
+        'required' => ['layer', 'int', 'int'],
+        'required_descriptions' => ['layer to expand', 'expand width by', 'expand height by'],
         'help_text' => $expand_layer_canvas_help_text
     });
     return -1 if $pparams->has_error;
+    
+    my ($layer, $by_width, $by_height) = $pparams->get_required();
+    
+    my $width = $layer->get_width();
+    my $height = $layer->get_height();
+    
+    $layer->expand_dim($width + $by_width, $height + $by_height);
+    return 1;
 }
 
 my $recenter_help_text = qq[
@@ -62,7 +96,7 @@ sub move_layer {
 }
 
 my $set_layer_priority_help_text = qq[
-    The specified layer's priority is set to the specified value; 0 is the highest priority. Layers with equal or lower priority will be moved down.
+    The specified layer's priority is set to the specified value; the higher the number, the higher the priority. Higher priority layers are considered "above" those with lower priorities. When priority is set, the number will be adjusted so that there are no "gaps" in the priority list, and layers with equal or lower priority will be moved down.
 ];
 sub set_layer_priority {
     my ($state, @params) = @_;
@@ -77,13 +111,57 @@ sub set_layer_priority {
     my ($layer, $priority) = $pparams->get_required();
     my $group = $layer->get_group();
     
-    $group->set_layer_priority($layer->get_name(), $priority);
+    my $max = $group->{'max_priority'};
+    $priority = $max if $priority > $max;
+    $priority = 0 if $priority < 0;
+    
+    # priorities are actually stored so that 0 is the highest, so we need to adjust
+    $group->set_layer_priority($layer->get_name(), $max-$priority-1);
+    
+    return 1;
+}
+
+my $increase_layer_priority_help_text = qq[
+    Moves a layer 'up' in the visibility stack; see 'set_layer_priority' for more details.
+];
+sub increase_layer_priority {
+    my ($state, @params) = @_;
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'required' => ['layer'],
+        'required_descriptions' => ['layer to set'],
+        'help_text' => $increase_layer_priority_help_text
+    });
+    return -1 if $pparams->has_error;
+    
+    my ($layer) = $pparams->get_required();
+    my $group = $layer->get_group();
+    
+    $group->increase_priority($layer->get_name());
+    return 1;
+}
+
+my $decrease_layer_priority_help_text = qq[
+    Moves a layer 'down' in the visibility stack; see 'set_layer_priority' for more details.
+];
+sub decrease_layer_priority {
+    my ($state, @params) = @_;
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'required' => ['layer'],
+        'required_descriptions' => ['layer to set'],
+        'help_text' => $decrease_layer_priority_help_text
+    });
+    return -1 if $pparams->has_error;
+    
+    my ($layer) = $pparams->get_required();
+    my $group = $layer->get_group();
+    
+    $group->decrease_priority($layer->get_name());
     return 1;
 }
 
 # apply a mask to a layer, delete everything outside of it, then resize the layer
 my $crop_layer_help_text = qq[
-    This layer's dimensions are trimmed to left/bottom/right/top, from the nominal dimensions of 0 / 0 / width-1 / height-1
+    This layer's dimensions are trimmed to left/bottom/right/top, from the nominal dimensions of 0 / 0 / width-1 / height-1.
 ];
 sub crop_layer {
     my ($state, @params) = @_;
