@@ -41,9 +41,10 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
-*.CivBeyondSwordWBSave
 *.zip
 *.txt
+input/*
+output/*
 debug.txt
 output
 log.civ4mc

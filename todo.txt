@@ -1,28 +1,68 @@
+A: alpha for alpha
+B: required for beta
+
 Big Ticket TODO:
 
-    - method of assigning a fixed set of resources/weights to a mask, one at a time - allocation function
-    - is there a good way of applying a mask to a bunch of starts? a "apply_mask_to_starts" command or something like that? 
-    - balance commands
-    - documentation
-    - tutorials
-    - test difference/merge
-    - tests
+    - B: method of assigning a fixed set of resources/weights to a mask, one at a time - allocation function
+    - B: is there a good way of applying a mask to a bunch of starts? a "apply_mask_to_starts" command or something like that? 
+    - B: balance commands
+    - A: tutorials
+    - A: test difference/merge
+    - B: tests
 
 Medium Ticket TODO:
 
-    - decide how to handle width/height of group vs individual layers
+    - A: decide how to handle width/height of group vs individual layers
         - should groups have a fixed size? should size be based on background?
         - two different merge modes?
-    - merge_all
-    - apply_shape_to_mask
-    - new_mask_from_magic_wand
-    - cleanup_ascii
+    - B: apply_shape_to_mask
+    - B: new_mask_from_magic_wand
+    - A: dump map info
+    - A: dump weight to table
+    - B: redo shitty nested error handling in e.g. Param::Parser with real exceptions ala Try::Tiny
+    - A: organize module methods
 
-Tonight:
-    - parameter descriptions
-    - finish ascii
-    - try to finish banana
-
+Small Ticket TODO:
+    - new wrap/crop commands for group/layer
+    - merge layer command
+        - both layers must be in the same group
+    - A: make set_priority interface have the highest numbers on top
+    
+Group Stuff
+    - when a group is created, wrap can be set or unset, and dimensions are set
+        - import_group sets dimensions and wrap automatically from the base_layer
+        - for new_group:
+            - use flags at creation to set --noWrapX and --noWrapY
+            - &set_group_wrap --wrapX --wrapY
+                - sets cooresponding wrap on each layer
+                - layers all have the same wrap property as the group for that dimension
+            - &expand_layer_canvas
+            - &crop_group
+            - expand_group_canvas
+                - does nothing to the layers
+            - when new layer is added
+                - wrap is set to be the same as the layer
+            - whenever layer is added:
+                - group is expanded if dimension exceeds
+                - a warning is displayed
+            - whenever a layer is resized:
+                - error if expanded beyond group size
+            - whenever a layer is moved:
+                - nothing happens
+            - when two layers are merged:
+                - wrap boundaries are determined based on group dimensions
+                - if wrap occurs, width/height of result layer = width/height of group
+            - when group is flattened
+                - we just flatten each two pair of layers
+                
+Five tutorials
+    - index page
+    - first tutorial (setup + intro)
+    - starting the banana - masks/weights/terrain
+    - intro to layers/groups (a break from the banana)
+    - finishing up the banana
+    - balance
+    
 land allocation method
 1.) find starts
 2.) for each start:

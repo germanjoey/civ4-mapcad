@@ -5,13 +5,10 @@ use warnings;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(write_block_data deepcopy report_error report_warning find_max_players write_config slurp);
+our @EXPORT_OK = qw(write_block_data deepcopy find_max_players write_config slurp);
 
 use Data::Dumper;
 use Config::General qw(SaveConfig);
-
-use Civ4MapCad::Object::Group;
-use Civ4MapCad::Object::Layer;
 
 sub write_block_data {
     my ($obj, $fh, $indent, $name1, $name2) = @_;
@@ -35,6 +32,7 @@ sub deepcopy {
     my ($v) = @_;
     
     if (ref($v) =~ /Group/) {
+        eval "use Civ4MapCad::Object::Group; "; # delay import to prevent recursive import goofiness
         my $copy = Civ4MapCad::Object::Group->new_blank($v->get_width(), $v->get_height());
         foreach my $k (keys %$v) {
             $copy->{$k} = deepcopy($v->{$k});
@@ -45,6 +43,7 @@ sub deepcopy {
         my $width = $v->get_width();
         my $height = $v->get_height();
         
+        eval " use Civ4MapCad::Object::Layer; "; # delay import to prevent recursive import goofiness
         my $copy = Civ4MapCad::Object::Layer->new_default($v->get_name(), $width, $height);
         
         foreach my $k (keys %$v) {

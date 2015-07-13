@@ -201,6 +201,7 @@ sub is_land {
 
 sub is_water {
     my ($self) = @_;
+    
     return (($self->{'TerrainType'} eq 'TERRAIN_OCEAN') or ($self->{'TerrainType'} eq 'TERRAIN_COAST')) ? 1 : 0;
 }
 
@@ -212,7 +213,6 @@ sub is_blank {
 sub update_tile {
     my ($self, $terrain) = @_;
     
-    use Data::Dumper;
     foreach my $key (keys %$terrain) {
         return -1 unless exists $field_names{$key};
         $self->{$key} = $terrain->{$key};
@@ -285,6 +285,8 @@ sub to_cell {
     }
     
     $title =  $self->get('x') . ',' . $self->get('y') . $title;
+    
+    $title =~ s/\s+/ /g;
     
     my $cell = qq[<a title="$title">$icon</a>];
     return qq[<td class="tooltip"><div class="$tt$variety$river">$cell</div></td>];

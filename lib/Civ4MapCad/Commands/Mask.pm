@@ -310,7 +310,8 @@ sub _two_op {
 }
 
 my $generate_layer_from_mask_help_text = qq[
-    
+    Create a layer by applying a weight table to a mask. The value at each mask coordinate is evaluated according to the weight table, which is used to generate a new tile. For example, if the mask's value at coordinate 3,2 is equal to 0.45, and the weight table specifies that values
+    between 0.4 and 1 map to an ordinary grassland tile, then the output layer will have a grassland tile at 3,2.
 ];
 sub generate_layer_from_mask {
     my ($state, @params) = @_;
@@ -341,12 +342,12 @@ sub generate_layer_from_mask {
     $layer->apply_mask($mask, $weight, $offsetX, $offsetY, 1);
     
     my $result = $group->add_layer($layer);
-    if ($result != 1) {
-        $state->report_warning("layer named $layer_name already exists in group '$group_name'.");
-        return -1;
+    if (exists $result->{'error'}) {
+        $state->report_warning($result->{'error_msg'});
     }
-    
+        
     $state->set_variable("\$$group_name.$layer_name", 'layer', $layer);
+    return 1;
 }
 
 sub modify_layer_with_mask {
@@ -377,13 +378,11 @@ sub modify_layer_with_mask {
     $copy->apply_mask($mask, $weight, $offsetX, $offsetY, 0);
     
     my $result = $group->add_layer($copy);
-    if ($result != 1) {
-        $state->report_warning("copy named $layer_name already exists in group '$group_name'.");
-        return -1;
+    if (exists $result->{'error'}) {
+        $state->report_warning($result->{'error_msg'});
     }
     
     $state->set_variable("\$$group_name.$layer_name", 'layer', $copy);
-    
     return 1;
 }
 
@@ -415,9 +414,8 @@ sub cutout_layer_with_mask {
     my $selected = $layer->select_with_mask($mask, $offsetX, $offsetY, $clear) = @_;
     
     my $result = $group->add_layer($selected);
-    if ($result != 1) {
-        $state->report_warning("layer named $layer_name already exists in group '$group_name'.");
-        return -1;
+    if (exists $result->{'error'}) {
+        $state->report_warning($result->{'error_msg'});
     }
     
     $state->set_variable("\$$group_name.$layer_name", 'layer', $selected);

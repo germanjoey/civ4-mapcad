@@ -10,7 +10,7 @@ our @EXPORT_OK = qw(dump_out dump_framework dump_single_layer);
 use Civ4MapCad::Util qw(slurp);
 
 sub dump_framework {
-    my ($template_filename, $dump_filename, $name, $start_index, $tabs) = @_;
+    my ($template_filename, $dump_filename, $full_name, $start_index, $tabs) = @_;
     
     my @tab_heads; my @tab_bodies;
     
@@ -51,7 +51,7 @@ sub dump_framework {
         $body .= $tb;
     }
     
-    dump_out($template_filename, $dump_filename, $name, $head, $body);
+    dump_out($template_filename, $dump_filename, $full_name, $head, $body);
 }
 
 sub dump_out {
@@ -73,7 +73,7 @@ sub dump_out {
 }
 
 sub dump_single_layer {
-    my ($layer, $do_info) = @_;
+    my ($layer, $name, $do_info) = @_;
     
     my $map = $layer->{'map'};
     
@@ -87,6 +87,8 @@ sub dump_single_layer {
         foreach my $x (0..$maxrow) {
             my $tile = $map->{'Tiles'}[$x][$y];
             
+            warn "$y $x" unless defined $tile;
+            
             push @row, $tile->to_cell;
         }
         
@@ -98,7 +100,7 @@ sub dump_single_layer {
         $info = dump_layer_info($layer);
     }
     
-    return [$layer->get_name(), $info, \@cells];
+    return [$name, $info, \@cells];
 }
 
 sub dump_layer_info {

@@ -52,11 +52,18 @@ sub default {
 
 sub get {
     my ($self, $key) = @_;
+    return unless exists $self->{$key};
     return $self->{$key};
 }
 
 sub set {
     my ($self, $key, $value) = @_;
+    
+    if ((($key eq 'wrap X') or ($key eq 'wrap Y')) and ($value == 0)) {
+        delete $self->{$key};
+    }
+    
+    
     $self->{$key} = $value;
 }
 

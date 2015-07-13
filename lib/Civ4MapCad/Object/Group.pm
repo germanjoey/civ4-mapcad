@@ -13,9 +13,11 @@ sub new_blank {
    
     my $obj = {
         'name' => $name,
+        'wrapX' => 1,
+        'wrapY' => 1,
         'layers' => {}, # indexed by name
-        'width' => 0,
-        'height' => 0,
+        'width' => $width,
+        'height' => $height,
         'max_priority' => -1,
         'priority' => {}, # indexed by name, value is priority. bottom layer (highest priority, which is the lowest number) defines map settings
     };
@@ -30,6 +32,8 @@ sub new_from_import {
     
     my $obj = {
         'layers' => {},
+        'wrapX' => 0,
+        'wrapY' => 0,
         'width' => 0,
         'height' => 0,
         'max_priority' => -1,
@@ -40,15 +44,46 @@ sub new_from_import {
     $self->{'name'} = $name;
     my $layer = Civ4MapCad::Object::Layer->new_from_import($name, $filename);
     
+    # error on import
     if (ref($layer) eq '') {
         return $layer;
     };
     
-    $self->add_layer($layer);
-    $self->{'width'} = $self->{'layers'}{$name}->get_width;
-    $self->{'height'} = $self->{'layers'}{$name}->get_height;
+    $self->{'width'} = $layer->get_width();
+    $self->{'height'} = $layer->get_height();
+    $self->{'wrapX'} = ($layer->wrapsX()) ? 1 : 0;
+    $self->{'wrapY'} = ($layer->wrapsY()) ? 1 : 0;
     
+    $self->add_layer($layer);
     return $self;
+}
+
+sub wrapsX {
+    my ($self) = @_;
+    return $self->{'wrapX'};
+}
+
+sub wrapsY {
+    my ($self) = @_;
+    return $self->{'wrapY'};
+}
+
+sub set_wrapX {
+    my ($self, $value) = @_;
+    
+    $self->{'wrapX'} = $value;
+    foreach my $layer ($self->get_layers()) {
+        $layer->set_wrapX($value);
+    }
+}
+
+sub set_wrapY {
+    my ($self, $value) = @_;
+    
+    $self->{'wrapY'} = $value;
+    foreach my $layer ($self->get_layers()) {
+        $layer->set_wrapY($value);
+    }
 }
 
 sub get_width {
@@ -59,6 +94,25 @@ sub get_width {
 sub get_height {
     my ($self) = @_;
     return $self->{'height'};
+}
+
+sub expand_dimensions {
+    my ($self, $width, $height) = @_;
+    $self->{'width'} = $width;
+    $self->{'height'} = $height;
+}
+
+sub crop {
+    my ($self, $left, $bottom, $right, $top) = @_;
+    
+    foreach my $layer ($self->get_layers()) {
+        if ($layer->check_window($left, $bottom, $right, $top)) {
+            $layer->crop($left, $bottom, $right, $top);
+        }
+    }
+    
+    $self->{'width'} = $right - $left;
+    $self->{'height'} = $top - $bottom;
 }
 
 sub set_layer {
@@ -104,25 +158,45 @@ sub get_layer_names {
 sub add_layer {
     my ($self, $layer) = @_;
     my $layer_name = $layer->get_name();
+    my $group_name = $self->get_name();
+    
+    $layer->set_membership($self);
+    $layer->set_wrapX($self->{'wrapX'});
+    $layer->set_wrapY($self->{'wrapY'});
+    
+    my %ret = ('error_msg' => '');
     
     if (exists $self->{'layers'}{$layer_name}) {
         # WARNING: ovewriting!
         $self->{'layers'}{$layer_name} = $layer;
-        return -1;
+        $layer->set_membership($self);
+        
+        $ret{'error'} = 1;
+        $ret{'error_msg'} = "layer named '$layer_name' already exists in group '$group_name'... overwriting";
     }
-   
-    $self->{'max_priority'} ++;
-    $self->{'layers'}{$layer_name} = $layer;
-    $self->{'priority'}{$layer_name} = $self->{'max_priority'};
-   
-    if ($self->{'max_priority'} == 0) {
-        $self->{'width'} = $layer->get_width();
-        $self->{'height'} = $layer->get_height();
+    else {
+        $self->{'max_priority'} ++;
+        $self->{'layers'}{$layer_name} = $layer;
+        $self->{'priority'}{$layer_name} = $self->{'max_priority'};
     }
     
-    $layer->set_membership($self);
+    if (($layer->get_width() > $self->get_width()) or ($layer->get_height() > $self->get_height())) {
+        if ($layer->get_width() > $self->get_width()) {
+            $self->{'width'} = $layer->get_width();
+        }
+        
+        if ($layer->get_height() > $self->get_height()) {
+            $self->{'height'} = $layer->get_height();
+        }
+        
+        $ret{'error'} = 1;
+        $ret{'error_msg'} .= " and " if $ret{'error_msg'} =~ /\w/;
+        $ret{'error_msg'} .= "the addition of layer named '$layer_name' to group '$group_name' has stretched its size.";
+        
+    }
    
-    return 1;
+    $ret{'error_msg'} .= '.';
+    return \%ret;
 }
 
 # expand numbers can be negative
@@ -208,14 +282,14 @@ sub merge_two_and_replace {
     delete $self->{'priority'}{$layer2_name};
     delete $self->{'layers'}{$layer2_name};
    
-    my $merged = $layer1->merge($layer2);
+    my $merged = $layer1->merge_with_layer($layer2);
     $self->{'layers'}{$layer1_name} = $merged;
    
     return 1;
 }
  
 sub merge_all {
-    my ($self) = @_;
+    my ($self, $rename_final_to_match) = @_;
    
     my $copy = deepcopy($self);
    
@@ -225,10 +299,17 @@ sub merge_all {
        
         $copy->merge_two_and_replace($remaining_layers[0], $remaining_layers[1]);
     }
-   
-    # cleanup priority list
+    
     my @remaining_layers = $copy->get_layer_names();
-    $copy->{'priority'}{$remaining_layers[0]} = 0;
+    my $remnant = $remaining_layers[0];
+    
+    # fill in the background so the final result has the correct size
+    my $background = Civ4MapCad::Object::Layer->new_default('__background', $self->get_width(), $self->get_height());
+    $self->{'layers'}{$remnant} = $self->{'layers'}{$remnant}->merge_with_layer($background);
+    $self->{'layers'}{$remnant}->rename($self->get_name()) if $rename_final_to_match;
+    
+    # cleanup priority list
+    $copy->{'priority'}{$remnant} = 0;
     $self->{'max_priority'} = 0;
    
     return $copy;
@@ -382,7 +463,7 @@ sub export {
     
     my @layers = $self->get_layers();
     
-    print "\n" if @layers > 1;
+    print "\n";
     
     foreach my $layer (@layers) {
         my $layer_name = $layer->get_name();
@@ -402,7 +483,7 @@ sub export {
         print "  Exported layer $layer_name.\n";
     }
     
-    print "\n" if @layers > 1;
+    print "\n";
     
     return 1;
 }

@@ -36,7 +36,7 @@ sub check_op {
     return 1;
 }
 
-# TODO: check value to make sure its between 0 and 1
+# TODO: check value to make sure its between 0 and 1?
 sub evaluate {
     my ($self, $value) = @_;
     my $state = $self->{'state'};

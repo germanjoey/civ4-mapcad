@@ -1,0 +1,1821 @@
+Version=11
+BeginGame
+	Era=ERA_ANCIENT
+	Speed=GAMESPEED_NORMAL
+	Calendar=CALENDAR_DEFAULT
+	Option=GAMEOPTION_LEAD_ANY_CIV
+	Option=GAMEOPTION_NO_VASSAL_STATES
+	Option=GAMEOPTION_NO_GOODY_HUTS
+	Option=GAMEOPTION_NO_EVENTS
+	Victory=VICTORY_TIME
+	GameTurn=0
+	MaxTurns=500
+	MaxCityElimination=0
+	NumAdvancedStartPoints=600
+	TargetScore=0
+	StartYear=-4000
+	Description=
+	ModPath=
+EndGame
+BeginTeam
+	TeamID=0
+	Tech=TECH_AGRICULTURE
+	Tech=TECH_HUNTING
+	ContactWithTeam=0
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=1
+	ContactWithTeam=1
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=2
+	ContactWithTeam=2
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=3
+	ContactWithTeam=3
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=4
+	ContactWithTeam=4
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=5
+	ContactWithTeam=5
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=6
+	ContactWithTeam=6
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=7
+	ContactWithTeam=7
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=8
+	ContactWithTeam=8
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=9
+	ContactWithTeam=9
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=10
+	ContactWithTeam=10
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=11
+	ContactWithTeam=11
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=12
+	ContactWithTeam=12
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=13
+	ContactWithTeam=13
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=14
+	ContactWithTeam=14
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=15
+	ContactWithTeam=15
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=16
+	ContactWithTeam=16
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=17
+	ContactWithTeam=17
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=18
+	ContactWithTeam=18
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=19
+	ContactWithTeam=19
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=20
+	ContactWithTeam=20
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=21
+	ContactWithTeam=21
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=22
+	ContactWithTeam=22
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=23
+	ContactWithTeam=23
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=24
+	ContactWithTeam=24
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=25
+	ContactWithTeam=25
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=26
+	ContactWithTeam=26
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=27
+	ContactWithTeam=27
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=28
+	ContactWithTeam=28
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=29
+	ContactWithTeam=29
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=30
+	ContactWithTeam=30
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=31
+	ContactWithTeam=31
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=32
+	ContactWithTeam=32
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=33
+	ContactWithTeam=33
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=34
+	ContactWithTeam=34
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=35
+	ContactWithTeam=35
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=36
+	ContactWithTeam=36
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=37
+	ContactWithTeam=37
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=38
+	ContactWithTeam=38
+	RevealMap=0
+EndTeam
+BeginTeam
+	TeamID=39
+	ContactWithTeam=39
+	RevealMap=0
+EndTeam
+BeginPlayer
+	Team=0
+	LeaderType=LEADER_GENGHIS_KHAN
+	LeaderName=Temujin
+	CivDesc=TXT_KEY_CIV_ZULU_DESC
+	CivShortDesc=TXT_KEY_CIV_ZULU_SHORT_DESC
+	CivAdjective=TXT_KEY_CIV_ZULU_ADJECTIVE
+	FlagDecal=Art/Interface/TeamColor/FlagDECAL_ZuluShield.dds
+	WhiteFlag=0
+	CivType=CIVILIZATION_ZULU
+	Color=PLAYERCOLOR_LIGHT_YELLOW
+	ArtStyle=ARTSTYLE_MIDDLE_EAST
+	PlayableCiv=1
+	MinorNationStatus=0
+	StartingGold=0
+	StartingX=8, StartingY=3
+	StateReligion=
+	StartingEra=ERA_ANCIENT
+	RandomStartLocation=false
+	CivicOption=CIVICOPTION_GOVERNMENT, Civic=CIVIC_DESPOTISM
+	CivicOption=CIVICOPTION_LEGAL, Civic=CIVIC_BARBARISM
+	CivicOption=CIVICOPTION_LABOR, Civic=CIVIC_TRIBALISM
+	CivicOption=CIVICOPTION_ECONOMY, Civic=CIVIC_DECENTRALIZATION
+	CivicOption=CIVICOPTION_RELIGION, Civic=CIVIC_PAGANISM
+	Handicap=HANDICAP_MONARCH
+EndPlayer
+BeginPlayer
+	Team=1
+	LeaderType=LEADER_TOKUGAWA
+	LeaderName=DUMMY
+	CivDesc=DUMMY
+	CivShortDesc=DUMMY
+	CivAdjective=DUMMY
+	FlagDecal=Art/Interface/TeamColor/FlagDECAL_EyeOfRa.dds
+	WhiteFlag=0
+	CivType=CIVILIZATION_JAPAN
+	Color=PLAYERCOLOR_DARK_PINK
+	ArtStyle=ARTSTYLE_MIDDLE_EAST
+	PlayableCiv=0
+	MinorNationStatus=0
+	StartingGold=0
+	StartingX=0, StartingY=0
+	StateReligion=
+	StartingEra=ERA_ANCIENT
+	RandomStartLocation=false
+	CivicOption=CIVICOPTION_GOVERNMENT, Civic=CIVIC_DESPOTISM
+	CivicOption=CIVICOPTION_LEGAL, Civic=CIVIC_REPRESENTATION
+	CivicOption=CIVICOPTION_LABOR, Civic=CIVIC_POLICE_STATE
+	CivicOption=CIVICOPTION_ECONOMY, Civic=CIVIC_DECENTRALIZATION
+	CivicOption=CIVICOPTION_RELIGION, Civic=CIVIC_PAGANISM
+	Handicap=HANDICAP_MONARCH
+EndPlayer
+BeginPlayer
+	Team=2
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=3
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=4
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=5
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=6
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=7
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=8
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=9
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=10
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=11
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=12
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=13
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=14
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=15
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=16
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=17
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=18
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=19
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=20
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=21
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=22
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=23
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=24
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=25
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=26
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=27
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=28
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=29
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=30
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=31
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=32
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=33
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=34
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=35
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=36
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=37
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=38
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginPlayer
+	Team=39
+	LeaderType=NONE
+	CivType=NONE
+	Color=NONE
+	ArtStyle=NONE
+	Handicap=HANDICAP_NOBLE
+EndPlayer
+BeginMap
+	grid width=15
+	grid height=15
+	top latitude=30
+	bottom latitude=30
+	wrap X=1
+	wrap Y=1
+	world size=WORLDSIZE_STANDARD
+	climate=CLIMATE_TEMPERATE
+	sealevel=SEALEVEL_MEDIUM
+	num plots written=225
+	num signs written=0
+	Randomize Resources=false
+EndMap
+
+### Plot Info ###
+BeginPlot
+	x=0,y=0
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+	BeginUnit
+		UnitType=UNIT_SETTLER, UnitOwner=1
+		Damage=0
+		Level=1, Experience=0
+		FacingDirection=4
+		UnitAIType=UNITAI_SETTLE
+	EndUnit
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=0,y=1
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=0,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=0,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=5
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=6
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=7
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=8
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=9
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=0,y=13
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=0,y=14
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=1,y=0
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=1,y=1
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=1,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=1,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=5
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=6
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=7
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=8
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=9
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=1,y=13
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=1,y=14
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=2,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=2,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=2,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=2,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=5
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=6
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=7
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=8
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=9
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=2,y=13
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=2,y=14
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=3,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=5
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=6
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=7
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=8
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=9
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=13
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=3,y=14
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=5
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=6
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=7
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=8
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=9
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=13
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=4,y=14
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=4
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=5
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=6
+	FeatureType=FEATURE_FOREST, FeatureVariety=0
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=5,y=7
+	TerrainType=TERRAIN_GRASS
+	PlotType=1
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=5,y=8
+	BonusType=BONUS_HORSE
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=5,y=9
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=10
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=13
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=5,y=14
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=4
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=5
+	BonusType=BONUS_COPPER
+	TerrainType=TERRAIN_PLAINS
+	PlotType=1
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=6,y=6
+	FeatureType=FEATURE_FOREST, FeatureVariety=0
+	TerrainType=TERRAIN_PLAINS
+	PlotType=2
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=6,y=7
+	FeatureType=FEATURE_FOREST, FeatureVariety=0
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=6,y=8
+	BonusType=BONUS_DEER
+	FeatureType=FEATURE_FOREST, FeatureVariety=1
+	TerrainType=TERRAIN_GRASS
+	PlotType=1
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=6,y=9
+	RiverNSDirection=0
+	isWOfRiver
+	FeatureType=FEATURE_FOREST, FeatureVariety=0
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=6,y=10
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=13
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=6,y=14
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=4
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=5
+	RiverNSDirection=0
+	isWOfRiver
+	FeatureType=FEATURE_FOREST, FeatureVariety=1
+	TerrainType=TERRAIN_GRASS
+	PlotType=1
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=7,y=6
+	RiverNSDirection=0
+	isWOfRiver
+	FeatureType=FEATURE_FOREST, FeatureVariety=1
+	TerrainType=TERRAIN_PLAINS
+	PlotType=1
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=7,y=7
+	BonusType=BONUS_IRON
+	TerrainType=TERRAIN_PLAINS
+	PlotType=1
+	BeginUnit
+		UnitType=UNIT_SCOUT, UnitOwner=0
+		Damage=0
+		Level=1, Experience=0
+		FacingDirection=4
+		UnitAIType=UNITAI_EXPLORE
+	EndUnit
+	BeginUnit
+		UnitType=UNIT_SETTLER, UnitOwner=0
+		Damage=0
+		Level=1, Experience=0
+		FacingDirection=4
+		UnitAIType=UNITAI_SETTLE
+	EndUnit
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=7,y=8
+	TerrainType=TERRAIN_GRASS
+	PlotType=1
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=7,y=9
+	isNOfRiver
+	RiverWEDirection=3
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=7,y=10
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=13
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=7,y=14
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=4
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=5
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=8,y=6
+	BonusType=BONUS_WHEAT
+	TerrainType=TERRAIN_PLAINS
+	PlotType=2
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=8,y=7
+	isNOfRiver
+	RiverWEDirection=1
+	TerrainType=TERRAIN_GRASS
+	PlotType=1
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=8,y=8
+	BonusType=BONUS_BANANA
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=8,y=9
+	isNOfRiver
+	RiverWEDirection=3
+	FeatureType=FEATURE_FOREST, FeatureVariety=1
+	TerrainType=TERRAIN_GRASS
+	PlotType=1
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=8,y=10
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=13
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=8,y=14
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=4
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=5
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=9,y=6
+	RiverNSDirection=2
+	isWOfRiver
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=9,y=7
+	isNOfRiver
+	RiverWEDirection=1
+	FeatureType=FEATURE_FOREST, FeatureVariety=1
+	TerrainType=TERRAIN_GRASS
+	PlotType=1
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=9,y=8
+	FeatureType=FEATURE_FOREST, FeatureVariety=0
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=9,y=9
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+	TeamReveal=0,
+EndPlot
+BeginPlot
+	x=9,y=10
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=13
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=9,y=14
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=5
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=6
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=7
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=8
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=9
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=13
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=10,y=14
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=5
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=6
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=7
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=8
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=9
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=13
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=11,y=14
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=5
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=6
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=7
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=8
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=9
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=13
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=12,y=14
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=13,y=0
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=13,y=1
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=13,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=13,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=13,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=13,y=5
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=13,y=6
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=13,y=7
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=13,y=8
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=13,y=9
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=13,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=13,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=13,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=13,y=13
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=13,y=14
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=14,y=0
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=14,y=1
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=14,y=2
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=14,y=3
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=14,y=4
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=14,y=5
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=14,y=6
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=14,y=7
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=14,y=8
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=14,y=9
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=14,y=10
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=14,y=11
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=14,y=12
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+EndPlot
+BeginPlot
+	x=14,y=13
+	TerrainType=TERRAIN_OCEAN
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+BeginPlot
+	x=14,y=14
+	TerrainType=TERRAIN_COAST
+	PlotType=3
+	TeamReveal=1,
+EndPlot
+
+### Sign Info ###

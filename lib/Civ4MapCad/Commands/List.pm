@@ -56,7 +56,6 @@ sub list_layers {
     my @layers = map { sprintf "priority %2d, %s", $group->get_layer_priority($_), $_ } ($group->get_layer_names());
     
     $state->list( @layers );
-    
     return 1;
 }
  
@@ -90,6 +89,7 @@ sub list_weights {
     if (@params == 1) {
         @weights = grep { $_ =~ /$params[0]/ } @weights;
     }
+    
     $state->list( @weights );
     return 1;
 }
@@ -115,15 +115,14 @@ sub show_weights {
     my @to_show;
     
     if ($flatten) {
-        @to_show = map { "$_->[0] $_->[1] => $_->[2]," } ( $weight->flatten(1) );
+        @to_show = map { sprintf "$_->[0] %6.4f => $_->[2],", $_->[1] } ( $weight->flatten(1) );
     }
     else {
-        @to_show = map { "$_->[0] $_->[1] => $_->[2]," } (@{ $weight->{'pairs'} });
+        @to_show = map { sprintf "$_->[0] %6.4f => $_->[2],", $_->[1] } (@{ $weight->{'pairs'} });
     }
     
     $to_show[-1] =~ s/,$//;
     $state->list( @to_show );
-    
     return 1;
 }
 
@@ -151,6 +150,8 @@ sub dump_mask_to_console {
         print "\n";
     }
     print "\n";
+    
+    return 1;
 }
 
 my $dump_mask_help_text = qq[
@@ -169,10 +170,21 @@ sub dump_mask {
     
     my ($mask) = $pparams->get_required();
     my ($mask_name) = $pparams->get_required_names();
-    
     my $add_to_existing = $pparams->get_named("add_to_existing");
-    my $template = ($add_to_existing) ? 'dump.html' : 'def/dump.html.tmpl';
-    my $start_index = ($add_to_existing) ? (_find_max_tab($template)+1) : 0;
+    
+    my $template;
+    my $set_index;
+    my $start_index;
+    if ($add_to_existing) {
+        $template = 'dump.html';
+        $start_index = _find_max_tab($template)+1;
+        $set_index = _find_max_set($template)+1;
+    }
+    else {
+        $template = 'def/dump.html.tmpl';
+        $set_index = 1;
+        $start_index = 0;
+    }
     
     my $canvas = $mask->{'canvas'};
     my $maxrow = $#$canvas;
@@ -194,7 +206,8 @@ sub dump_mask {
         push @cells, \@row;
     }
     
-    dump_framework($template, 'dump.html', $mask_name, $start_index, [[$mask_name, [], \@cells]])
+    dump_framework($template, 'dump.html', $mask_name, $start_index, [["$set_index: " . $mask_name, [], \@cells]]);
+    return 1;
 }
 
 my $dump_group_help_text = qq[
@@ -214,22 +227,33 @@ sub dump_group {
     return -1 if $pparams->has_error;
     
     my ($group) = $pparams->get_required();
-    my $copy = deepcopy($group);
-    
-    # TODO
     my $do_info = $pparams->get_named('info_too');
+    my $add_to_existing = $pparams->get_named("add_to_existing");
+    
+    my $template;
+    my $set_index;
+    my $start_index;
+    if ($add_to_existing) {
+        $template = 'dump.html';
+        $start_index = _find_max_tab($template) + 1;
+        $set_index = _find_max_set($template) + 1;
+    }
+    else {
+        $template = 'def/dump.html.tmpl';
+        $set_index = 1;
+        $start_index = 0;
+    }
+    
+    my $copy = deepcopy($group);
     
     my @layer_cells;
     foreach my $layer ($copy->get_layers()) {
         $layer->fix_coast();
-        push @layer_cells, dump_single_layer($layer, $do_info);
+        push @layer_cells, dump_single_layer($layer, "$set_index: " . $layer->get_name(), $do_info);
     }
     
-    my $add_to_existing = $pparams->get_named("add_to_existing");
-    my $template = ($add_to_existing) ? 'dump.html' : 'def/dump.html.tmpl';
-    my $start_index = ($add_to_existing) ? (_find_max_tab($template)+1) : 0;
-    
     dump_framework($template, 'dump.html', $group->get_name(), $start_index, \@layer_cells);
+    return 1;
 }
 
 my $dump_layer_help_text = qq[
@@ -250,15 +274,28 @@ sub dump_layer {
     
     my ($layer) = $pparams->get_required();
     my $do_info = $pparams->get_named('info_too');
-    my $copy = deepcopy($layer);
-    $copy->fix_coasts();
-    
     my $add_to_existing = $pparams->get_named("add_to_existing");
-    my $template = ($add_to_existing) ? 'dump.html' : 'def/dump.html.tmpl';
-    my $start_index = ($add_to_existing) ? (_find_max_tab($template)+1) : 0;
-
-    my $cells = dump_single_layer($copy, $do_info);
+    
+    my $template;
+    my $set_index;
+    my $start_index;
+    if ($add_to_existing) {
+        $template = 'dump.html';
+        $start_index = _find_max_tab($template)+1;
+        $set_index = _find_max_set($template)+1;
+    }
+    else {
+        $template = 'def/dump.html.tmpl';
+        $set_index = 1;
+        $start_index = 0;
+    }
+    
+    my $copy = deepcopy($layer);
+    $copy->fix_coast();
+    
+    my $cells = dump_single_layer($copy, "$set_index: " . $layer->get_name(), $do_info);
     dump_framework($template, 'dump.html', $layer->get_name(), $start_index, [$cells]);
+    return 1;
 }
 
 sub _find_max_tab {
@@ -269,6 +306,15 @@ sub _find_max_tab {
     my @tabs = $template =~ /id="tabs-(\d+)"/g;
     @tabs = sort {$b <=> $a} @tabs;
     return $tabs[0];
+}
+
+sub _find_max_set {
+    my ($template_filename) = @_;
+    
+    my ($template) = slurp($template_filename);
+    my @sets = $template =~ /a href=\"\#tabs-\d+\">(\d+):/g;
+    @sets = sort {$b <=> $a} @sets;
+    return $sets[0];
 }
 
 1;

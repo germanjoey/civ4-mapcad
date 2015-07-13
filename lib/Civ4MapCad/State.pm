@@ -8,6 +8,8 @@ use Text::Wrap qw(wrap);
 use Civ4MapCad::Commands;
 our $repl_table = create_dptable Civ4MapCad::Commands; 
 
+use Civ4MapCad::Util qw(deepcopy);
+
 sub new {
     my $proto = shift;
     my $class = ref $proto || $proto;
@@ -22,7 +24,8 @@ sub new {
         'mask' => {},
         'terrain' => {},
         'in_script' => 0,
-        'log' => []
+        'log' => [],
+        'return_stack' => []
     };
     
     return bless $obj, $class;
@@ -43,28 +46,78 @@ sub process_command {
     my ($command_name, @params) = split ' ', $command;    
     $command_name = lc $command_name;
     
-    # TODO: create a "return" command to allow run_script to return a result
-    if ($command_name eq 'run_script') {
-        if (@params != 1) {
-            my $n = @params;
-            $self->report_error("run_script uses only 1 parameter, but recieved $n. Please see commands.txt for more info.");
+    if ($command_name eq 'return') {
+        if ((@params == 1) and ($params[0] eq '--help')) {
+            print "\n";
+            print "  Command format:\n\n";
+            print "  return <result>\n\n";
+            print "  Returns a result from a script to be assigned to some other objec. The \n";
+            print "  return type may be any type of group/layer/mask/weight, but not shape. If\n";
+            print "  this result is ignored, a warning will be produced.\n\n";
+            
+            return 1;
         }
-    
-        if ($params[0] !~ /^"[^"]+"$/) {
-            $self->report_error("run_script requires a single string argument containing the path to the script to run.");
-        }
-        
-        $params[0] =~ s/\"//g;
-        
-        $self->in_script();
-        my $ret = $self->process_script(@params);
-        $self->off_script();
         
         if ($self->is_off_script()) {
-            $self->add_log($command);
+            return 1;
         }
         
-        return $ret;
+        if ((@params != 1)) {
+            $self->report_error("Incorrect command format.");
+            print "  Command format:\n\n";
+            print "  return <result>\n\n";
+            return -1;
+        }
+        
+        my $to_return = $params[0];
+        my $return_type = $self->get_variable_type_from_name($to_return);
+        if (exists $return_type->{'error'}) {
+            $self->report_error($return_type->{'error_msg'});
+            return -1;
+        }
+        $return_type = $return_type->{'type'};
+        
+        if ($return_type eq 'shape') {
+            $self->report_error("Shapes cannot be returned from scripts.");
+            return -1;
+        }
+        
+        if (!$self->variable_exists($to_return, $return_type)) {
+            $self->report_error("Unknown variable '$to_return' of type '$return_type'.");
+            return -1;
+        }
+        
+        if ($self->return_stack_empty()) {
+            $self->report_warning("return used but no result from script was specified.");
+            return 1;
+        }
+        
+        my ($expected_name, $expected_type) = $self->shift_script_return();
+        if ($expected_type ne $return_type) {
+            $self->report_error("Result variable '$expected_name' does not match returned variable '$to_return'.");
+        }
+        
+        my $obj = $self->get_variable($to_return, $return_type);
+        my $copy = deepcopy($obj);
+        
+        $self->set_variable($expected_name, $return_type, $copy);
+        
+        return 1;
+    }
+    
+    elsif ($command_name eq 'eval') {
+        if ((@params == 1) and ($params[0] eq '--help')) {
+            print "\n";
+            print "  Command format:\n\n";
+            print "  eval <code>\n\n  Evaluates perl code and prints the result. Everything on the command line\n";
+            print "  after the 'eval' keyword will be evaluated.\n\n";
+            return 1;
+        }
+    
+        my $full_line = join ' ', @params;
+        print eval $full_line;
+        print "\n";
+        return 1;
     }
     
     elsif ($command_name eq 'exit') {
@@ -73,7 +126,7 @@ sub process_command {
     
     elsif ($command_name eq 'help') {
         my @com_list = keys %$repl_table;
-        push @com_list, ('exit', 'help', 'run_script');
+        push @com_list, ('eval', 'exit', 'help', 'return');
         @com_list = sort @com_list;
         
         if (@params == 1) {
@@ -156,14 +209,31 @@ sub process_script {
         my ($i, $line) = @$l;
         
         my $ret = $self->process_command($line);
-        
         if ($ret == -1) {
-            print " ** inducing early script exit for script '$script_path' due to error on line '$i'...\n\n";
+            $self->report_message(" ** inducing early script exit for script '$script_path' due to error on line '$i'...");
+            print "\n\n";
             return -1;
         }
     }
     
     return 1;
+}
+
+sub push_script_return {
+    my ($self, $name, $type) = @_;
+    push @{ $self->{'return_stack'} }, [$name, $type];
+}
+
+sub return_stack_empty {
+    my ($self) = @_;
+    return 1 if @{ $self->{'return_stack'} } == 0;
+    return 0;
+}
+
+sub shift_script_return {
+    my ($self) = @_;
+    my ($ret) = shift @{ $self->{'return_stack'} };    
+    return @$ret;
 }
 
 sub in_script {
@@ -220,17 +290,52 @@ sub get_variable {
 sub set_variable {
     my ($self, $name, $type, $value) = @_;
     
+    if ($type eq 'layer') {
+        $self->_assign_layer_result($name, $value);
+        return;
+    }
+    
     $self->{$type}{$name} = $value;
     
     if ($type eq 'group') {
         $name =~ s/\$//g;
         $value->rename($name);
+        
+        # clear out old layer names, in case some got deleted in a merge
+        foreach my $full_layer_name (keys %{ $self->{'layer'} }) {
+            if ($full_layer_name =~ /^\$$name/) {
+                delete $self->{'layer'}{$full_layer_name};
+            }
+        }
     
+        # now add them back
         foreach my $layer ($value->get_layers()) {
-            my $layername = $layer->get_name();
-            $self->{'layer'}{"\$$name.$layername"} = $layer;
+            my $layer_name = $layer->get_name();
+            $self->{'layer'}{"\$$name.$layer_name"} = $layer;
         }
     }
+}
+
+sub _assign_layer_result {
+    my ($self, $result_name, $result_layer) = @_;
+    
+    my ($result_group_name, $result_layer_name) = $result_name =~ /\$(\w+)\.(\w+)/;
+    my $group = $self->get_variable('$' . $result_group_name, 'group');
+    $result_layer->rename($result_layer_name);
+        
+    if ($group->layer_exists($result_layer_name)) {
+        $group->set_layer($result_layer_name, $result_layer);
+    }
+    else {
+        my $result = $group->add_layer($result_layer);
+        if (exists $result->{'error'}) {
+            $self->report_warning($result->{'error_msg'});
+        }
+    }
+    
+    $result_layer->set_membership($group);
+    
+    $self->{'layer'}{'$' . "$result_group_name.$result_layer_name"} = $result_layer;
 }
 
 sub variable_exists {
@@ -250,9 +355,8 @@ sub variable_exists {
     return exists($self->{$expected_type}{$name});
 }
 
-# returns a hash here because we call this from param parser, and we need to defer the error report
-sub check_vartype {
-    my ($self, $raw_name, $expected_type) = @_;
+sub get_variable_type_from_name {
+    my ($self, $raw_name) = @_;
     
     my ($sigil) = $raw_name =~ /^([\$\%\@\*])/;
     my %prefix = ('$' => 'group', '@' => 'mask', '%' => 'weight', '*' => 'shape');
@@ -265,20 +369,26 @@ sub check_vartype {
         return -1;
     }
     
-    my $actual = $prefix{$sigil};
+    if (($sigil eq '$') and ($raw_name =~ /\./)) {
+        return {'type' => 'layer'};
+    }
+    else {
+        return {'type' => $prefix{$sigil}};
+    }
+}
+
+# returns a hash here because we call this from param parser, and we need to defer the error report
+sub check_vartype {
+    my ($self, $raw_name, $expected_type) = @_;
     
-    if ($raw_name =~ /\./) {
-        if ($actual eq 'group') {
-            $actual = 'layer';
-        }
-        else {
-            return {
-                'error' => 1,
-                'error_msg' => "unknown variable type for '$raw_name'."
-            };
-        }
+    my ($sigil) = $raw_name =~ /^([\$\%\@\*])/;
+    
+    my ($type) = $self->get_variable_type_from_name($raw_name);
+    if (exists $type->{'error'}) {
+        return $type;
     }
     
+    my $actual = $type->{'type'};
     if ($sigil eq '$') {
         if (($expected_type eq 'layer') and ($raw_name !~ /\./)) {
             return {

@@ -146,9 +146,9 @@ sub _max_size {
     my ($self, $other, $offsetX, $offsetY) = @_;
     
     my $left = min(0, $offsetX);
-    my $right = max($self->get_width(), $other->get_height() + $offsetX);
+    my $right = max($self->get_width(), $other->get_width() + $offsetX);
     my $bottom = min(0, $offsetY);
-    my $top = max($self->get_width(), $other->get_height() + $offsetY);
+    my $top = max($self->get_height(), $other->get_height() + $offsetY);
     
     return ($right - $left, $top - $bottom);
 }

@@ -100,17 +100,17 @@
 </bare_iron>
 
 <grasshill_aluminum>
-	BonusType=BONUS_ALUMINIUM
+	BonusType=BONUS_ALUMINUM
 	TerrainType=TERRAIN_GRASS
 	PlotType=1
 </grasshill_aluminum>
 <plainshill_aluminum>
-	BonusType=BONUS_ALUMINIUM
+	BonusType=BONUS_ALUMINUM
 	TerrainType=TERRAIN_PLAINS
 	PlotType=1
 </plainshill_aluminum>
 <bare_aluminum>
-	BonusType=BONUS_ALUMINIUM
+	BonusType=BONUS_ALUMINUM
 </bare_aluminum>
 
 <grasshill_coal>

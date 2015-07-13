@@ -27,5 +27,5 @@ new_weight_table >= 0.80 => bare_clam,
                  >= 0.40 => bare_fish,
                  >= 0.20 => bare_seaoil,
                  >= 0.00 => bare_whales
-                 => %seafood
+                 => %bare_seafood
 

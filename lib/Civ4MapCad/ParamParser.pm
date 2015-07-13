@@ -43,10 +43,11 @@ sub new {
     my @calling_format = _report_calling_format($state, $param_spec);
     
     if ($processed->{'error'} and (@$raw_params == 1) and ($raw_params->[0] eq '--help')) {
+        print "\n";
         print "  Command format:\n\n";
-        $state->report_message($calling_format[0], 2);
+        $state->report_message($calling_format[0]);
         foreach my $i (1..$#calling_format) {
-            print "\n    $calling_format[$i]";
+            print "\n  $calling_format[$i]";
         }
         
         print "\n\n";
@@ -65,12 +66,12 @@ sub new {
         print "  Command format:\n\n";
         $state->report_message($calling_format[0]);
         foreach my $i (1..$#calling_format) {
-            print "\n    $calling_format[$i]";
+            print "\n  $calling_format[$i]";
         }
         
         print "\n\n";
         $state->report_message($param_spec->{'help_text'}) if (exists $param_spec->{'help_text'}) and ($processed->{'help'});
-        print "\n\n";
+        print "\n\n" unless $processed->{'error'};
     }
     
     return bless $processed, $class;
@@ -167,6 +168,10 @@ sub _process {
     
     my %processed_params = ('error' => 0);
     
+    if (exists($param_spec->{'allow_implied_result'}) and (! exists($param_spec->{'has_result'}))) {
+        die "*** command definition error: command has 'allow_implied_result' specified but not 'has_result'!";
+    }
+    
     # figure out result
     my $implied_result = 0;
     if ((@$raw_params >= 2) and ($raw_params->[-2] eq '=>')) {
@@ -210,7 +215,7 @@ sub _process {
         }
     
         $raw =~ s/^\-+/-/;
-        $raw =~ s/^-/--/;
+        $raw =~ s/^-(?!\d)/--/;
         
         if ($raw eq '=>') {
             $processed_params{'error_msg'} = "a result operator was specified in a way that does not make sense.";
@@ -232,8 +237,23 @@ sub _process {
     # get optional flags
     my $optional_list = _make_opt_list ($optional, \%processed_params);
     GetOptionsFromArray(\@preproc, \%processed_params, @$optional_list);
+    
     if ((!$has_shape_params) && (@preproc != @$required)) {
-        $processed_params{'error_msg'} = "this command was supplied an incorrect number of required parameters.";
+        my @unknown;
+        foreach my $item (@preproc) {
+            if ($item =~ /^\-\-/) {
+                $item =~ s/^\-\-//;
+                push @unknown, $item;
+            }
+        }
+        
+        if (@unknown > 0) {
+            $processed_params{'error_msg'} = "the following named parameters are either unknown or recieved values that did not match their type: @unknown.";
+        }
+        else {
+            $processed_params{'error_msg'} = "this command was supplied an incorrect number of required parameters.";
+        }
+        
         $processed_params{'error'} = 1;
         $processed_params{'help_anyways'} = 1;
         return \%processed_params;
@@ -260,7 +280,7 @@ sub _process {
         
         if ($expected_type eq 'int') {
             unless ($preproc[$i] =~ /^[-+]?\d+$/) {
-                $processed_params{'error_msg'} = "parameter '$preproc[$i]' was expected to be a floating point value but yet is not.";
+                $processed_params{'error_msg'} = "parameter '$preproc[$i]' was expected to be an integer value but yet is not.";
                 $processed_params{'error'} = 1;
                 $processed_params{'help_anyways'} = 1;
                 return \%processed_params;
@@ -310,25 +330,24 @@ sub _process {
         my $name = $check_result->{'name'};
     
         if (! $state->variable_exists($name, $expected_type)) {
+            $processed_params{'error'} = 1;
+            
             if ($expected_type eq 'layer') {
                 my ($groupname) = $name =~ /^(\$\w+)/;
                 my ($layername) = $name =~ /^\$\w+\.(\w+)/;
                 
                 if (! $state->variable_exists($groupname, 'group')) {
                     $processed_params{'error_msg'} = "a variable of type group named '\$$groupname' does not exist.";
-                    $processed_params{'error'} = 1;
                     return \%processed_params;
                 }
                 else {
                     $processed_params{'error_msg'} = "group '\$$groupname' does not contain a layer named '$layername'.";
-                    $processed_params{'error'} = 1;
                     return \%processed_params;
                 }
             }
             else {
                 my %prefix = ('group' => '$', 'mask' => '@', 'weight' => '%', 'shape' => '*');
                 $processed_params{'error_msg'} = "a variable of type '$expected_type' named '$name' does not exist.";
-                $processed_params{'error'} = 1;
                 return \%processed_params;
             }
         }

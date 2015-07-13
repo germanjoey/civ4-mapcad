@@ -48,5 +48,5 @@ new_weight_table >= 0.86 => bare_corn,
                  >= 0.30 => bare_rice,
                  >= 0.16 => bare_sheep,
                  >= 0.00 => bare_wheat
-                 => %landfood
+                 => %bare_landfood
 

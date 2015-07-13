@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(
-    export_sims find_starts export_group combine_groups flatten_group copy_layer_from_group import_group new_group find_difference
+    export_sims find_starts export_group combine_groups flatten_group import_group new_group find_difference
     extract_starts_as_mask normalize_starts find_starts strip_nonsettlers add_scouts_to_settlers extract_starts export_sims
     copy_group
 );
@@ -14,6 +14,40 @@ our @EXPORT_OK = qw(
 use Civ4MapCad::Util qw(deepcopy);
 use Civ4MapCad::Object::Layer;
 use Civ4MapCad::Object::Group;
+
+my $set_wrap_help_text = qq[
+    
+];
+sub set_wrap {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'required' => ['group'],
+        'required_descriptions' => ['group to set'],
+        'optional' => {
+            'wrapX' => 'true',
+            'wrapY' => 'true'
+        },
+        'help_text' => $set_wrap_help_text
+    });
+    return -1 if $pparams->has_error;
+}
+
+my $crop_group_help_text = qq[
+    
+];
+sub crop_group {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'required' => ['group', 'int', 'int', 'int', 'int'],
+        'required_descriptions' => ['group to crop', 'left', 'bottom', 'right', 'top'],
+        'has_result' => ['group'],
+        'allow_implied_result' => 1,
+        'help_text' => $crop_group_help_text
+    });
+    return -1 if $pparams->has_error;
+}
 
 my $new_group_help_text = qq[
     Create a new group with a blank canvas with a size of width/height. The new group will have a single layer with the same name as the result group.
@@ -92,7 +126,7 @@ sub copy_group {
 
 # TODO: allow transparent tile to be specified as an optional argument via a terrain
 my $flatten_group_help_text = qq[
-    Flattens a group by merging all layers down, starting with the highest priority. Tiles at the same coordinates in an 'upper' layer will overwrite ones on a 'lower' layer. Ocean tiles are counted as "transparent" in the upper layer. If you do not specify a result, the group will be overwritten.
+    Flattens a group by merging all layers down, starting with the highest priority. Tiles at the same coordinates in an 'upper' layer will overwrite ones on a 'lower' layer. Ocean tiles are counted as "transparent" in the upper layer. If you do not specify a result, the group will be overwritten. If the '--rename_final' flag is set, the final layer will be renamed to the same name as the group's name.
 ];
 sub flatten_group {
     my ($state, @params) = @_;
@@ -100,15 +134,20 @@ sub flatten_group {
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['group'],
         'required_descriptions' => ['group to flatten'],
+        'has_result' => 'group',
         'allow_implied_result' => 1,
         'help_text' => $flatten_group_help_text,
+        'optional' => {
+            'rename_final' => 'false'
+        }
     });
     return -1 if $pparams->has_error;
     
     my $result_name = $pparams->get_result_name();
-    my ($group) = $pparams->required();
+    my ($group) = $pparams->get_required();
+    my ($rename_final) = $pparams->get_named('rename_final');
     
-    my $result = $group->merge_all();
+    my $result = $group->merge_all($rename_final);
     $state->set_variable($result_name, 'group', $result);
     
     return 1;

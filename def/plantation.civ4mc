@@ -38,5 +38,5 @@ new_weight_table >= 0.83 => bare_banana,
                  >= 0.33 => bare_spices,
                  >= 0.16 => bare_sugar,
                  >= 0.00 => bare_wine
-                 => %plantation
+                 => %bare_plantation
 

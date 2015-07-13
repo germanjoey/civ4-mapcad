@@ -40,12 +40,17 @@ use Civ4MapCad::Commands::Group qw(
 
 our $global_state;
 
+my $import_shape_help_text = qq[
+    TODO
+];
 sub import_shape {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'has_result' => 'shape',
-        'required' => ['str']
+        'required' => ['str'],
+        'required_descriptions' => ['path'],
+        'help_text' => $import_shape_help_text
     });
     return -1 if $pparams->has_error;
     
@@ -69,6 +74,7 @@ sub import_shape {
     eval {
         no strict 'refs';
         no warnings 'redefine';
+        delete $INC{$path} if exists $INC{$path};
         require "$path";
     };
     if ($@) {
@@ -94,6 +100,69 @@ sub register_shape {
     delete $global_state->{'shape_name'};
     $global_state->{'registering'} = 0;
     return 1;
+}
+
+sub run_script {
+    my ($state, @params) = @_;
+
+    if ((@params == 1) and ($params[0] eq '--help')) {
+        print "\n";
+        print "  Command format:\n\n";
+        print "  run_script \"string\"\ => optional_result_name\n    param 1: filename of script to run\n\n";
+        print "  Loads a script and runs the commands within. A result to this command may be\n";
+        print "  specified; if so, then the 'return' command may be used in the script to return\n";
+        print "  a result. The result may be any type (group/layer/mask/weight) but must match\n";
+        print "  the type returned by the script.\n\n";
+        return 1;
+    }
+    
+    my $error = 0;
+    my $result_name = '';
+    if (@params == 3) {
+        if ($params[1] eq '=>' and ($params[2] =~ /[\*\$\@\%]?\w+(?:\.\w+)?/)) {
+            my $result_name = pop @params;
+            my $op = pop @params;
+            
+            my $type = $state->get_variable_type_from_name($result_name);
+            if (exists $type->{'error'}) {
+                $state->report_error($type->{'error_msg'});
+                return -1;
+            }
+            
+            my $result_type = $type->{'type'};
+            $state->push_script_return($result_name, $result_type);
+        }
+        else {
+            $error = 1;
+        }
+    }
+    
+    if ((@params != 1) or ((@params == 1) and ($params[0] !~ /^"[^"]+"$/))) {
+        $error = 1;
+    }
+    
+    if ($error) {
+        $state->report_error("run_script requires a single string argument containing the path to the script to run, and allows an optional result.");
+        print "\n";
+        print "  Command format:\n\n";
+        print "  run_script \"string\"\ => optional_result_name\n    param 1: filename of script to run\n\n";
+        return -1;
+    }
+
+    my $filename = $params[0];
+    $filename =~ s/\"//g;
+    
+    $state->in_script();
+    my $ret = $state->process_script($filename);
+    $state->off_script();
+    
+    if ($state->is_off_script()) {
+        my $command = "run_script \"$filename\"";
+        $command .= " => $result_name" if $result_name ne '';
+        $state->add_log($command);
+    }
+        
+    return $ret;
 }
 
 1;

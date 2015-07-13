@@ -102,30 +102,74 @@ sub delete_tile {
     $self->{'map'}->delete_tile($x, $y);
 }
 
+sub expand_dim {
+    my ($self, $new_width, $new_height) = @_;
+    
+    my $width = max($new_width, $self->get_width());
+    my $height = max($new_height, $self->get_height());
+    $self->{'map'}->expand_dim($width, $height);
+}
+
+sub translate_merge_coords {
+    my ($self, $x, $y, $oX, $oY) = @_;
+    
+    # factor in the offset
+    my $sx = $x + $oX;
+    my $sy = $y + $oY;
+    
+    my $gwidth = $self->get_group()->get_width();
+    my $gheight = $self->get_group()->get_height();
+
+    # if we don't wrap, check to see if we're out of bounds. we return -1,-1 in that case
+    return (-1, -1) if (($sx >= $gwidth) or ($sx < 0)) and (!$self->wrapsX());
+    return (-1, -1) if (($sy >= $gheight) or ($sy < 0)) and (!$self->wrapsY());
+    
+    # translate wrap
+    my $tx = ($sx >= $gwidth) ? ($sx - $gwidth) : (($sx < 0) ? ($sx + $gwidth) : $sx);
+    my $ty = ($sy >= $gheight) ? ($sy - $gheight) : (($sy < 0) ? ($sy + $gheight) : $sy);
+    
+    return ($tx, $ty);
+}
+
 # returns a new Layer object - whether the map gets overwritten or not is up to the container object's methods
 # TODO: merge signs
-# TODO: the container is what should actually do the copy, not this method
+# self has the more important priority here
 sub merge_with_layer {
     my ($self, $othr) = @_;
     
-    my $copy = deepcopy($self);
+    # first make a copy of the layer so we keep all our map settings
+    my $copy = deepcopy($self);    
     
-    # next, calculate new dimensions
-    my $left = min($copy->{'offsetX'}, $othr->{'offsetX'});
-    my $right = max($copy->{'offsetX'} + $copy->get_width(), $othr->{'offsetX'} + $othr->get_width()); 
-    my $bottom = min($copy->{'offsetY'}, $othr->{'offsetY'});
-    my $top = max($copy->{'offsetY'} + $copy->get_height(), $othr->{'offsetY'} + $othr->get_height());
+    my $new_width = $self->get_group()->get_width();
+    my $new_height = $self->get_group()->get_width();
     
-    my $width = $right - $left;
-    my $height = $top - $bottom;
-    
-    $copy->{'map'}->expand_dim($width, $height);
+    $copy->expand_dim($new_width, $new_height);
     $copy->{'map'}->clear_map();
-    $copy->{'map'}->overwrite_tiles($self->{'map'}, $self->{'offsetX'}, $self->{'offsetY'});
-    $copy->{'map'}->overwrite_tiles($othr->{'map'}, $othr->{'offsetX'}, $othr->{'offsetY'});
     
-    $copy->{'offsetX'} = $left;
-    $copy->{'offsetY'} = $bottom;
+    for my $x (0 .. $othr->get_width()-1) {
+        for my $y (0 .. $othr->get_height()-1) {
+            my ($tx, $ty) = $copy->translate_merge_coords($x, $y, $othr->{'offsetX'}, $othr->{'offsetY'});
+            next if ($tx < 0) or ($tx >= $self->get_group()->get_width());
+            next if ($ty < 0) or ($ty >= $self->get_group()->get_height());
+            
+            $copy->{'map'}{'Tiles'}[$tx][$ty] = deepcopy($othr->{'map'}{'Tiles'}[$x][$y]);
+            $copy->{'map'}{'Tiles'}[$tx][$ty]->set('x', $tx);
+            $copy->{'map'}{'Tiles'}[$tx][$ty]->set('y', $ty);
+        }
+    }
+    
+    for my $x (0 .. $self->get_width()-1) {
+        for my $y (0 .. $self->get_height()-1) {
+            next if $self->{'map'}{'Tiles'}[$x][$y]->is_blank();
+            my ($tx, $ty) = $copy->translate_merge_coords($x, $y, $self->{'offsetX'}, $self->{'offsetY'});
+            next if ($tx < 0) or ($tx >= $self->get_group()->get_width());
+            next if ($ty < 0) or ($ty >= $self->get_group()->get_height());
+            
+            $copy->{'map'}{'Tiles'}[$tx][$ty] = deepcopy($self->{'map'}{'Tiles'}[$x][$y]);
+            $copy->{'map'}{'Tiles'}[$tx][$ty]->set('x', $tx);
+            $copy->{'map'}{'Tiles'}[$tx][$ty]->set('y', $ty);
+        }
+    }
     
     return $copy;
 }
@@ -134,6 +178,16 @@ sub export_layer {
     my ($self, $filename) = @_;
     $self->fix_coast();
     $self->{'map'}->export_map($filename);
+}
+
+sub set_wrapX {
+    my ($self, $value) = @_;
+    $self->{'map'}->set_wrapX($value);
+}
+
+sub set_wrapY {
+    my ($self, $value) = @_;
+    $self->{'map'}->set_wrapY($value);
 }
 
 sub wrapsX {
@@ -177,6 +231,7 @@ sub apply_mask {
             next if ($ty < 0) or ($ty >= $self->get_width());
         
             my $terrain = $weight->evaluate($mask->{'canvas'}[$x][$y]);
+            next unless defined $terrain;
             
             if ($overwrite) {
                 $self->{'map'}{'Tiles'}[$tx][$ty]->set_tile($terrain);

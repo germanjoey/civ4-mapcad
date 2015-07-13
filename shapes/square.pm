@@ -20,5 +20,4 @@ my $gen = sub {
     return 0;
 };
 
-
 register_shape(\%params, $gen);

@@ -60,5 +60,5 @@ new_weight_table >= 0.88 => bare_aluminum,
                  >= 0.28 => bare_marble,
                  >= 0.16 => bare_stone,
                  >= 0.00 => bare_uranium
-                 => %strategic
+                 => %bare_strategic
 

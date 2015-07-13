@@ -3,6 +3,7 @@ package Civ4MapCad::Map;
 use strict;
 use warnings;
 
+use List::Util qw(min max);
 use Civ4MapCad::Util qw(write_block_data deepcopy);
 
 our @fields = qw(TeamID RevealMap);
@@ -111,7 +112,13 @@ sub clear_map {
 }
 
 sub expand_dim {
-    my ($self, $width, $height) = @_;
+    my ($self, $new_width, $new_height) = @_;
+    
+    my $current_width = $self->info('grid width');
+    my $current_height = $self->info('grid width');
+    
+    my $width = max($new_width, $current_width);
+    my $height = max($new_height, $current_height);
     
     $self->{'MapInfo'}->set('grid width', $width);
     $self->{'MapInfo'}->set('grid height', $height);
@@ -134,6 +141,16 @@ sub wrapsX {
 sub wrapsY {
     my ($self) = @_;
     return defined($self->info('wrap Y')) and ($self->info('wrap Y') eq '1');
+}
+
+sub set_wrapX {
+    my ($self, $value) = @_;
+    $self->{'MapInfo'}->set('wrap X', $value);
+}
+
+sub set_wrapY {
+    my ($self, $value) = @_;
+    $self->{'MapInfo'}->set('wrap Y', $value);
 }
 
 sub overwrite_tiles {
@@ -276,18 +293,23 @@ sub import_map {
     
     my $max_players = @{ $self->{'Players'} };
     if ($max_players != $main::config{'max_players'}) {
-        print "\n* WARNING: Converting map from $max_players to $main::config{'max_players'} players.\n";
+        print "\n* WARNING: Converting map '$filename'\n";
+        print "           from $max_players to $main::config{'max_players'} players.\n";
         print "           Set 'mod' in def/config.cfg or use the 'set_mod' command to prevent\n";
         print "           automatic conversion on import.\n\n";
         $self->set_max_num_players($main::config{'max_players'});
     }
     
     close $fh;
+    
     return '';
 }
 
 sub export_map {
     my ($self, $filename) = @_;
+    
+    use Data::Dumper;
+    print Dumper $self->{'MapInfo'};
     
     open (my $fh, '>', $filename) or die $!;
     
@@ -402,7 +424,7 @@ sub add_scouts_to_settlers {
 }
 
 sub get_tile {
-    my ($self, $x, $y, $debug) = @_;
+    my ($self, $x, $y) = @_;
     
     my $ux = $x;
     my $uy = $y;
@@ -437,22 +459,23 @@ sub fix_coast {
 
     foreach my $x (0..$#{$self->{'Tiles'}}) {
         foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
+            warn "$x $y" unless defined $self->{'Tiles'}[$x][$y];
             if ($self->{'Tiles'}[$x][$y]->is_water()) {
                 $self->{'Tiles'}[$x][$y]->set('PlotType', 3);
 
-                my $xp1_yp1 = (defined $self->get_tile($x+1, $y+1)) ? $self->get_tile($x+1, $y+1)->is_land() : 0;
-                my $x00_yp1 = (defined $self->get_tile($x+0, $y+1)) ? $self->get_tile($x+0, $y+1)->is_land() : 0;
-                my $xm1_yp1 = (defined $self->get_tile($x-1, $y+1)) ? $self->get_tile($x-1, $y+1)->is_land() : 0;
-                my $xp1_y00 = (defined $self->get_tile($x+1, $y+0)) ? $self->get_tile($x+1, $y+0)->is_land() : 0;
+                my $xp1_yp1 = (defined $self->get_tile($x+1, $y+1)) ? ($self->get_tile($x+1, $y+1)->is_land()) : 0;
+                my $x00_yp1 = (defined $self->get_tile($x+0, $y+1)) ? ($self->get_tile($x+0, $y+1)->is_land()) : 0;
+                my $xm1_yp1 = (defined $self->get_tile($x-1, $y+1)) ? ($self->get_tile($x-1, $y+1)->is_land()) : 0;
+                my $xp1_y00 = (defined $self->get_tile($x+1, $y+0)) ? ($self->get_tile($x+1, $y+0)->is_land()) : 0;
                 
-                my $xm1_y00 = (defined $self->get_tile($x-1, $y+0)) ? $self->get_tile($x-1, $y+0)->is_land() : 0;
-                my $xp1_ym1 = (defined $self->get_tile($x+1, $y-1)) ? $self->get_tile($x+1, $y-1)->is_land() : 0;
-                my $x00_ym1 = (defined $self->get_tile($x+0, $y-1)) ? $self->get_tile($x+0, $y-1)->is_land() : 0;
-                my $xm1_ym1 = (defined $self->get_tile($x-1, $y-1)) ? $self->get_tile($x-1, $y-1)->is_land() : 0;
-
-                my $ocean = ($self->{'Tiles'}[$x][$y]->get('TerrainType') eq 'TERRAIN_OCEAN');
-
-                if ($xp1_yp1 or $x00_yp1 or $xm1_yp1 or $xp1_y00 or $xm1_y00 or $xp1_ym1 or $x00_ym1 or $xm1_ym1) {
+                my $xm1_y00 = (defined $self->get_tile($x-1, $y+0)) ? ($self->get_tile($x-1, $y+0)->is_land()) : 0;
+                my $xp1_ym1 = (defined $self->get_tile($x+1, $y-1)) ? ($self->get_tile($x+1, $y-1)->is_land()) : 0;
+                my $x00_ym1 = (defined $self->get_tile($x+0, $y-1)) ? ($self->get_tile($x+0, $y-1)->is_land()) : 0;
+                my $xm1_ym1 = (defined $self->get_tile($x-1, $y-1)) ? ($self->get_tile($x-1, $y-1)->is_land()) : 0;
+                
+                my $make_coast = $xp1_yp1 + $x00_yp1 + $xm1_yp1 + $xp1_y00 + $xm1_y00 + $xp1_ym1 + $x00_ym1 + $xm1_ym1;
+                
+                if ($make_coast > 0) {
                     $self->{'Tiles'}[$x][$y]->set('TerrainType','TERRAIN_COAST');
                 }
                 else {
@@ -641,7 +664,7 @@ sub set_max_num_players {
 }
 
 sub crop {
-    my ($self, $left, $bottom, $top, $right) = @_;
+    my ($self, $left, $bottom, $right, $top) = @_;
     
     my @new;
     
@@ -654,10 +677,18 @@ sub crop {
             next if $x < $bottom;
             next if $x >= $top;
             $new[$x-$left][$y-$bottom] = $self->{'Tiles'}[$x][$y];
+            $new[$x-$left][$y-$bottom]->set('x', $x-$left);
+            $new[$x-$left][$y-$bottom]->set('y', $y-$bottom);
         }
     }
     
     $self->{'Tiles'} = \@new;
+    my $width = $right - $left;
+    my $height = $top - $bottom;
+    
+    $self->{'MapInfo'}->set('grid width', $width);
+    $self->{'MapInfo'}->set('grid height', $height);
+    $self->{'MapInfo'}->set('num plots written', $width*$height);
 }
 
 sub fliplr {

@@ -20,9 +20,11 @@ If we think of it like ascii art, it might look like this, where the '*' have a 
           **** ****  
          ****   ****  
 
-Civ4 MC has a way to turn ascii art like this directly into a mask object... we just need to put it into a file and then load it with the 'import_mask_from_ascii' command. Unfortunately, a gingerbread man won't help us make a banana... we need something else. Now, we could just make a big banana ascii art ([http://picascii.com/](http://picascii.com/) and the "cleanup_ascii" commands might help here) but instead we're going to do things in a little bit 
+Civ4 MC has a way to turn ascii art like this directly into a mask object... we just need to put it into a file and then load it with the 'import_mask_from_ascii' command. Unfortunately, a gingerbread man won't help us make a banana... we need something else. Now, we could just make a big banana ascii art ([http://picascii.com/](http://picascii.com/) and the "cleanup_ascii" commands might help here) but instead we're going to do things in a little bit more fancy of a way to show off some other Civ4 MC commands.
 
+First, let's import a circle ascii art
 
+    
          
 So, with Masks we have a way to describe a shape. How do we then turn that into terrain? Enter Weight tables. Weight tables are kind of like paintbuckets for the inside of the cookiecutter. The fill specific value-ranges with a type of tile. For example, a very simple Weight might look like this:
 
