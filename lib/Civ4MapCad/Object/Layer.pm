@@ -131,8 +131,8 @@ sub translate_merge_coords {
     return ($tx, $ty);
 }
 
-# returns a new Layer object - whether the map gets overwritten or not is up to the container object's methods
 # TODO: merge signs
+# returns a new Layer object - whether the map gets overwritten or not is up to the container object's methods
 # self has the more important priority here
 sub merge_with_layer {
     my ($self, $othr) = @_;

@@ -285,7 +285,6 @@ sub to_cell {
     }
     
     $title =  $self->get('x') . ',' . $self->get('y') . $title;
-    
     $title =~ s/\s+/ /g;
     
     my $cell = qq[<a title="$title">$icon</a>];
