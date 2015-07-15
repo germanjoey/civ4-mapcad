@@ -32,6 +32,8 @@ sub set_output_dir {
     my ($directory) = $pparams->get_required();
     
     $main::config{'output_dir'} = $directory;
+    
+    return 1;
 }
 
 my $set_mod_help_text = qq[
@@ -52,11 +54,11 @@ sub set_mod {
     
     if ($max == -1) {
         $state->report_error("Unknown mod type: '$mod'.");
-        return;
+        return -1;
     }
     elsif ($max == $main::config{'max_players'}) {
         $state->report_warning("Max players is already set to '$max'.");
-        return;
+        return 1;
     }
     
     my @groups = sort keys %{ $state->{'group'} };
@@ -129,7 +131,7 @@ sub history {
         push @log, "  $i: $cmd";
     }
     
-    print "\n\n", join("\n", @log), "\n\n";
+    print "\n", join("\n", @log), "\n\n";
 }
 
 1;

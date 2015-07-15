@@ -24,16 +24,7 @@ new_weight_table >= 0.90 => %banana,
                  => %bananaland
 # show_weights %bananaland --flatten
 
+# now summon!
 new_group 25 25 => $the_full_banana
-import_group "tutorials/t2/bfc.CivBeyondSwordWBSave" => $bfc
-dump_group $bfc --add_to_existing
 generate_layer_from_mask @random_banana %bananaland => $the_full_banana.background
-crop_layer $the_full_banana.background 0 0 11 17
-dump_group $the_full_banana --add_to_existing
-copy_layer_from_group $bfc.bfc => $the_full_banana.bfc
-increase_layer_priority $the_full_banana.bfc
-list_layers $the_full_banana
-move_layer $the_full_banana.background 4 -1
-dump_group $the_full_banana --add_to_existing
-flatten_group $the_full_banana
 dump_group $the_full_banana --add_to_existing

@@ -470,9 +470,26 @@ sub get_surrounding {
     return \@surrounding;
 }
 
+sub check_croppable {
+    my ($self, $left, $bottom, $right, $top) = @_;
+    
+    my $layer_left = $self->{'offsetX'};
+    my $layer_right = $self->{'offsetX'} + $self->get_width();
+    my $layer_bottom = $self->{'offsetY'};
+    my $layer_top = $self->{'offsetY'} + $self->get_height();
+    
+    return 1 if ($layer_left < $left) and ($layer_right > $left);
+    return 1 if ($layer_right > $left) and ($layer_right > $right);
+    return 1 if ($layer_bottom < $bottom) and ($layer_top > $bottom);
+    return 1 if ($layer_top > $bottom) and ($layer_top > $top);
+    
+    return 0;
+}
+
 sub crop {
-    my ($self, $left, $bottom, $top, $right) = @_;
-    $self->{'map'}->crop($left, $bottom, $top, $right);
+    my ($self, $left, $bottom, $right, $top) = @_;
+    
+    $self->{'map'}->crop($left - $self->{'offsetX'}, $bottom - $self->{'offsetY'}, $right - $self->{'offsetX'}, $top - $self->{'offsetY'});
 }
 
 sub fliplr {

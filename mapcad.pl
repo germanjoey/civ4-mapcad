@@ -27,6 +27,7 @@ print "Type 'commandname --help' for more info on a particular command.\n";
 print "\n";
 
 $state->process_command('run_script "def/init.civ4mc"');
+$state->clear_log();
 
 while (1) {
     print "> ";

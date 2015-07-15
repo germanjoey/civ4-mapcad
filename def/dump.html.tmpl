@@ -196,7 +196,14 @@
 <script src="doc/jquery-ui-1.11.4/external/jquery/jquery.js"></script>
 <script src="doc/jquery-ui-1.11.4/jquery-ui.js"></script>
 <script>
-$( "#tabs" ).tabs();
+var tabs = $( "#tabs" ).tabs();
+tabs.find( ".ui-tabs-nav" ).sortable({
+      axis: "x",
+      stop: function() {
+        tabs.tabs( "refresh" );
+      }
+    });
+    
 $( ".tooltip" ).tooltip();
 
 // Hover states on the static widgets

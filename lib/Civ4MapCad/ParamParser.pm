@@ -54,6 +54,7 @@ sub new {
         $state->report_message($param_spec->{'help_text'}) if exists $param_spec->{'help_text'};
         print "\n\n";
         
+        $processed->{'error'} = 0;
         return bless $processed, $class;
     }
     

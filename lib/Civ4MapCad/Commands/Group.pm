@@ -7,7 +7,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(
     export_sims find_starts export_group combine_groups flatten_group import_group new_group find_difference
-    extract_starts_as_mask normalize_starts find_starts strip_nonsettlers add_scouts_to_settlers extract_starts export_sims
+    extract_starts_as_mask normalize_starts strip_nonsettlers add_scouts_to_settlers extract_starts export_sims
     copy_group crop_group expand_group_canvas set_wrap
 );
 
@@ -73,7 +73,7 @@ sub crop_group {
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['group', 'int', 'int', 'int', 'int'],
         'required_descriptions' => ['group to crop', 'left', 'bottom', 'right', 'top'],
-        'has_result' => ['group'],
+        'has_result' => 'group',
         'allow_implied_result' => 1,
         'help_text' => $crop_group_help_text
     });
@@ -244,8 +244,8 @@ sub export_group {
     my $output_dir = $main::config{'output_dir'};
     my @layers = $group->get_layer_names();
     
-    if (@layers > 0) {
-        my $flat = $group->merge_all();
+    if (@layers > 1) {
+        my $flat = $group->merge_all(1);
         my ($flat_layer) = $flat->get_layers();
         $flat_layer->export_layer($output_dir . '/' . $flat->get_name() . ".flat.CivBeyondSwordWBSave");
     }
@@ -378,7 +378,8 @@ sub extract_starts {
     $copy->normalize_starts();
     
     my $bfc = $state->get_variable('@bfc_tight', 'mask');
-    $copy->extract_starts_with_mask($bfc);
+    $copy->extract_starts_with_mask($bfc, 1);
+    
     $state->set_variable($result_name, 'group', $copy);
     return 1;
 }
@@ -404,10 +405,11 @@ sub export_sims {
     my ($group) = $pparams->get_required();
     my $copy = deepcopy($group);
     
+    $copy->merge_all(1);
     $copy->normalize_starts();
     my $bfc = $state->get_variable('@bfc_for_sim', 'mask');
     
-    $copy->extract_starts_with_mask($bfc);
+    $copy->extract_starts_with_mask($bfc, 0);
     $copy->export($output_dir);
     
     return 1;

@@ -157,12 +157,6 @@ sub run_script {
     $state->in_script();
     my $ret = $state->process_script($filename);
     $state->off_script();
-    
-    if ($state->is_off_script()) {
-        my $command = "run_script \"$filename\"";
-        $command .= " => $result_name" if $result_name ne '';
-        $state->add_log($command);
-    }
         
     return $ret;
 }

@@ -106,13 +106,14 @@ sub crop {
     my ($self, $left, $bottom, $right, $top) = @_;
     
     foreach my $layer ($self->get_layers()) {
-        if ($layer->check_window($left, $bottom, $right, $top)) {
+        if ($layer->check_croppable($left, $bottom, $right, $top)) {
             $layer->crop($left, $bottom, $right, $top);
+            $layer->move(-$left, -$bottom) if ($left > 0) or ($bottom > 0);
         }
     }
     
-    $self->{'width'} = $right - $left;
-    $self->{'height'} = $top - $bottom;
+    $self->{'width'} = $right - $left + 1;
+    $self->{'height'} = $top - $bottom + 1;
 }
 
 sub set_layer {
@@ -169,7 +170,6 @@ sub add_layer {
     if (exists $self->{'layers'}{$layer_name}) {
         # WARNING: ovewriting!
         $self->{'layers'}{$layer_name} = $layer;
-        $layer->set_membership($self);
         
         $ret{'error'} = 1;
         $ret{'error_msg'} = "layer named '$layer_name' already exists in group '$group_name'... overwriting";
@@ -437,7 +437,7 @@ sub add_scouts_to_settlers {
 
 # its assumed that the group is normalized by this point
 sub extract_starts_with_mask {
-    my ($self, $mask) = @_;
+    my ($self, $mask, $clear_selected) = @_;
     
     my $all_starts = $self->find_starts();
     
@@ -454,7 +454,7 @@ sub extract_starts_with_mask {
         my $offsetX = $x - int($mask->get_width()/2);
         my $offsetY = $y - int($mask->get_height()/2);
         
-        my $start_layer = $self->{'layers'}{$layer_name}->select_with_mask($mask, $offsetX, $offsetY, 0);
+        my $start_layer = $self->{'layers'}{$layer_name}->select_with_mask($mask, $offsetX, $offsetY, $clear_selected);
         $start_layer->set_player_from_layer($owner, $self->{'layers'}{$layer_name});
         $start_layer->rename("start" . $owner);
         $start_layer->strip_hidden_strategic();
@@ -463,7 +463,7 @@ sub extract_starts_with_mask {
         
         my $p = $self->{'priority'}{$layer_name};
         $self->add_layer($start_layer);
-        $self->set_layer_priority($start_layer->get_name(), $start_layer, $p);
+        #$self->set_layer_priority($start_layer->get_name(), $start_layer, $p);
     }
     
     return 1;
@@ -487,7 +487,6 @@ sub export {
         if ($self->get_name() eq $layer->get_name()) {
             $strip = 0;
             $path = $output_dir . "/" . $group_name . ".CivBeyondSwordWBSave" ;
-            $path =~ s/\.CivBeyondSwordWBSave/.out.CivBeyondSwordWBSave/ if -e $path;
         }
         
         $layer->reduce_players();

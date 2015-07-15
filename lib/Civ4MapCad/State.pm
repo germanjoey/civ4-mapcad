@@ -175,7 +175,7 @@ sub process_script {
     
     unless ($ret) {
         $self->report_error("could not load script '$script_path': $!");
-        return;
+        return -1;
     }
     
     my @lines = <$script>;
@@ -259,6 +259,11 @@ sub add_log {
 sub get_log {
     my ($self) = @_;
     return @{ $self->{'log'} };
+}
+
+sub clear_log {
+    my ($self) = @_;
+    $self->{'log'} = [];
 }
 
 sub get_output_dir {

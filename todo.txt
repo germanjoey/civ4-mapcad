@@ -1,5 +1,5 @@
-A: alpha for alpha
-B: required for beta
+A: alpha for alpha release (v0.1)
+B: required for beta release (v0.2)
 
 Big Ticket TODO:
 
@@ -12,23 +12,18 @@ Big Ticket TODO:
 
 Medium Ticket TODO:
 
-    - A: decide how to handle width/height of group vs individual layers
-        - should groups have a fixed size? should size be based on background?
-        - two different merge modes?
     - B: apply_shape_to_mask
     - B: new_mask_from_magic_wand
     - A: dump map info
     - A: dump weight to table
     - B: redo shitty nested error handling in e.g. Param::Parser with real exceptions ala Try::Tiny
+    - B: set leader/civ/color commands
     - A: organize module methods
     - B: handle signs
-    - B: command list extracted into its own markdown file
+    - B: command list auto-extracted into its own markdown file
 
 Small Ticket TODO:
-    - new wrap/crop commands for group/layer
-    - merge layer command
-        - both layers must be in the same group
-    - A: make set_priority interface have the highest numbers on top
+    - B: change $pparams->error to $pparams->is_done
     
 Group Stuff
     - when a group is created, wrap can be set or unset, and dimensions are set

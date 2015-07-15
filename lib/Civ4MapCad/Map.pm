@@ -308,13 +308,9 @@ sub import_map {
 sub export_map {
     my ($self, $filename) = @_;
     
-    use Data::Dumper;
-    print Dumper $self->{'MapInfo'};
-    
     open (my $fh, '>', $filename) or die $!;
     
     print $fh $self->{'Version'}, "\n";
-    
     $self->{'Game'}->write($fh);
     
     foreach my $team ($self->get_teams()) {
@@ -670,12 +666,12 @@ sub crop {
     
     foreach my $x (0..$#{$self->{'Tiles'}}) {
         next if $x < $left;
-        next if $x >= $right;
+        next if $x > $right;
         $new[$x-$left] = [];
         
         foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
-            next if $x < $bottom;
-            next if $x >= $top;
+            next if $y < $bottom;
+            next if $y > $top;
             $new[$x-$left][$y-$bottom] = $self->{'Tiles'}[$x][$y];
             $new[$x-$left][$y-$bottom]->set('x', $x-$left);
             $new[$x-$left][$y-$bottom]->set('y', $y-$bottom);
@@ -683,8 +679,8 @@ sub crop {
     }
     
     $self->{'Tiles'} = \@new;
-    my $width = $right - $left;
-    my $height = $top - $bottom;
+    my $width = $right - $left + 1;
+    my $height = $top - $bottom + 1;
     
     $self->{'MapInfo'}->set('grid width', $width);
     $self->{'MapInfo'}->set('grid height', $height);

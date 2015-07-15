@@ -18,7 +18,9 @@ And you'll see:
 
 ![tutorial1-img2](t1/i2.png)
 
-Uh oh! Not off to a great start! Looks like this was an RtR mod map, which allows up to 40 players per game, while Civ4MC is set to standard BTS by default, which allows only 18 players per game. While the tool will continue to work just fine for now, we'll want our game to run RtR so let's try to fix that. But how? First, let's see if there's any commands related to mods:
+Oh no! Not off to a great start! I haven't even explained what this freaking command does and yet it's already giving some kind of error! (A little secret: I set up the save file to give an error on purpose ![emot-ssh](emot-ssh.gif))
+
+It looks like we got an error because this was an RtR mod save, which allows up to 40 players per game. Unfortunately, by default, Civ4MC is set to read standard BTS, which allows only 18 players per game. While the tool will continue to work just fine for now, we'll want our game to run RtR mod, and thus our output files should be RtR format. So, let's try to fix that. But how? First, let's see if there's any commands related to mods:
 
     > help
 
@@ -36,14 +38,13 @@ Two commands were found that have "mod" in their name, one of which, "set mod," 
 
 ![tutorial1-img5](t1/i5.png)
 
-Alright, sounds good. We can set our mod to RtR very easily; as soon as we switch mod, all Group objects (and their layers) are automatically converted. (Windows users can press up or down on their keyboards to cycle through commands, by the way).
+This sounds good. We can set our mod to RtR very easily; as soon as we switch mod, all map-type objects are automatically converted. (Windows users can press up or down on their keyboards to cycle through commands, by the way).
 
     > set_mod "RtR"
     
-    
 ![tutorial1-img6](t1/i6.png)
 
-Alright, cool. Our map is now an object that we can manipulate with other commands. Specifically, it is a "Group" type object. We'll talk more about groups, layers, and the other object types in the second tutorial. For now, let's just take a look at our map with the "dump_group" command:
+Alright, cool. Our map is now an object that we can manipulate with other commands. Specifically, it is a "Group" type object, short for "Group of Layers." Don't worry what that means right now, just know that this object contains all the tiles in our map. We'll talk more about groups, layers, and the other object types in the second tutorial. For now, let's just take a look at our map with the "dump_group" command:
 
     > dump_group $tutorial1
 
@@ -51,7 +52,7 @@ Nothing happened, huh? Civ4 MC doesn't have a gui of its own, but there's still 
 
 ![tutorial1-img7](t1/i7.png)
 
-It's our map in handy html form! You can drop this file in your dropbox and link to it in a lurker thread, and now suddenly the 90% of posters who spend 90% of their browsing time while they are at work can look over your map too. Mousing-over each tile will pop up a little tooltip with coordinate and tile information. We can also look at the starts seperately. Try:
+It's our map in handy html form! You can drop this file in your dropbox and link to it in a lurker thread, and now suddenly the 90% of posters who spend 90% of their internet browsing time while they are at work can look over your map too. Mousing-over each tile will pop up a little tooltip with coordinate and tile information. We can also look at the starts seperately. Try:
 
     > extract_starts $tutorial1
     > dump_group $tutorial1
@@ -74,4 +75,6 @@ In the outputs directory, we'll see that we have a new copy of our map, now conv
 
 It's a little starting sim of the player 0's BFC, using the correct map settings and difficulty! Mapmakers could hand these out at the start of a new game to save players some busywork at the start of their new games. Note that all hidden resources are stripped, and an AI is crammed into the corner on that little 1-tile island to prevent an auto-victory, and all victory conditions are disabled.
 
-Anyways, that's all for now.
+Anyways, that's all for now. In the next tutorial, we'll talk a little bit more about object types and what they mean to the map.
+
+[Back to tutorial index](Readme.md)
