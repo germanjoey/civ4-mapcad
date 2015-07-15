@@ -39,7 +39,18 @@ sub load_terrain {
    
     my %terrain = Config::General->new($filename)->getall();
    
+    my %ok_fields;
+    my @ok_fields_list = qw(isNOfRiver isWOfRiver RouteType RiverNSDirection RiverWEDirection BonusType FeatureType FeatureVariety TerrainType PlotType ImprovementType);
+    @ok_fields{@ok_fields_list} = (1) x @ok_fields_list;
+    
     foreach my $name (keys %terrain) {
+        foreach my $field (sort keys %{ $terrain{$name} }) {
+            unless (exists $ok_fields{$field}) {
+                $state->report_error("Unknown field name '$field' found in definition of terrain '$name' in file '$filename'.");
+                return -1;
+            }
+        }
+    
         $state->set_variable($name, 'terrain', $terrain{$name});
     }
    
@@ -61,7 +72,9 @@ sub new_weight_table {
     my ($state, @params) = @_;
     
     if ((@params == 1) and ($params[0] eq '--help')) {
+        $state->buffer_bar();
         print $new_weight_table_help_text, "\n";
+        $state->register_prints();
         return 1;
     }
     

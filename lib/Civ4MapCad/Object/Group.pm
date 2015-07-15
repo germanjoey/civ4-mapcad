@@ -168,7 +168,6 @@ sub add_layer {
     my %ret = ('error_msg' => '');
     
     if (exists $self->{'layers'}{$layer_name}) {
-        # WARNING: ovewriting!
         $self->{'layers'}{$layer_name} = $layer;
         
         $ret{'error'} = 1;
@@ -305,16 +304,14 @@ sub merge_two_and_replace {
 sub merge_all {
     my ($self, $rename_final_to_match) = @_;
    
-    my $copy = deepcopy($self);
-   
     while (1) {
-        my @remaining_layers = $copy->get_layer_names();
+        my @remaining_layers = $self->get_layer_names();
         last if @remaining_layers == 1;
        
-        $copy->merge_two_and_replace($remaining_layers[0], $remaining_layers[1]);
+        $self->merge_two_and_replace($remaining_layers[0], $remaining_layers[1]);
     }
     
-    my @remaining_layers = $copy->get_layer_names();
+    my @remaining_layers = $self->get_layer_names();
     my $remnant = $remaining_layers[0];
     
     # fill in the background so the final result has the correct size
@@ -323,10 +320,8 @@ sub merge_all {
     $self->{'layers'}{$remnant}->rename($self->get_name()) if $rename_final_to_match;
     
     # cleanup priority list
-    $copy->{'priority'}{$remnant} = 0;
+    $self->{'priority'}{$remnant} = 0;
     $self->{'max_priority'} = 0;
-   
-    return $copy;
 }
 
 sub find_difference {
@@ -476,9 +471,9 @@ sub export {
     $group_name =~ s/\$//;
     
     my @layers = $self->get_layers();
+    $main::config{'state'}->buffer_bar();
     
     print "\n";
-    
     foreach my $layer (@layers) {
         my $layer_name = $layer->get_name();
         my $path = $output_dir . "/" . $self->get_name() . "." . $layer_name . ".CivBeyondSwordWBSave";
@@ -493,11 +488,10 @@ sub export {
         $layer->add_dummy_start() if $layer->num_players() == 1;
         $layer->export_layer($path);
         
-        print "  Exported layer $layer_name.\n";
+        $main::config{'state'}->report_message("Exported layer $layer_name.");
     }
     
     print "\n";
-    
     return 1;
 }
 

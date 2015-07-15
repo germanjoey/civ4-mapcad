@@ -76,6 +76,17 @@ sub recenter {
     $self->{'offsetY'} = 0;
 }
 
+
+sub get_offsetX {
+    my ($self) = @_;
+    return $self->{'offsetX'};
+}
+
+sub get_offsetY {
+    my ($self) = @_;
+    return $self->{'offsetY'};
+}
+
 sub get_width {
     my ($self) = @_;
     return $self->{'map'}->info('grid width');

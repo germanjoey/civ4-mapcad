@@ -293,10 +293,7 @@ sub import_map {
     
     my $max_players = @{ $self->{'Players'} };
     if ($max_players != $main::config{'max_players'}) {
-        print "\n* WARNING: Converting map '$filename'\n";
-        print "           from $max_players to $main::config{'max_players'} players.\n";
-        print "           Set 'mod' in def/config.cfg or use the 'set_mod' command to prevent\n";
-        print "           automatic conversion on import.\n\n";
+        $main::config{'state'}->report_warning("Converting map '$filename' from $max_players to $main::config{'max_players'} players. Set 'mod' in def/config.cfg or use the 'set_mod' command to prevent automatic conversion on import.", 1);
         $self->set_max_num_players($main::config{'max_players'});
     }
     

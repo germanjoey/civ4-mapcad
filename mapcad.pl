@@ -8,9 +8,10 @@ use Config::General;
 use Civ4MapCad::State;
 use Civ4MapCad::Util qw(find_max_players);
 
+use sigtrap qw(handler dump_log error-signals);
 our %config = Config::General->new('def/config.cfg')->getall();
 
-our $state = Civ4MapCad::State->new;
+our $state = Civ4MapCad::State->new();
 my $max = find_max_players($config{'mod'});
 
 if ($max < 0) {
@@ -19,6 +20,9 @@ if ($max < 0) {
 }
 
 $config{'max_players'} = $max;
+$config{'state'} = $state;
+$SIG{'INT'} = sub { $main::config{'state'}->process_command('write_log'); exit(0) };
+$SIG{__DIE__} = sub { $main::config{'state'}->process_command('write_log'); my $message = shift; die $message };
 
 print "\n";
 print "Welcome to Civ4 Map Cad!\n\n";
@@ -33,6 +37,13 @@ while (1) {
     print "> ";
     my $command = <>;
     
+    next unless defined($command);
     next unless $command =~ /\w/;
     $state->process_command($command);
+}
+
+sub dump_log {
+    $main::config{'state'}->process_command('write_log');
+    my $message = shift;
+    die $message;
 }

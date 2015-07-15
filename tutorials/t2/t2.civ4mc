@@ -1,8 +1,11 @@
 set_mod "RtR"
 import_group "tutorials/t1/tutorial1.CivBeyondSwordWBSave" => $tutorial2
+list_groups
 dump_group $tutorial2
 crop_group $tutorial2 12 0 38 23 => $t2_cropped
+list_groups
 dump_group $t2_cropped --add_to_existing
 extract_starts $t2_cropped
+list_layers $t2_cropped
 dump_group $t2_cropped --add_to_existing
 flatten_group $t2_cropped

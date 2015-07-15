@@ -6,6 +6,8 @@ use warnings;
 use Exporter::Dispatch;
 use Civ4MapCad::ParamParser;
 
+use Civ4MapCad::Util;
+
 use Civ4MapCad::Commands::Config qw(
    set_output_dir set_mod write_log history
 );
@@ -97,7 +99,7 @@ sub register_shape {
     my ($params, $gen) = @_;
     
     $global_state->{'shape'}{$global_state->{'shape_name'}} = $gen;
-    $global_state->{'shape_param'}{$global_state->{'shape_name'}} = $params;
+    $global_state->{'shape_param'}{$global_state->{'shape_name'}} = Civ4MapCad::Util::deepcopy($params);
     
     delete $global_state->{'shape_name'};
     $global_state->{'registering'} = 0;
@@ -157,6 +159,10 @@ sub run_script {
     $state->in_script();
     my $ret = $state->process_script($filename);
     $state->off_script();
+    
+    if ($state->is_off_script()) {
+        $state->clear_buffer_bar();
+    }
         
     return $ret;
 }

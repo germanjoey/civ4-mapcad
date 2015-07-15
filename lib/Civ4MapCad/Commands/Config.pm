@@ -63,22 +63,20 @@ sub set_mod {
     
     my @groups = sort keys %{ $state->{'group'} };
     if (@groups > 0) {
-        print "\n";
-        
+        my @modified;
         foreach my $group_name (@groups) {
             my $group = $state->{'group'}{$group_name};
-            print " * Setting $group_name to $max players\n";
+            push @modified, "* Setting $group_name to $max players.";
             
             foreach my $layer ($group->get_layers()) {
                 $layer->set_max_num_players($max);
             }
         }
         
-        print "\n";
+        $state->list( @modified );
     }
     
     $main::config{'max_players'} = $max;
-    
     return 1;
 }
 
@@ -91,24 +89,16 @@ sub write_log {
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'help_text' => $write_log_help_text,
         'optional' => {
-            'filename' => 'log.civ4mc',
-            'delete_existing' => 'false'
+            'filename' => 'log.civ4mc'
         }
     });
     return -1 if $pparams->has_error;
     
-    my $delete_existing = $pparams->get_named('delete_existing');
     my $filename = $pparams->get_named('filename');
     
-    if (((-e $filename) and ($delete_existing)) or (!(-e $filename))) {
-        open (my $log, '>', $filename) or die $!;
-        print $log join("\n", $state->get_log());
-        close $log;
-    }
-    elsif (-e $filename) {
-        $state->report_error("file '$filename' already exists and --delete_existing was not set");
-        return -1;
-    }
+    open (my $log, '>', $filename) or die $!;
+    print $log join("\n", $state->get_log());
+    close $log;
     
     return 1;
 }
@@ -131,7 +121,8 @@ sub history {
         push @log, "  $i: $cmd";
     }
     
-    print "\n", join("\n", @log), "\n\n";
+    $state->list( @log );
+    return 1;
 }
 
 1;

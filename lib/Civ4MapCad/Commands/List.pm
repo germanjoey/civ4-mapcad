@@ -14,28 +14,113 @@ use Civ4MapCad::ParamParser;
 use Civ4MapCad::Util qw(deepcopy slurp);
 use Civ4MapCad::Dump qw(dump_out dump_framework dump_single_layer);
  
+my $list_shapes_help_text = qq[
+  Command Format: 
+  
+    list_shapes search_term
+
+  The search_term is optional; if not supplied, all shapes will be listed.
+];
 sub list_shapes {
     my ($state, @params) = @_;
     
-    my @shapes = sort keys %{$state->{'shape'}};
+    if ((@params == 1) and ($params[0] eq '--help')) {
+        $state->buffer_bar();
+        print $list_shapes_help_text, "\n";
+        $state->register_print();
+        return 1;
+    }
+    
+    my @shape_names = sort keys %{$state->{'shape'}};
     if (@params == 1) {
-        @shapes = grep { $_ =~ /$params[0]/ } @shapes;
+        @shape_names = grep { $_ =~ /$params[0]/ } @shape_names;
+    }
+    elsif (@params > 0) {
+        $state->buffer_bar();
+        print $list_shapes_help_text, "\n";
+        $state->register_print();
+        return -1;
+    }
+    
+    my @full;
+    foreach my $shape_name (@shape_names) {
+        my $description = $shape_name;
+    
+        foreach my $param (keys %{ $state->{'shape_param'}{$shape_name} }) { 
+            if ($state->{'shape_param'}{$shape_name}{$param} =~ /\-?\d+\.\d+/) {
+                $description .= " --$param float";
+            }
+            else {
+                $description .= " --$param int";
+            }
+        }
+        
+        push @full, $description
+    }
+    
+    if (@full == 0) {
+        @full = ("None found.");
+        @full = ("None found matching description '$params[0]'.") if @params == 1;
     }
    
-    $state->list( @shapes );
+    $state->list( @full );
     return 1;
 }
- 
+
+my $list_groups_help_text = qq[
+  Command Format: 
+  
+    list_groups search_term
+
+  The search_term is optional; if not supplied, all groups will be listed.
+];
 sub list_groups {
     my ($state, @params) = @_;
    
-    my @groups = sort keys %{$state->{'group'}};
-    if (@params == 1) {
-        @groups = grep { $_ =~ /$params[0]/ } @groups;
+    if ((@params == 1) and ($params[0] eq '--help')) {
+        $state->buffer_bar();
+        print $list_groups_help_text, "\n";
+        $state->register_print();
+        return 1;
     }
     
-    $state->list( @groups );
+    my @group_names = sort keys %{$state->{'group'}};
+    if (@params == 1) {
+        @group_names = grep { $_ =~ /$params[0]/ } @group_names;
+    }
+    elsif (@params > 0) {
+        $state->buffer_bar();
+        print $list_groups_help_text, "\n";
+        $state->register_print();
+        return -1;
+    }
+    
+    my @full;
+    foreach my $group_name (@group_names) {
+        my $group = $state->{'group'}{$group_name};
+        my $description = _group_description($group);
+        push @full, $description;
+    }
+    
+    if (@full == 0) {
+        @full = ("None found.");
+        @full = ("None found matching description '$params[0]'.") if @params == 1;
+    }
+    
+    $state->list( @full );
     return 1;
+}
+
+sub _group_description {
+    my ($group) = @_;
+
+    my $description = '$' . $group->get_name() . " (size: " . $group->get_width() . ' x ' . $group->get_height() . ")";
+    $description .= ', ' if $group->wrapsX() or $group->wrapsY();
+    $description .= 'wraps in X' if $group->wrapsX();
+    $description .= ' and ' if $group->wrapsX() and $group->wrapsY();
+    $description .= 'wraps in Y' if $group->wrapsY();
+    
+    return $description;
 }
  
 my $list_layers_help_text = qq[
@@ -51,48 +136,178 @@ sub list_layers {
     return -1 if $pparams->has_error;
     
     my ($group) = $pparams->get_required();
+    my $group_description = _group_description($group);
     
-    print "\n  Higher priority numbers means the layer is \"above\" those\n  with lower priority numbers.\n";
+    my @layers;
+    push @layers, "$group_description\n";
+    push @layers, "Layers:\n";
     
-    # layers' priorities are actually stored internally with the highest priority being '0', so we adjust the display
-    my @layers = map { sprintf "priority %2d, %s", 1 + $group->{'max_priority'} - $group->get_layer_priority($_), $_ } ($group->get_layer_names());
+    foreach my $layer ($group->get_layers()) {
+        my $layer_name = $layer->get_name();
+        my $priority = 1 + $group->{'max_priority'} - $group->get_layer_priority($layer_name);
+        my $description = sprintf "  priority %s, %s (size: %d x %d), moved to %d,%d from group origin", $priority, $layer->get_name(), $layer->get_width(), $layer->get_height(), $layer->get_offsetX(), $layer->get_offsetY();
+        push @layers, $description;
+    }
+    
+    push @layers, "\n  (higher priority numbers means those layers are \"above\" the others).";
     
     $state->list( @layers );
     return 1;
 }
- 
+
+my $list_masks_help_text = qq[
+  Command Format: 
+  
+    list_masks search_term
+
+  The search_term is optional; if not supplied, all masks will be listed.
+];
 sub list_masks {
     my ($state, @params) = @_;
    
-    my @masks = sort keys %{$state->{'mask'}};
-    if (@params == 1) {
-        @masks = grep { $_ =~ /$params[0]/ } @masks;
+    if ((@params == 1) and ($params[0] eq '--help')) {
+        $state->buffer_bar();
+        print $list_masks_help_text, "\n";
+        $state->register_print();
+        return 1;
     }
     
-    $state->list( @masks );
+    my @mask_names = sort keys %{$state->{'mask'}};
+    if (@params == 1) {
+        @mask_names = grep { $_ =~ /$params[0]/ } @mask_names;
+    }
+    elsif (@params > 0) {
+        $state->buffer_bar();
+        print $list_masks_help_text, "\n";
+        $state->register_print();
+        return -1;
+    }
+    
+    my @full;
+    foreach my $mask_name (@mask_names) {
+        my $mask = $state->{'mask'}{$mask_name};
+        my $description = sprintf "%s (size: %d x %d)", $mask_name, $mask->get_width(), $mask->get_height();
+        push @full, $description;
+    }
+    
+    if (@full == 0) {
+        @full = ("None found.");
+        @full = ("None found matching description '$params[0]'.") if @params == 1;
+    }
+    
+    $state->list( @full );
     return 1;
 }
 
+my $list_terrain_help_text = qq[
+  Command Format: 
+  
+    list_terrain search_term
+
+  The search_term is optional; if not supplied, all terrain will be listed.
+];
 sub list_terrain {
     my ($state, @params) = @_;
    
-    my @terrains = sort keys %{$state->{'terrain'}};
-    if (@params == 1) {
-        @terrains = grep { $_ =~ /$params[0]/ } @terrains;
+    if ((@params == 1) and ($params[0] eq '--help')) {
+        $state->buffer_bar();
+        print $list_terrain_help_text, "\n";
+        $state->register_print();
+        return 1;
     }
-    $state->list( @terrains );
+    
+    my @terrain_names = sort keys %{$state->{'terrain'}};
+    if (@params == 1) {
+        @terrain_names = grep { $_ =~ /$params[0]/ } @terrain_names;
+        
+        my @height_types = ('Peak', 'Hill', 'Flat', 'Water');
+        
+        my @full;
+        foreach my $terrain_name (@terrain_names) {
+            push @full, $terrain_name;
+            
+            foreach my $key (sort keys %{ $state->{'terrain'}{$terrain_name} }) {
+                push @full, "  $key = $state->{'terrain'}{$terrain_name}{$key}";
+                
+                if ($key eq 'PlotType') {
+                    my $height = $state->{'terrain'}{$terrain_name}{$key} + 0;
+                    $full[-1] .= " ($height_types[$height])";
+                }
+            }
+            
+            $full[-1] .= "\n";
+        }
+        
+        chomp $full[$#full] if @full > 0;
+        @terrain_names = @full;
+    }
+    elsif (@params > 0) {
+        $state->buffer_bar();
+        print $list_terrain_help_text, "\n";
+        $state->register_print();
+        return -1;
+    }
+    
+    if (@terrain_names == 0) {
+        @terrain_names = ("None found.");
+        @terrain_names = ("None found matching description '$params[0]'.") if @params == 1;
+    }
+    
+    $state->list( @terrain_names );
     return 1;
 }
 
+my $list_weights_help_text = qq[
+  Command Format: 
+  
+    list_weights search_term
+
+  The search_term is optional; if not supplied, all weights will be listed.
+];
 sub list_weights {
     my ($state, @params) = @_;
    
-    my @weights = sort keys %{$state->{'weight'}};
-    if (@params == 1) {
-        @weights = grep { $_ =~ /$params[0]/ } @weights;
+    if ((@params == 1) and ($params[0] eq '--help')) {
+        $state->buffer_bar();
+        print $list_weights_help_text, "\n";
+        $state->register_print();
+        return 1;
     }
     
-    $state->list( @weights );
+    my @weight_names = sort keys %{$state->{'weight'}};
+    if (@params == 1) {
+        @weight_names = grep { $_ =~ /$params[0]/ } @weight_names;
+    }
+    elsif (@params > 0) {
+        $state->buffer_bar();
+        print $list_weights_help_text, "\n";
+        $state->register_print();
+        return -1;
+    }
+    
+    my @full;
+    foreach my $weight_name (@weight_names) {
+        my $weight = $state->{'weight'}{$weight_name};
+        my @packed = @{ $weight->{'pairs'} };
+        my @flat = $weight->flatten(1);
+        
+        my $description;
+        if (@packed == @flat) {
+            $description = sprintf "%s, %d entries", $weight_name, @packed+0;
+        }
+        else {
+            $description = sprintf "%s, %d entries packed, %d entries flat", $weight_name, @packed+0, @flat+0;
+        }
+        
+        push @full, $description;
+    }
+    
+    if (@full == 0) {
+        @full = ("None found.");
+        @full = ("None found matching description '$params[0]'.") if @params == 1;
+    }
+    
+    $state->list( @full );
     return 1;
 }
 
@@ -139,20 +354,24 @@ sub dump_mask_to_console {
         'help_text' => $dump_mask_to_console_help_text
     });
     return -1 if $pparams->has_error;
+    $state->buffer_bar();
+    
     my ($mask) = $pparams->get_required();
     
-    print "\n";
+    my @lines;
     foreach my $xx (0..$mask->get_width()-1) {
+        my $line = '';
         foreach my $yy (0..$mask->get_height()-1) {
             my $x = $mask->get_width() - 1 - $xx;
             my $y = $mask->get_height() - 1 - $yy;
             my $value = ($mask->{'canvas'}[$x][$y] > 0) ? 1 : ' ';
-            print $value;
+            $line .= $value;
         }
-        print "\n";
+        
+        push @lines, $line;
     }
-    print "\n";
     
+    $state->list( @lines );
     return 1;
 }
 

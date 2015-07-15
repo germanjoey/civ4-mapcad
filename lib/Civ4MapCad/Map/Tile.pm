@@ -107,7 +107,7 @@ sub parse {
         }
         
         if ($line =~ /^\s*BeginCity/i) {
-            warn "* WARNING! Cities are not currently supported by this tool. Skipping...";
+            $main::config{'state'}->report_warning("Cities are not currently supported by this tool. Skipping...", 1);
             while (1) {
                 my $line = <$fh>;
                 last if $line =~ /EndCity/;

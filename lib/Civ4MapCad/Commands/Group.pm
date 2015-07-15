@@ -149,7 +149,6 @@ sub import_group {
     }
     
     $state->set_variable($result_name, 'group', $result);
-    
     return 1;
 }
 
@@ -189,17 +188,18 @@ sub flatten_group {
         'allow_implied_result' => 1,
         'help_text' => $flatten_group_help_text,
         'optional' => {
-            'rename_final' => 'false'
+            'rename_final_layer' => 'false'
         }
     });
     return -1 if $pparams->has_error;
     
     my $result_name = $pparams->get_result_name();
     my ($group) = $pparams->get_required();
-    my ($rename_final) = $pparams->get_named('rename_final');
+    my ($rename_final) = $pparams->get_named('rename_final_layer');
     
-    my $result = $group->merge_all($rename_final);
-    $state->set_variable($result_name, 'group', $result);
+    my $copy = deepcopy($group);
+    $copy->merge_all($rename_final);
+    $state->set_variable($result_name, 'group', $copy);
     
     return 1;
 }
@@ -245,13 +245,13 @@ sub export_group {
     my @layers = $group->get_layer_names();
     
     if (@layers > 1) {
-        my $flat = $group->merge_all(1);
+        my $copy = deepcopy($group);
+        my $flat = $copy->merge_all(1);
         my ($flat_layer) = $flat->get_layers();
         $flat_layer->export_layer($output_dir . '/' . $flat->get_name() . ".flat.CivBeyondSwordWBSave");
     }
     
     $group->export($output_dir);
-        
     return 1;
 }
 

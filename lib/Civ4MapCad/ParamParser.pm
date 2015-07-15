@@ -43,6 +43,8 @@ sub new {
     my @calling_format = _report_calling_format($state, $param_spec);
     
     if ($processed->{'error'} and (@$raw_params == 1) and ($raw_params->[0] eq '--help')) {
+        $state->buffer_bar();
+        
         print "\n";
         print "  Command format:\n\n";
         $state->report_message($calling_format[0]);
@@ -54,7 +56,7 @@ sub new {
         $state->report_message($param_spec->{'help_text'}) if exists $param_spec->{'help_text'};
         print "\n\n";
         
-        $processed->{'error'} = 0;
+        $state->register_print();
         return bless $processed, $class;
     }
     
@@ -63,6 +65,8 @@ sub new {
     }
     
     if ($processed->{'help'} or $processed->{'help_anyways'}) {
+        $state->buffer_bar();
+        
         print "\n" unless $processed->{'error'};
         print "  Command format:\n\n";
         $state->report_message($calling_format[0]);
@@ -73,6 +77,8 @@ sub new {
         print "\n\n";
         $state->report_message($param_spec->{'help_text'}) if (exists $param_spec->{'help_text'}) and ($processed->{'help'});
         print "\n\n" unless $processed->{'error'};
+        
+        $state->register_print();
     }
     
     return bless $processed, $class;

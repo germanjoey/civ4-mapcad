@@ -25,13 +25,25 @@ sub new {
         'terrain' => {},
         'in_script' => 0,
         'log' => [],
-        'return_stack' => []
+        'return_stack' => [],
+        'already_printed' => 0,
+        'buffer_ready' => 0
     };
     
     return bless $obj, $class;
 }
 
 sub process_command {
+    my ($self, $command) = @_;
+    my $ret = $self->_process_command($command);
+    
+    $self->ready_buffer_bar();
+    $self->clear_printed();
+          
+    return $ret;
+}
+
+sub _process_command {
     my ($self, $command) = @_;
     
     chomp $command;
@@ -46,8 +58,14 @@ sub process_command {
     my ($command_name, @params) = split ' ', $command;    
     $command_name = lc $command_name;
     
+    if ($self->is_off_script()) {
+        $self->add_log($command);
+    }
+    
     if ($command_name eq 'return') {
         if ((@params == 1) and ($params[0] eq '--help')) {
+            $self->buffer_bar();
+        
             print "\n";
             print "  Command format:\n\n";
             print "  return <result>\n\n";
@@ -55,6 +73,7 @@ sub process_command {
             print "  return type may be any type of group/layer/mask/weight, but not shape. If\n";
             print "  this result is ignored, a warning will be produced.\n\n";
             
+            $self->register_print();
             return 1;
         }
         
@@ -64,6 +83,7 @@ sub process_command {
         
         if ((@params != 1)) {
             $self->report_error("Incorrect command format.");
+            
             print "  Command format:\n\n";
             print "  return <result>\n\n";
             return -1;
@@ -102,10 +122,14 @@ sub process_command {
         
         $self->set_variable($expected_name, $return_type, $copy);
         
+        $self->ready_buffer_bar();
+        $self->clear_printed();
         return 1;
     }
     
     elsif ($command_name eq 'eval') {
+        $self->buffer_bar();
+        
         if ((@params == 1) and ($params[0] eq '--help')) {
             print "\n";
             print "  Command format:\n\n";
@@ -117,14 +141,18 @@ sub process_command {
         my $full_line = join ' ', @params;
         print eval $full_line;
         print "\n";
+        
         return 1;
     }
     
     elsif ($command_name eq 'exit') {
+        $self->process_command('write_log');
         exit(0);
     }
     
     elsif ($command_name eq 'help') {
+        $self->buffer_bar();
+        
         my @com_list = keys %$repl_table;
         push @com_list, ('eval', 'exit', 'help', 'return');
         @com_list = sort @com_list;
@@ -152,16 +180,12 @@ sub process_command {
     
     elsif (exists $repl_table->{$command_name}) {
         my $ret = $repl_table->{$command_name}->($self, @params);
-        
-        if ($self->is_off_script()) {
-            $self->add_log($command);
-        }
-        
         return $ret;
     }
     
     else {
         $self->report_error("unknown command '$command_name'");
+        
         return -1;
     }
 }
@@ -219,6 +243,11 @@ sub process_script {
     return 1;
 }
 
+sub clear_buffer_bar {
+    my ($self) = @_;
+    $self->{'already_printed'} = 0;
+}
+
 sub push_script_return {
     my ($self, $name, $type) = @_;
     push @{ $self->{'return_stack'} }, [$name, $type];
@@ -253,6 +282,11 @@ sub is_off_script {
 
 sub add_log {
     my ($self, $command) = @_;
+    
+    if ((@{$self->{'log'}} > 0) and ($self->{'log'}[-1] eq $command)) {
+        return;
+    }
+    
     push @{ $self->{'log'} }, $command;
 }
 
@@ -433,9 +467,42 @@ sub check_vartype {
     }
 }
 
+sub ready_buffer_bar {
+    my ($self) = @_;
+    if ($self->is_off_script()) {
+        $self->{'buffer_ready'} = 0;
+    }
+    else { 
+        $self->{'buffer_ready'} = 1;
+    }
+}
+
+sub buffer_bar {
+    my ($self) = @_;
+    
+    if ($self->{'already_printed'} and $self->{'buffer_ready'}) {
+        $self->{'buffer_ready'} = 0;
+        print "-------------------------\n";
+    }
+}
+
+sub clear_printed {
+    my ($self) = @_;
+    $self->{'already_printed'} = 0 if $self->is_off_script();
+}
+
+sub register_print {
+    my ($self) = @_;
+    
+    if (! $self->is_off_script()) {
+        $self->{'already_printed'} = 1;
+    }
+}
+
 # TODO: replace all error printing with this
 sub report_error {
     my ($self, $msg) = @_;
+    $self->buffer_bar();
     
     $msg =~ s/\n//g;
     
@@ -447,28 +514,41 @@ sub report_error {
     print "\n\n";
     print wrap(" ", "  ", "* " . $msg);
     print "\n\n";
+    
+    $self->register_print();
 }
 
 sub report_warning {
-    my ($self, $msg) = @_;
+    my ($self, $msg, $dont_print_line) = @_;
+    $self->buffer_bar();
     
     $msg =~ s/\n//g;
     
     $Text::Wrap::columns = 76;
     print "\n";
-    print wrap("", "  ", "* WARNING for command:");
+        
+    if ($dont_print_line) {
+        print wrap("", "  ", "* WARNING:");
+        print "\n\n";
+        print wrap(" ", "  ", "* " . $msg);
+    }
+    else {
+        print wrap("", "  ", "* WARNING for command:");
+        print "\n\n";
+        print wrap("    ", "    ", $self->{'current_line'});
+        print "\n\n";
+        print wrap(" ", "  ", "* " . $msg);
+    }
+    
     print "\n\n";
-    print wrap("    ", "    ", $self->{'current_line'});
-    print "\n\n";
-    print wrap(" ", "  ", "* " . $msg);
-    print "\n\n";
+    $self->register_print();
 }
 
 sub report_message {
     my ($self, $msg, $extra_indent) = @_;
+    $self->buffer_bar();
     
     $msg =~ s/\n//g;
-    
     my $ei = 0;
     $ei = $extra_indent if defined $extra_indent;
     
@@ -480,16 +560,19 @@ sub report_message {
     $msg =~ s/\s+$//;
     
     print wrap("  " . (" " x $ei), "" . (" " x $ei) , $msg);
+    
+    $self->register_print();
 }
 
 sub list {
     my ($self, @items) = @_;
+    $self->buffer_bar();
     
     print "\n  ";
     print join ("\n  ", @items);
     print "\n\n";
     
-    return 1;
+    $self->register_print();
 }
 
 1;
