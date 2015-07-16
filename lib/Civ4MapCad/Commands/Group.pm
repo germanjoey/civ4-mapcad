@@ -31,6 +31,7 @@ sub set_wrap {
         'help_text' => $set_wrap_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($group) = $pparams->get_required();
     my $nowrapX = $pparams->get_named('nowrapX');
@@ -54,6 +55,7 @@ sub expand_group_canvas {
         'help_text' => $expand_group_canvas_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($group, $by_width, $by_height) = $pparams->get_required();
     
@@ -78,6 +80,7 @@ sub crop_group {
         'help_text' => $crop_group_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($group, $left, $bottom, $right, $top) = $pparams->get_required();
     
@@ -113,6 +116,7 @@ sub new_group {
         'help_text' => $new_group_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my $result_name = $pparams->get_result_name();
     my ($width, $height) = $pparams->get_required();
@@ -137,6 +141,7 @@ sub import_group {
         'help_text' => $import_group_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my $result_name = $pparams->get_result_name();
     my ($filename) = $pparams->get_required();
@@ -192,6 +197,7 @@ sub flatten_group {
         }
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my $result_name = $pparams->get_result_name();
     my ($group) = $pparams->get_required();
@@ -218,6 +224,7 @@ sub combine_groups {
         'help_text' => $combine_groups_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my $result_name = $pparams->get_result_name();
     my ($group, $other_group) = $pparams->get_required();
@@ -239,6 +246,7 @@ sub export_group {
         'help_text' => $export_group_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($group) = $pparams->get_required();
     my $output_dir = $main::config{'output_dir'};
@@ -251,12 +259,14 @@ sub export_group {
         $flat_layer->export_layer($output_dir . '/' . $flat->get_name() . ".flat.CivBeyondSwordWBSave");
     }
     
+    $state->buffer_bar();
     $group->export($output_dir);
+    $state->register_print();
+    
     return 1;
 }
 
 # return a mask highlighting each start
-
 my $extract_starts_as_mask_help_text = qq[
     Return a group of masks highlighting each start... not yet implemented.
 ];
@@ -269,6 +279,7 @@ sub extract_starts_as_mask {
         'help_text' => $extract_starts_as_mask_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($group) = $pparams->get_required();
     my $result_name = $pparams->get_result_name();
@@ -292,6 +303,7 @@ sub normalize_starts {
         'help_text' => $normalize_starts_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($group) = $pparams->get_required();
     $group->normalize_starts();
@@ -310,6 +322,7 @@ sub add_scouts_to_settlers {
         'help_text' => $add_scouts_to_settlers_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my $result_name = $pparams->get_result_name();
     my ($group) = $pparams->get_required();
@@ -330,6 +343,7 @@ sub strip_all_units {
         'help_text' => $strip_all_units_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my $result_name = $pparams->get_result_name();
     my ($group) = $pparams->get_required();
@@ -349,6 +363,7 @@ sub strip_nonsettlers {
         'help_text' => $strip_nonsettlers_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my $result_name = $pparams->get_result_name();
     my ($group) = $pparams->get_required();
@@ -370,6 +385,7 @@ sub extract_starts {
         'help_text' => $extract_starts_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my $result_name = $pparams->get_result_name();
     my ($group) = $pparams->get_required();
@@ -378,7 +394,7 @@ sub extract_starts {
     $copy->normalize_starts();
     
     my $bfc = $state->get_variable('@bfc_tight', 'mask');
-    $copy->extract_starts_with_mask($bfc, 1);
+    $copy->extract_starts_with_mask($bfc, 0, 1);
     
     $state->set_variable($result_name, 'group', $copy);
     return 1;
@@ -399,6 +415,7 @@ sub export_sims {
         }
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my $output_dir = $main::config{'output_dir'};
     my $delete_existing = $pparams->get_named('delete_existing');
@@ -409,7 +426,7 @@ sub export_sims {
     $copy->normalize_starts();
     my $bfc = $state->get_variable('@bfc_for_sim', 'mask');
     
-    $copy->extract_starts_with_mask($bfc, 0);
+    $copy->extract_starts_with_mask($bfc, 1, 0);
     $copy->export($output_dir);
     
     return 1;
@@ -431,6 +448,7 @@ sub find_difference {
         'help_text' => $find_difference_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my $result_name = $pparams->get_result_name();
     my ($flat1, $flat2) = $pparams->get_required();

@@ -1,4 +1,4 @@
-Welcome to the first tutorial for Civ4 Map Cad! I'll show you how to get the program running, how to run some basic commands, use the help and debugging interfaces, and finally how to generate starting sims for players in a new pitboss game.
+In this tutorial, I'll show you how to get the program running, how to run some basic commands, use the help and debugging interfaces, and finally how to generate starting sims for players in a new pitboss game.
 
 The first thing you'll need to do is install Perl. You can get it here, free:
 

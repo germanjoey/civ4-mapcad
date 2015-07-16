@@ -48,6 +48,7 @@ sub new_mask_from_shape {
         'help_text' => $new_mask_from_shape_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($shape, $width, $height) = $pparams->get_required();
     my $shape_params = $pparams->get_shape_params();
@@ -84,6 +85,7 @@ sub import_mask_from_ascii {
         }
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($filename) = $pparams->get_required();
     my $ret = open (my $test, $filename) || 0;
@@ -125,6 +127,7 @@ sub import_mask_from_table {
         'help_text' => $import_mask_from_table_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($filename) = $pparams->get_required();
     my $ret = open (my $test, $filename) || 0;
@@ -161,6 +164,7 @@ sub export_mask_to_table {
         }
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($mask, $filename) = $pparams->get_required();
     $mask->export_to_file($filename);
@@ -185,6 +189,7 @@ sub export_mask_to_ascii {
         }
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($mask, $filename) = $pparams->get_required();
     
@@ -213,6 +218,7 @@ sub clean_ascii_mask {
         'help_text' => $clean_ascii_mask_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($filename) = $pparams->get_required();
     if (! -e $filename) {
@@ -274,6 +280,7 @@ sub _one_op {
         'help_text' => $help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($target) = $pparams->get_required;
     my $result = $sub->($target);
@@ -297,6 +304,7 @@ sub _two_op {
         }
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($target, $with) = $pparams->get_required();
     my $offsetX = $pparams->get_named('offsetX');
@@ -327,6 +335,7 @@ sub generate_layer_from_mask {
         }
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my $result_name = $pparams->get_result_name();
     my ($group_name) = $result_name =~ /^(\$\w+)/;
@@ -364,6 +373,7 @@ sub modify_layer_with_mask {
         }
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my $result_name = $pparams->get_result_name();
     my ($group_name) = $result_name =~ /^(\$\w+)/;
@@ -400,6 +410,7 @@ sub cutout_layer_with_mask {
         }
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my $result_name = $pparams->get_result_name();
     my ($group_name) = $result_name =~ /^(\$\w+)/;
@@ -437,6 +448,7 @@ sub apply_shape_to_mask {
         }
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     die;
 }

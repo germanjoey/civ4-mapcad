@@ -27,6 +27,7 @@ sub set_output_dir {
         }
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my $delete_existing = $pparams->get_named('delete_existing');
     my ($directory) = $pparams->get_required();
@@ -48,6 +49,7 @@ sub set_mod {
         'help_text' => $set_mod_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($mod) = $pparams->get_required();
     my $max = find_max_players($mod);
@@ -93,6 +95,7 @@ sub write_log {
         }
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my $filename = $pparams->get_named('filename');
     
@@ -113,6 +116,7 @@ sub history {
         'help_text' => $history_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my @log;
     my $i = 0;

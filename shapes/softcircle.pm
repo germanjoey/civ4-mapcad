@@ -1,7 +1,7 @@
 my %params = (
     'centerX' => 0,
     'centerY' => 0,
-    'radius' => 0
+    'radius' => '0.0'
 );
 
 my $gen = sub {

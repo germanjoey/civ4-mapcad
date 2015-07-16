@@ -98,9 +98,9 @@ sub get_height {
 }
 
 sub move {
-    my ($self, $byX, $byY) = @_;
-    $self->{'offsetX'} = $byX;
-    $self->{'offsetY'} = $byY;
+    my ($self, $toX, $toY) = @_;
+    $self->{'offsetX'} = $toX;
+    $self->{'offsetY'} = $toY;
 }
 
 sub fill_tile {
@@ -118,6 +118,7 @@ sub expand_dim {
     
     my $width = max($new_width, $self->get_width());
     my $height = max($new_height, $self->get_height());
+    
     $self->{'map'}->expand_dim($width, $height);
 }
 
@@ -152,9 +153,10 @@ sub merge_with_layer {
     my $copy = deepcopy($self);    
     
     my $new_width = $self->get_group()->get_width();
-    my $new_height = $self->get_group()->get_width();
+    my $new_height = $self->get_group()->get_height();
     
     $copy->expand_dim($new_width, $new_height);
+    
     $copy->{'map'}->clear_map();
     
     for my $x (0 .. $othr->get_width()-1) {
@@ -181,6 +183,9 @@ sub merge_with_layer {
             $copy->{'map'}{'Tiles'}[$tx][$ty]->set('y', $ty);
         }
     }
+    
+    $copy->{'offsetX'} = 0;
+    $copy->{'offsetY'} = 0;
     
     return $copy;
 }
@@ -285,7 +290,6 @@ sub select_with_mask {
     }
     
     $selection->move($mask_offsetX, $mask_offsetY);
-    
     return $selection;
 }
 

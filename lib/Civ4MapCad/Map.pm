@@ -115,7 +115,7 @@ sub expand_dim {
     my ($self, $new_width, $new_height) = @_;
     
     my $current_width = $self->info('grid width');
-    my $current_height = $self->info('grid width');
+    my $current_height = $self->info('grid height');
     
     my $width = max($new_width, $current_width);
     my $height = max($new_height, $current_height);

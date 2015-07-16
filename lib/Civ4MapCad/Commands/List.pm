@@ -33,7 +33,7 @@ sub list_shapes {
     
     my @shape_names = sort keys %{$state->{'shape'}};
     if (@params == 1) {
-        @shape_names = grep { $_ =~ /$params[0]/ } @shape_names;
+        @shape_names = grep { $_ =~ /\Q$params[0]\E/ } @shape_names;
     }
     elsif (@params > 0) {
         $state->buffer_bar();
@@ -86,7 +86,7 @@ sub list_groups {
     
     my @group_names = sort keys %{$state->{'group'}};
     if (@params == 1) {
-        @group_names = grep { $_ =~ /$params[0]/ } @group_names;
+        @group_names = grep { $_ =~ /\Q$params[0]\E/ } @group_names;
     }
     elsif (@params > 0) {
         $state->buffer_bar();
@@ -134,6 +134,7 @@ sub list_layers {
         'help_text' => $list_layers_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($group) = $pparams->get_required();
     my $group_description = _group_description($group);
@@ -145,7 +146,9 @@ sub list_layers {
     foreach my $layer ($group->get_layers()) {
         my $layer_name = $layer->get_name();
         my $priority = 1 + $group->{'max_priority'} - $group->get_layer_priority($layer_name);
-        my $description = sprintf "  priority %s, %s (size: %d x %d), moved to %d,%d from group origin", $priority, $layer->get_name(), $layer->get_width(), $layer->get_height(), $layer->get_offsetX(), $layer->get_offsetY();
+        my $moved = sprintf "moved to %d,%d from group origin", $layer->get_offsetX(), $layer->get_offsetY();
+        $moved = "aligned with group origin" if ($layer->get_offsetX() == 0) and ($layer->get_offsetY() == 0);
+        my $description = sprintf "  priority %s, %s (size: %d x %d), $moved", $priority, $layer->get_name(), $layer->get_width(), $layer->get_height();
         push @layers, $description;
     }
     
@@ -174,7 +177,7 @@ sub list_masks {
     
     my @mask_names = sort keys %{$state->{'mask'}};
     if (@params == 1) {
-        @mask_names = grep { $_ =~ /$params[0]/ } @mask_names;
+        @mask_names = grep { $_ =~ /\Q$params[0]\E/ } @mask_names;
     }
     elsif (@params > 0) {
         $state->buffer_bar();
@@ -218,7 +221,7 @@ sub list_terrain {
     
     my @terrain_names = sort keys %{$state->{'terrain'}};
     if (@params == 1) {
-        @terrain_names = grep { $_ =~ /$params[0]/ } @terrain_names;
+        @terrain_names = grep { $_ =~ /\Q$params[0]\E/ } @terrain_names;
         
         my @height_types = ('Peak', 'Hill', 'Flat', 'Water');
         
@@ -276,7 +279,7 @@ sub list_weights {
     
     my @weight_names = sort keys %{$state->{'weight'}};
     if (@params == 1) {
-        @weight_names = grep { $_ =~ /$params[0]/ } @weight_names;
+        @weight_names = grep { $_ =~ /\Q$params[0]\E/ } @weight_names;
     }
     elsif (@params > 0) {
         $state->buffer_bar();
@@ -376,7 +379,8 @@ sub dump_mask_to_console {
 }
 
 my $dump_mask_help_text = qq[
-    Displays a mask into the dump.html debugging window. Mask values closer to zero will appear blue, while those closer to 1 will appear red. If 'add_to_existing' is specified, the dump will appear as a new tab in the existing dump.html.
+    Displays a mask into the dump.html debugging window. Mask values closer to zero will appear blue, while those closer to 1 will appear red. If 'add_to_existing'
+    is specified, the dump will appear as a new tab in the existing dump.html.
 ];
 sub dump_mask {
     my ($state, @params) = @_;

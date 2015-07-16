@@ -42,6 +42,8 @@ sub new {
     my $processed = _process($state, $raw_params, $param_spec);
     my @calling_format = _report_calling_format($state, $param_spec);
     
+    $processed->{'done'} = 0;
+    
     if ($processed->{'error'} and (@$raw_params == 1) and ($raw_params->[0] eq '--help')) {
         $state->buffer_bar();
         
@@ -53,10 +55,15 @@ sub new {
         }
         
         print "\n\n";
+        print "  Description:\n" if exists $param_spec->{'help_text'};
         $state->report_message($param_spec->{'help_text'}) if exists $param_spec->{'help_text'};
         print "\n\n";
         
         $state->register_print();
+        
+        $processed->{'done'} = 1;
+        $processed->{'error'} = 0;
+        
         return bless $processed, $class;
     }
     
@@ -75,6 +82,7 @@ sub new {
         }
         
         print "\n\n";
+        print "  Description:\n" if (exists $param_spec->{'help_text'}) and ($processed->{'help'});
         $state->report_message($param_spec->{'help_text'}) if (exists $param_spec->{'help_text'}) and ($processed->{'help'});
         print "\n\n" unless $processed->{'error'};
         
@@ -149,6 +157,11 @@ sub _report_calling_format {
             my $desc = $param_spec->{'required_descriptions'}[$i-1];
             push @format, "  param $i: $desc";
         }
+    }
+    
+    if ($param_spec->{'allow_implied_result'}) {
+        push @format, "\n    Specifying a result is optional; if not specified, the original";
+        push @format, "  $param_spec->{'has_result'} will be overwritten.";
     }
     
     return @format;
@@ -476,6 +489,12 @@ sub _make_opt_list {
     }
     
     return \@optional_list;
+}
+
+sub done {
+    my ($self) = @_;
+    return 1 if $self->{'done'};
+    return 0;
 }
 
 sub has_error {

@@ -26,6 +26,7 @@ sub load_terrain {
         'help_text' => $load_terrain_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($filename) = $pparams->get_required();
     $filename =~ s/"//g;
@@ -123,6 +124,7 @@ sub import_weight_table_from_file {
         'help_text' => $import_weight_table_from_file_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
 
     my ($filename) = $pparams->get_required();
     $filename =~ s/"//g;
@@ -218,6 +220,7 @@ sub evaluate_weight {
         'help_text' => $evaluate_weight_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($weight, $value) = $pparams->get_required();
     my $result = $weight->evaluate($value);

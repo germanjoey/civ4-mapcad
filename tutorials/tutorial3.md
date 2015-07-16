@@ -1,4 +1,7 @@
-http://www.garath.net/Sullla/Civ4/ADG12.html
+
+
+Ah, after relaxing with a quiet evening spent playing your pitboss turns, you settle into bed with expectations of blissful dreams. The drama and tension of the game... it all begins to fades away. You stir and suddenly flames erupt in a ring around your room  and a gaunt, disheveled man with eyes of coal materializes before you. Materializes? Huh? Or was he always there? What??? Is this hell, you ask him. Oh, perhaps, perhaps, he smirks with a low growl. At least, it is if these guys have anything to do with it. Out of your closest pop five men in raggeddy banana suits... and they start to dance. It's the original members of [TEAM BANANA](http://www.garath.net/Sullla/Civ4/ADG12.html) from the infamous Apolyton Demogame... and they want YOU to make a map for their reunion game!!
+
 
 
 

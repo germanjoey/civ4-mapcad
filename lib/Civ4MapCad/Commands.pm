@@ -57,6 +57,7 @@ sub import_shape {
         'help_text' => $import_shape_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my $shape_name = $pparams->get_result_name();
     my ($path) = $pparams->get_required();
@@ -110,13 +111,19 @@ sub run_script {
     my ($state, @params) = @_;
 
     if ((@params == 1) and ($params[0] eq '--help')) {
+        $state->buffer_bar();
+        
         print "\n";
-        print "  Command format:\n\n";
-        print "  run_script \"string\"\ => optional_result_name\n    param 1: filename of script to run\n\n";
+        print "  Command format:";
+        print "\n\n";
+        print "  run_script \"string\"\ => optional_result_name\n    param 1: filename of script to run";
+        print "\n\n";
         print "  Loads a script and runs the commands within. A result to this command may be\n";
         print "  specified; if so, then the 'return' command may be used in the script to return\n";
         print "  a result. The result may be any type (group/layer/mask/weight) but must match\n";
         print "  the type returned by the script.\n\n";
+        
+        $state->register_print();
         return 1;
     }
     
@@ -150,6 +157,7 @@ sub run_script {
         print "\n";
         print "  Command format:\n\n";
         print "  run_script \"string\"\ => optional_result_name\n    param 1: filename of script to run\n\n";
+        
         return -1;
     }
 
@@ -160,10 +168,6 @@ sub run_script {
     my $ret = $state->process_script($filename);
     $state->off_script();
     
-    if ($state->is_off_script()) {
-        $state->clear_buffer_bar();
-    }
-        
     return $ret;
 }
 

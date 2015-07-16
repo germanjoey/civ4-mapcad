@@ -108,7 +108,9 @@ sub crop {
     foreach my $layer ($self->get_layers()) {
         if ($layer->check_croppable($left, $bottom, $right, $top)) {
             $layer->crop($left, $bottom, $right, $top);
-            $layer->move(-$left, -$bottom) if ($left > 0) or ($bottom > 0);
+            
+            $layer->move(max(0, $layer->get_offsetX() - $left), 0) if $layer->get_offsetX() > 0;
+            $layer->move(max(0, $layer->get_offsetY() - $bottom), 0) if $layer->get_offsetY() > 0;
         }
     }
     
@@ -432,7 +434,7 @@ sub add_scouts_to_settlers {
 
 # its assumed that the group is normalized by this point
 sub extract_starts_with_mask {
-    my ($self, $mask, $clear_selected) = @_;
+    my ($self, $mask, $as_sim, $clear_selected) = @_;
     
     my $all_starts = $self->find_starts();
     
@@ -452,13 +454,16 @@ sub extract_starts_with_mask {
         my $start_layer = $self->{'layers'}{$layer_name}->select_with_mask($mask, $offsetX, $offsetY, $clear_selected);
         $start_layer->set_player_from_layer($owner, $self->{'layers'}{$layer_name});
         $start_layer->rename("start" . $owner);
-        $start_layer->strip_hidden_strategic();
-        $start_layer->strip_victories();
-        $start_layer->set_difficulty($main::config{'difficulty'});
+        
+        if ($as_sim) {
+            $start_layer->strip_hidden_strategic();
+            $start_layer->strip_victories();
+            $start_layer->set_difficulty($main::config{'difficulty'});
+        }
         
         my $p = $self->{'priority'}{$layer_name};
         $self->add_layer($start_layer);
-        #$self->set_layer_priority($start_layer->get_name(), $start_layer, $p);
+        $self->increase_priority($start_layer->get_name());
     }
     
     return 1;
@@ -471,7 +476,6 @@ sub export {
     $group_name =~ s/\$//;
     
     my @layers = $self->get_layers();
-    $main::config{'state'}->buffer_bar();
     
     print "\n";
     foreach my $layer (@layers) {
@@ -489,6 +493,7 @@ sub export {
         $layer->export_layer($path);
         
         $main::config{'state'}->report_message("Exported layer $layer_name.");
+        print "\n";
     }
     
     print "\n";

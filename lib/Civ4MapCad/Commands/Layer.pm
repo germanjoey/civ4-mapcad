@@ -25,6 +25,7 @@ sub merge_two_layers {
         'help_text' => $merge_two_layers_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($layer_top, $layer_bottom) = $pparams->get_required();
     
@@ -49,6 +50,7 @@ sub expand_layer_canvas {
         'help_text' => $expand_layer_canvas_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($layer, $by_width, $by_height) = $pparams->get_required();
     
@@ -71,6 +73,7 @@ sub recenter {
         'help_text' => $recenter_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($layer, $offsetX, $offsetY) = $pparams->get_required();
     $layer->recenter();
@@ -89,6 +92,7 @@ sub move_layer {
         'help_text' => $move_layer_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($layer, $offsetX, $offsetY) = $pparams->get_required();
     $layer->move($offsetX, $offsetY);
@@ -107,6 +111,7 @@ sub set_layer_priority {
         'help_text' => $set_layer_priority_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($layer, $priority) = $pparams->get_required();
     my $group = $layer->get_group();
@@ -132,6 +137,7 @@ sub increase_layer_priority {
         'help_text' => $increase_layer_priority_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($layer) = $pparams->get_required();
     my $group = $layer->get_group();
@@ -151,6 +157,7 @@ sub decrease_layer_priority {
         'help_text' => $decrease_layer_priority_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($layer) = $pparams->get_required();
     my $group = $layer->get_group();
@@ -174,6 +181,7 @@ sub crop_layer {
         'allow_implied_result' => 1
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($layer, $left, $bottom, $right, $top) = $pparams->get_required();
     
@@ -211,6 +219,7 @@ sub flip_layer_lr {
         'allow_implied_result' => 1
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($layer) = $pparams->get_required();
     my $copy = deepcopy($layer);
@@ -236,6 +245,7 @@ sub flip_layer_tb {
         'allow_implied_result' => 1
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($layer) = $pparams->get_required();
     my $copy = deepcopy($layer);
@@ -260,10 +270,12 @@ sub copy_layer_from_group {
         'help_text' => $copy_layer_from_group_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my $result_name = $pparams->get_result_name();
     my ($layer) = $pparams->get_required();
     my $copy = deepcopy($layer);
+    $copy->move(0,0);
     $state->set_variable($result_name, 'layer', $copy);
     
     return 1;

@@ -122,8 +122,6 @@ sub _process_command {
         
         $self->set_variable($expected_name, $return_type, $copy);
         
-        $self->ready_buffer_bar();
-        $self->clear_printed();
         return 1;
     }
     
@@ -171,9 +169,9 @@ sub _process_command {
         }
         
         my $com = join ("\n    ", @com_list);
-        print qq[\nAvailable commands are:\n\n    $com\n\n];
-        print qq[You can filter this list with a phrase, e.g. "help weight" to show all commands with "weight" in their name.\n\n] if @params == 0;
-        print qq[For more info about a specific command, type its name plus --help, e.g. "evaluate_weight --help".\n\n];
+        print qq[\n  Available commands are:\n\n    $com\n\n];
+        print qq[  You can filter this list with a phrase, e.g. "help weight" to show all\n  commands with "weight" in their name.\n\n] if @params == 0;
+        print qq[  For more info about a specific command, type its name plus --help,\n  e.g. "evaluate_weight --help"\n\n];
         
         return 1;
     }
@@ -241,11 +239,6 @@ sub process_script {
     }
     
     return 1;
-}
-
-sub clear_buffer_bar {
-    my ($self) = @_;
-    $self->{'already_printed'} = 0;
 }
 
 sub push_script_return {
@@ -494,7 +487,7 @@ sub clear_printed {
 sub register_print {
     my ($self) = @_;
     
-    if (! $self->is_off_script()) {
+    if (!$self->is_off_script()) {
         $self->{'already_printed'} = 1;
     }
 }
@@ -546,7 +539,6 @@ sub report_warning {
 
 sub report_message {
     my ($self, $msg, $extra_indent) = @_;
-    $self->buffer_bar();
     
     $msg =~ s/\n//g;
     my $ei = 0;
