@@ -1,10 +1,14 @@
-Ah, after relaxing with a quiet evening spent playing your pitboss turns, you settle into bed with expectations of blissful dreams of your glorious empire. The drama and tension of the game... it all begins to fades away, just as you notice that something seems amiss. You stir... and suddenly, flames erupt in a ring around your room! A gaunt, disheveled stranger with eyes of coal materializes before you. Materializes? Huh? Or was he always there...? Your mouth agape, you leap back, knocking your head against the wall. You stir... "Is this h-hell...?", you manage to whisper. Oh, perhaps, perhaps, he smirks with a low growl. At least, it is if these guys have anything to do with it. Out of your closest pop five men in raggeddy banana suits... and they begin to dance. Oh, you feel the true horror now, as it begins to down on you what's really going on here... that's right, it's the original members of [TEAM BANANA](http://www.garath.net/Sullla/Civ4/ADG12.html) from the infamous Apolyton Demogame... and they want YOU to make a map for their reunion game!!
+## WELCOME TO BANANA HELL
+
+Ah, after relaxing with a quiet evening spent playing your pitboss turns, you settle into bed with expectations of blissful dreams of your glorious empire. The drama and tension of the game... it all begins to fades away, just as you notice that something seems amiss. You stir... and suddenly, flames erupt in a ring around your room! A gaunt, disheveled stranger with eyes of coal materializes before you. Materializes? Huh? Or was he always there...? Your mouth agape, you leap back, knocking your head against the wall. You stir... "Is this h-hell...?", you manage to whisper. Oh, perhaps, perhaps, he smirks with a low growl. At least, it is if these guys have anything to do with it. Out of your closest pop five men in raggeddy banana suits... and they begin to dance. Oh, you feel the true horror now, as it begins to down on you what's really going on here... oh no, oh yes, that's right, it's the original members of [TEAM BANANA](http://www.garath.net/Sullla/Civ4/ADG12.html) from the infamous Apolyton Demogame... and they want YOU to make a map for their reunion game!! (t3/wth.gif)
 
 <p align="center">
-<img src="t3/dancing.gif" /> <img src="t3/dancing.gif" /> <img src="t3/dancing.gif" /> <img src="t3/dancing.gif" /> <img src="t3/dancing.gif" /> <img src="t3/dancing.gif" /> <img src="t3/dancing.gif" /> <img src="t3/dancing.gif" />
+    <img src="t3/dancing.gif" alt=""/> <img src="t3/dancing.gif"  alt=""/> <img src="t3/dancing.gif"  alt=""/> <img src="t3/dancing.gif"  alt=""/> <img src="t3/dancing.gif"  alt=""/> <img src="t3/dancing.gif"  alt=""/> <img src="t3/dancing.gif"  alt=""/> <img src="t3/dancing.gif"  alt=""/>
 </p>
 
 Obviously, these fools will insist on a banana map, and they ain't lettin' you leave this place until you give it to them. Surely, this will be the worst thing you've ever been apart of - and Donovan Zoi isn't gonna come heroically swooping to the rescue this time. But hold on tight, I'll help you get through it.
+
+## Masks
 
 Ok, the first thing we'll need to do is figure out how draw a banana. We'll need one banana island per player at the very least. We could just click this out in the worldbuilder and import it with *import_group*, but where's the fun in that? Besides, it might be the case that we need to make some changes later, so instead let's try creating one using Civ4 MC's special terrain generation tools: Masks, Weights, and Shapes.
 
@@ -56,6 +60,8 @@ Groups had a '$' in front of them, while now we see masks have a '@' in front of
 
 Try hovering over the coordinates... you can see that each one has a value. Red in this case means 1, blue means 0; if we had any mid-range decimal values, the coordinate would be purplish.
          
+## Weight Tables
+
 So, with Masks we have a way to describe a shape. How do we then turn that into terrain? Enter Weight tables. Weight tables are kind of like custom paintbuckets for the inside of the cookiecutter. They fill specific value-ranges with a type of tile. They use the '%' sigil. For example, a very simple Weight might look like this:
 
     > list_weights land
@@ -121,6 +127,8 @@ The *evaluate_weight* command exists as a handy debugging tool and lets us see t
         
 The plainshill_forest terrain was picked because our value, 0.3526, is above its condition of 0.3400, but below the previous condition (of %plains_forest) of 0.3700. Weights allows us to build pretty sophisticated tile distributions without it actually seeming all that complicated because of their nested nature.  
 
+## Shapes
+
 Now that we have masks and weights, we can build our banana. However, let's take a look at the last new object type, shapes, as they're another way to make mask in a much more fancy way. Shapes are essentially functions that describe a geometric shape, and use the * sigil. For example, we know that the equation of a circle is x^2 + y^2 = r^2.  Our circle shape thus says that if our x,y coordinate is inside the circle of this equation, our mask value at that coordinate will be a '1.0', otherwise it is a '0.0' Unlike the rest of Civ4 MC, you do need to know a bit of programming to create a new shape type, but I've already provided a bunch for you, loaded when Civ4MC first boots up (try the *list_shapes* command). 
 
 Try entering the following on the command line:
@@ -134,6 +142,8 @@ This command is a bit more complicated than the stuff we've seen previously, so 
 Refresh dump.html and take a look. As you can see, both circle1 and circle2 look exactly the same... if you ask if they want ice cream, they both say yes. In fact, it might not surprise you that I actually generated the circle with *new_mask_from_shape* to begin with and then saved it to circle.txt with the *export_mask_to_ascii* command. (*import_mask_to_ascii*/ *export_mask_to_table* is another option, by the way, which could be very useful if you want to generate a very complicated mask in some other way (e.g. matlab or python) and bring it into the tool). 
 
 ![tutorial3-i2](t3/i2.png)
+
+## BUILDING THE BANANA
 
 Alright, now let's get on with the show. We have some circles, but bananas don't look like circles. However, we can make a banana by moving one of the circles to the right and up a bit and then taking the difference:
 
@@ -150,6 +160,8 @@ Now that's a fine looking banana, if I don't say so myself! Think Venn diagrams;
 ![tutorial3-i4](t3/i5.png)
 
 Unfortunately, this map is utterly boring and unplayable by anyone's standards, much less those used by these perverts. Unsurprisingly, the filthy yellow fiends throw it back in your face. "We want RaNoOME!" they shout, actually pronouncing the E out loud somehow. "raNdOme! RanDOme! RANdoMe!" Their chanting chills you to the bone.
+
+## Randomizing the Banana
 
 Ok, so how do we do random? We'll use the *random shape, of course. This isn't so much of a traditional shape like a circle or square, but rather an equation that inserts a random value at each mask coordinate. Let's try it out:
 

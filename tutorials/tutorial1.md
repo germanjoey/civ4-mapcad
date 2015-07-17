@@ -1,3 +1,5 @@
+## Welcome!
+
 In this tutorial, I'll show you how to get the program running, how to run some basic commands, use the help and debugging interfaces, and finally how to generate starting sims for players in a new pitboss game.
 
 The first thing you'll need to do is install Perl. You can get it here, free:
@@ -43,6 +45,8 @@ This sounds good. We can set our mod to RtR very easily; as soon as we switch mo
     > set_mod "RtR"
     
 ![tutorial1-img6](t1/i6.png)
+
+## Working with the map
 
 Alright, cool. Our map is now an object that we can manipulate with other commands. Specifically, it is a "Group" type object, short for "Group of Layers." Don't worry what that means right now, just know that this object contains all the tiles in our map. We'll talk more about groups, layers, and the other object types in the second tutorial. For now, let's just take a look at our map with the "dump_group" command:
 

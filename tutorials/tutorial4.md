@@ -1,7 +1,9 @@
+## THE RETURN TO BANANA HELL
+
 We're back... or, should we say, we've never really left - because the banana brats have circled around you now and are still clamouring for their map. From what you can tell, they like their banana, "yay," but insist that this be a "real" game with a "real capital BFC." I mean, gimmie a break, right?
 
 <p align="center">
-<img src="t3/dancing.gif" /> <img src="t3/dancing.gif" /> <img src="t3/dancing.gif" /> <img src="t3/dancing.gif" /> <img src="t3/dancing.gif" /> <img src="t3/dancing.gif" /> <img src="t3/dancing.gif" /> <img src="t3/dancing.gif" />
+    <img src="t3/dancing.gif" alt=""/> <img src="t3/dancing.gif"  alt=""/> <img src="t3/dancing.gif"  alt=""/> <img src="t3/dancing.gif"  alt=""/> <img src="t3/dancing.gif"  alt=""/> <img src="t3/dancing.gif"  alt=""/> <img src="t3/dancing.gif"  alt=""/> <img src="t3/dancing.gif"  alt=""/>
 </p>
 
 (We're picking up where we were at the end of the last tutorial... if you've closed your command prompt since then, you can get back to where we were by running [this script](t3/t3.civ4mc):
@@ -9,6 +11,8 @@ We're back... or, should we say, we've never really left - because the banana br
     run_script "tutorials/t3/t3.civ4mc"
     
 We'll talk a little more about scripts later.)
+
+## Building a Capital BFC
 
 Making a BFC in the worldbuilder is easy enough. We'll just take one of the starting sims we generated from Tutorial 1 and edit it into something like this:
 
@@ -33,6 +37,8 @@ Start0 is the layer we want. Let's copy it into $the_real_banana and raise it ab
     crop_group $the_real_banana 0 0 13 16
 
 ![tutorial4-i4](t4/i4.png)
+
+## Using scripts
 
 Ah, now our banana is "legit" and ready to turn into a script. But, one thing first. When this is a script, our banana will re-randomize every single time the script is invoked. Instead, let's export @random_field to a table like so:
 
@@ -91,6 +97,8 @@ Just kidding... you'd have to be truly B-A-N-A-N-A-S to do something like that..
 
 ![img-dance](t4/dance.png)
 
+## Putting it all together
+
 &#42;ahem&#42;... The only real new thing here is that "return" statement at the end, which makes *run_script* produce a result. It's sort of like a function, if this were a programming language. A return statement is not needed in scripts, but it's pretty handy because it allows the run_script command to return a value. Thus, we can do this:
 
     run_script "tutorials/t4/banana.civ4mc" => $player1
@@ -128,19 +136,21 @@ We ran the script 5 times, and generated 5 bananas! That means we're in the home
     
 And that's it, we're done!!!! Here's our monster, the perfect toroidal banana nightmare. I put this script at [tutorials/t4/bunch.civ4mc](t4/bunch.civ4mc), if you want to look at it.
 
-I started by sizing the main group to 60 by 60, and spaced out the bananas 11 by 11, but then quickly realized that was way too spacey. (and probably way too big to post a screenshot of in this tutorial page) Because of the toroidal wrap, we could bring in everything a lot closer. Now it's the perfect size, I think - way, way too small to be acutally playable by normal people, but perfect for these goofballs considering that they'll probably abandon the game after 40-50 turns. At least this way they'll get some action! ![img-lol](t4/lol.gif)
+I started by sizing the main group to 60 by 60, and spaced out the bananas 11 by 11, but then quickly realized that was way too spacey. (and way too big to post a screenshot of in this tutorial page) Because of the toroidal wrap, we could bring in everything a lot closer. Now it's the perfect size, I think - way, way too small to be acutally playable by normal people, but perfect for these goofballs, considering that they'll probably abandon the game after 40-50 turns anyways. At least this way they'll get some action! ![img-lol](t4/lol.gif)
 
-Anyways, that's it for this tutorial. Hopefully, you can find your way around using the help commands:
+## Lord Almighty, we are free at last...
+
+With great reluctance, the devil lets you go... and also, it turns out that's it for this tutorial. Hopefully, you can find your way around using the built-in help commands, which, remember, are:
 
     help search_string # for searching
     command_name --help # for getting a full description of the command
     
-    list_shapes
-    list_groups
-    list_layers
-    list_weights
-    list_terrain
+    list_layers $group
+    list_shapes optional_search_string
+    list_groups optional_search_string
+    list_weights optional_search_string
+    list_terrain optional_search_string
     
-But of course, don't hesitate to ask if you have any trouble!
+But of course, don't hesitate to ask for help if you have any trouble!
 
 [Back to tutorial index](Readme.md)

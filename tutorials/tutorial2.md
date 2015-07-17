@@ -1,3 +1,5 @@
+## Regarding Groups and Layers
+
 In this tutorial, we'll talk a little bit more about Layers and Groups of Layers (called "Groups" for short), something we touched on briefly in the previous tutorial.
 
 Most of you will already be familiar with Layer-based designs from using image editors like Photoshop or The Gimp. If not, the essential idea is that we compose an image with multiple images that sit on top of each other. The layers on top cover up layers on the bottom, but these top layers might be smaller or have holes cut in them that allow you see the layers underneath. Other than visibility, the layers don't interact in any other way; they might as well be completely seperate images.
@@ -20,6 +22,8 @@ Not too complicated, right? Let's see an example, using the same map as the last
     set_mod "RtR"
     import_group "tutorials/t1/tutorial1.CivBeyondSwordWBSave" => $tutorial2
     dump_group $t2_cropped --add_to_existing
+    
+## Manipulating Groups and Layers
     
 But, you know what? This map is way bigger than necessary for an example; let's trim it up a bit using the "crop_group" command. (Remember that you can use '--help' on any command to learn more about it!)
 
