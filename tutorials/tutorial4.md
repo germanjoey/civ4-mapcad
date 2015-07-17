@@ -2,7 +2,7 @@ finishing the banana
 
 We're back... or, should we say, we've never really left - because the banana brats have circled around you now and are still clamouring for their map. From what you can tell, they like their banana, "yay," but insist that this be a "real" game with a "real capital BFC." I mean, gimmie a break, right?
 
-(We're picking up where we were at the end of the last tutorial... if you've closed your command prompt since then, you can get back to where we were by running [this script](tutorials/t3/t3.civ4mc):
+(We're picking up where we were at the end of the last tutorial... if you've closed your command prompt since then, you can get back to where we were by running [this script](t3/t3.civ4mc):
 
     run_script "tutorials/t3/t3.civ4mc"
     
@@ -12,7 +12,7 @@ Making a BFC in the worldbuilder is easy enough. We'll just take one of the star
 
 ![tutorial4-i1](t4/i1.png)
 
-We make sure to add all modern-era resources somewhere because, like, we're *totally* sure Team Banana will stick around that long. ![img-lol](tutorials/t4/lol.gif) Then we bring it into Civ4MC, and use extract_starts to get rid of the dummy AI civ.
+We make sure to add all modern-era resources somewhere because, like, we're *totally* sure Team Banana will stick around that long. ![img-lol](t4/lol.gif) Then we bring it into Civ4MC, and use extract_starts to get rid of the dummy AI civ.
 
     import_group "tutorials/t4/bfc.CivBeyondSwordWBSave" => $bfc
     extract_starts $bfc
@@ -36,7 +36,7 @@ Ah, now our banana is "legit" and ready to turn into a script. But, one thing fi
 
     export_mask_to_file @rand_field, "tutorials/t4/random.txt"
     
-And we can build our script like this, which I've saved at [tutorials/t4/banana.civ4mc](tutorials/t4/banana.civ4mc):
+And we can build our script like this, which I've saved at [t4/banana.civ4mc](t4/banana.civ4mc):
 
     # generate our banana!
     import_mask_from_ascii "tutorials/t3/circle.txt" => @circle1
@@ -124,7 +124,7 @@ We ran the script 5 times, and generated 5 bananas! That means we're in the home
     dump_group $banana_bunch
     export_sims $banana_bunch
     
-And that's it, we're done!!!! Here's our monster, the perfect toroidal banana nightmare. I named this script [bunch.civ4mc](tutorials/t3/bunch.civ4mc), if you want to look at it.
+And that's it, we're done!!!! Here's our monster, the perfect toroidal banana nightmare. I named this script [bunch.civ4mc](t4/bunch.civ4mc), if you want to look at it.
 
 I started by sizing the main group to 60 by 60, and spaced out the bananas 11 by 11, but then quickly realized that was way too spacey. (and probably way too big to post a screenshot of in this tutorial page) Because of the toroidal wrap, we could bring in everything a lot closer. Now it's the perfect size, I think - way, way too small to be acutally playable by normal people, but perfect for these goofballs considering that they'll probably abandon the game after 40-50 turns. At least this way they'll get some action! ![img-lol](t4/lol.gif)
 
