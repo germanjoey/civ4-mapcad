@@ -85,11 +85,11 @@ Only about 30 lines, including comments - not too shabby, right? Now.... to make
     dump_group $the_real_banana --add_to_existing
     ...
     
-Just kidding... you'd have to be truly B-A-N-A-N-A-S to do something like that... *<b></b>tugs collar<b></b>* ![img-sweatdrop](t4/sweatdrop.gif)
+Just kidding... you'd have to be truly B-A-N-A-N-A-S to do something like that... &#42;tugs collar&#42; ![img-sweatdrop](t4/sweatdrop.gif)
 
 ![img-dance](t4/dance.png)
 
-*<b></b>ahem<b></b>* The only real new thing here is that "return" statement at the end, which makes *run_script* produce a result. It's sort of like a function, if this were a programming language. A return statement is not needed in scripts, but it's pretty handy because it allows the run_script command to return a value. Thus, we can do this:
+&#42;ahem&#42;... The only real new thing here is that "return" statement at the end, which makes *run_script* produce a result. It's sort of like a function, if this were a programming language. A return statement is not needed in scripts, but it's pretty handy because it allows the run_script command to return a value. Thus, we can do this:
 
     run_script "tutorials/t4/banana.civ4mc" => $player1
     run_script "tutorials/t4/banana.civ4mc" => $player2
