@@ -73,8 +73,13 @@ sub set_contact {
 }
 
 sub add_contact {
-    my ($self, $value) = @_;
-    push @{$self->{'Contacts'}}, $value;
+    my ($self, $new_team) = @_;
+    
+    foreach my $team (@{$self->{'Contacts'}}) {
+        return if $team == $new_team;
+    }
+    
+    push @{$self->{'Contacts'}}, $new_team;
 }
 
 sub get_contacts {

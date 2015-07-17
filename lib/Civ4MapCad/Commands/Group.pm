@@ -43,6 +43,39 @@ sub set_wrap {
     return 1;
 }
 
+my $find_starts_help_text = qq[
+    Finds starts (settlers) in a group and reports their locations.
+];
+sub find_starts {
+    my ($state, @params) = @_;
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'required' => ['group'],
+        'required_descriptions' => ['group to find settlers in'],
+        'help_text' => $find_starts_help_text
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my ($group) = $pparams->get_required();
+    my $all_starts = $group->find_starts();
+    
+    my @sorted_starts;
+    foreach my $start (@$all_starts) {
+        push @sorted_starts, map {[$start->[0], @$_]} @{ $start->[1] };
+    }
+    @sorted_starts = sort { $b->[3] <=> $a->[3] } @sorted_starts;
+    
+    if (@sorted_starts == 0) {
+        $state->list('No starts found.');
+    }
+    else {
+        my @descriptions = map { sprintf "player %s is in layer '%s' at %d,%d", $_->[3], $_->[0], $_->[1], $_->[2] } @sorted_starts;
+        $state->list( @descriptions );
+    }
+    
+    return 1;
+}
+
 my $expand_group_canvas_help_text = qq[
     Expands a group's dimensions.
 ];
@@ -204,7 +237,17 @@ sub flatten_group {
     my ($rename_final) = $pparams->get_named('rename_final_layer');
     
     my $copy = deepcopy($group);
+    
+    if ($rename_final) {
+        my ($raw_name) = $result_name =~ /\$(\w+)/;
+        $copy->rename($raw_name);
+    }
+    
+    my $has_duplicate_owners = $group->has_duplicate_owners();
+    $state->buffer_bar() if $has_duplicate_owners;
     $copy->merge_all($rename_final);
+    $state->register_print() if $has_duplicate_owners;
+    
     $state->set_variable($result_name, 'group', $copy);
     
     return 1;
@@ -252,14 +295,19 @@ sub export_group {
     my $output_dir = $main::config{'output_dir'};
     my @layers = $group->get_layer_names();
     
+    $state->buffer_bar();
+    
     if (@layers > 1) {
         my $copy = deepcopy($group);
-        my $flat = $copy->merge_all(1);
-        my ($flat_layer) = $flat->get_layers();
-        $flat_layer->export_layer($output_dir . '/' . $flat->get_name() . ".flat.CivBeyondSwordWBSave");
+        print "\n  Exporting flat version of group ", $copy->get_name(), ".\n";
+        
+        my $has_duplicate_owners = $group->has_duplicate_owners();
+        $copy->merge_all(1);
+        
+        my ($flat_layer) = $copy->get_layers();
+        $flat_layer->export_layer($output_dir . '/' . $copy->get_name() . ".flat.CivBeyondSwordWBSave");
     }
     
-    $state->buffer_bar();
     $group->export($output_dir);
     $state->register_print();
     
@@ -306,7 +354,11 @@ sub normalize_starts {
     return 1 if $pparams->done;
     
     my ($group) = $pparams->get_required();
+    
+    my $has_duplicate_owners = $group->has_duplicate_owners();
+    $state->buffer_bar() if $has_duplicate_owners;
     $group->normalize_starts();
+    $state->register_print() if $has_duplicate_owners;
     
     return 1;
 }
@@ -389,14 +441,18 @@ sub extract_starts {
     
     my $result_name = $pparams->get_result_name();
     my ($group) = $pparams->get_required();
+    my $bfc = $state->get_variable('@bfc_tight', 'mask');
     
     my $copy = deepcopy($group);
-    $copy->normalize_starts();
     
-    my $bfc = $state->get_variable('@bfc_tight', 'mask');
+    my $has_duplicate_owners = $copy->has_duplicate_owners();
+    $state->buffer_bar() if $has_duplicate_owners;
+    $copy->merge_all(1);
+    $state->register_print() if $has_duplicate_owners;
+    
     $copy->extract_starts_with_mask($bfc, 0, 1);
-    
     $state->set_variable($result_name, 'group', $copy);
+    
     return 1;
 }
 
@@ -421,11 +477,13 @@ sub export_sims {
     my $delete_existing = $pparams->get_named('delete_existing');
     my ($group) = $pparams->get_required();
     my $copy = deepcopy($group);
-    
-    $copy->merge_all(1);
-    $copy->normalize_starts();
     my $bfc = $state->get_variable('@bfc_for_sim', 'mask');
     
+    my $has_duplicate_owners = $copy->has_duplicate_owners();
+    $state->buffer_bar() if $has_duplicate_owners;
+    $copy->merge_all(1);
+    $state->register_print() if $has_duplicate_owners;
+
     $copy->extract_starts_with_mask($bfc, 1, 0);
     $copy->export($output_dir);
     

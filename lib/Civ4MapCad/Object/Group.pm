@@ -109,8 +109,8 @@ sub crop {
         if ($layer->check_croppable($left, $bottom, $right, $top)) {
             $layer->crop($left, $bottom, $right, $top);
             
-            $layer->move(max(0, $layer->get_offsetX() - $left), 0) if $layer->get_offsetX() > 0;
-            $layer->move(max(0, $layer->get_offsetY() - $bottom), 0) if $layer->get_offsetY() > 0;
+            $layer->move_to(max(0, $layer->get_offsetX() - $left), 0) if $layer->get_offsetX() > 0;
+            $layer->move_to(0, max(0, $layer->get_offsetY() - $bottom)) if $layer->get_offsetY() > 0;
         }
     }
     
@@ -156,6 +156,22 @@ sub get_layer_names {
     my @names = keys %{ $self->{'layers'} };
     my @order = sort { $self->{'priority'}{$a} <=> $self->{'priority'}{$b} } @names;
     return @order;
+}
+
+sub delete_layer {
+    my ($self, $layer_name) = @_;
+    
+    my $p = $self->{'priority'}{$layer_name};
+    delete $self->{'priority'}{$layer_name};
+    delete $self->{'layers'}{$layer_name};
+    
+    foreach my $name (keys %{ $self->{'layers'} }) {
+        if ($self->{'priority'}{$name} > $p) {
+            $self->{'priority'}{$name} --;
+        }
+    }
+    
+    $self->{'max_priority'}-- if $self->{'max_priority'} >= $p;
 }
 
 sub add_layer {
@@ -209,7 +225,7 @@ sub change_canvas_size {
    
     if (($expand_top_by != 0) || ($expand_left_by != 0)) {
         foreach my $name (keys %{ $self->{'layers'} }) {
-            $self->{'layers'}{$name}->move($expand_top_by, $expand_left_by);
+            $self->{'layers'}{$name}->move_to($expand_top_by, $expand_left_by);
         }
     }
 }
@@ -284,7 +300,6 @@ sub set_layer_priority {
 
 sub get_layer_priority {
     my ($self, $layer_name) = @_;
- 
     return $self->{'priority'}{$layer_name};
 }
  
@@ -296,8 +311,16 @@ sub merge_two_and_replace {
    
     delete $self->{'priority'}{$layer2_name};
     delete $self->{'layers'}{$layer2_name};
-   
+    
+    my $starts2 = $layer2->find_starts();
     my $merged = $layer1->merge_with_layer($layer2);
+    
+    foreach my $start (@$starts2) {
+        my ($x, $y, $owner_id) = @$start;
+        my ($player, $team) = $layer2->get_player_data($owner_id);
+        $merged->set_player_from_other($owner_id, deepcopy($player), deepcopy($team));
+    }
+    
     $self->{'layers'}{$layer1_name} = $merged;
    
     return 1;
@@ -305,24 +328,37 @@ sub merge_two_and_replace {
  
 sub merge_all {
     my ($self, $rename_final_to_match) = @_;
-   
+    
+    $self->normalize_starts(); # important!
+    
     while (1) {
-        my @remaining_layers = $self->get_layer_names();
-        last if @remaining_layers == 1;
+        my @remaining_layers_names = $self->get_layer_names();
+        last if @remaining_layers_names == 1;
        
-        $self->merge_two_and_replace($remaining_layers[0], $remaining_layers[1]);
+        $self->merge_two_and_replace($remaining_layers_names[0], $remaining_layers_names[1]);
     }
     
-    my @remaining_layers = $self->get_layer_names();
-    my $remnant = $remaining_layers[0];
+    my @remaining_layers_names = $self->get_layer_names();
+    my $remnant = $remaining_layers_names[0];
     
     # fill in the background so the final result has the correct size
     my $background = Civ4MapCad::Object::Layer->new_default('__background', $self->get_width(), $self->get_height());
     $self->{'layers'}{$remnant} = $self->{'layers'}{$remnant}->merge_with_layer($background);
-    $self->{'layers'}{$remnant}->rename($self->get_name()) if $rename_final_to_match;
     
-    # cleanup priority list
-    $self->{'priority'}{$remnant} = 0;
+    # rename the final layer to match the group name, so clean out the old name from the indexes
+    if (($remnant ne $self->get_name()) and ($rename_final_to_match)) {
+        my $new_name = $self->get_name();
+        $self->{'layers'}{$remnant}->rename($new_name);
+        $self->{'layers'}{$new_name} = $self->{'layers'}{$remnant};
+        $self->{'priority'}{$new_name} = 0;
+        
+        delete $self->{'layers'}{$remnant};
+        delete $self->{'priority'}{$remnant};
+    }
+    else {
+        $self->{'priority'}{$remnant} = 0;
+    }
+    
     $self->{'max_priority'} = 0;
 }
 
@@ -332,15 +368,14 @@ sub find_difference {
     die "not yet implemented!";
 }
 
-sub normalize_starts {
+sub get_duplicate_owners {
     my ($self) = @_;
-    
+
     # first normalize each layer
     foreach my $layer (keys %{ $self->{layers} }) {
         $self->{'layers'}{$layer}->normalize_starts();
     }
     
-    my %duplicates;
     my %starts_found;
     my $all_starts = $self->find_starts();
     
@@ -351,27 +386,55 @@ sub normalize_starts {
             my ($x, $y, $owner) = @$start;
             
             if (exists $starts_found{$owner}) {
-                $duplicates{$owner} = 1;
-                push @{ $starts_found{$owner} }, $layer_name;
+                push @{ $starts_found{$owner} }, [$layer_name, $x, $y];
             }
             else {
-                $starts_found{$owner} = [$layer_name];
+                $starts_found{$owner} = [[$layer_name, $x, $y]];
             }
         }
     }
     
-    foreach my $duplicate_start (keys %duplicates) {
-        my @dups = $starts_found{$duplicate_start};
-        my $assigned_layer = shift @dups;
+    return \%starts_found;
+}
+
+sub has_duplicate_owners {
+    my ($self) = @_;
+    
+    my $starts_found = $self->get_duplicate_owners();
+    my @duplicates = grep { @{$starts_found->{$_}} > 1 } (keys %$starts_found);
+    
+    return (@duplicates > 0);
+    
+}
+
+sub normalize_starts {
+    my ($self) = @_;
+    
+    my $starts_found = $self->get_duplicate_owners();
+    my @duplicates = grep { @{$starts_found->{$_}} > 1 } (keys %$starts_found);
+    
+    print "\n" if @duplicates > 0;
+    
+    foreach my $duplicate_owner_id (@duplicates) {
+        my $dups = $starts_found->{$duplicate_owner_id};
+        my $assigned_start = shift @$dups;
+        
         while (1) {
-            last unless @dups > 0;
-            my $layer = shift @dups;
+            last if @$dups == 0;
+            my $start_to_reassign = shift @$dups;
+            my ($layer_name, $x, $y) = @$start_to_reassign;
             
-            my $new_id = _get_next_open_start_id(\%starts_found);
-            $starts_found{$new_id} = 1;
-            $self->{'layers'}{$layer}->reassign_start($duplicate_start, $new_id);
+            my $new_owner_id = _get_next_open_start_id($starts_found);
+            $starts_found->{$new_owner_id} = 1;
+            
+            my $layer = $self->{'layers'}{$layer_name};
+            my $full_name = $layer->get_full_name();
+            print " * WARNING: Reassigning player in $full_name from $duplicate_owner_id to $new_owner_id\n";
+            $layer->reassign_start_at($x, $y, $duplicate_owner_id, $new_owner_id);
         }
     }
+    
+    print "\n" if @duplicates > 0;
     
     return 1;
 }
@@ -432,10 +495,11 @@ sub add_scouts_to_settlers {
     return 1;
 }
 
-# its assumed that the group is normalized by this point
+# its assumed that the group is flattened and normalized by this point
 sub extract_starts_with_mask {
     my ($self, $mask, $as_sim, $clear_selected) = @_;
     
+    my @layer_names = $self->get_layer_names();
     my $all_starts = $self->find_starts();
     
     my @sorted_starts;

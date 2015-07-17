@@ -55,9 +55,12 @@ sub new {
         }
         
         print "\n\n";
-        print "  Description:\n" if exists $param_spec->{'help_text'};
-        $state->report_message($param_spec->{'help_text'}) if exists $param_spec->{'help_text'};
-        print "\n\n";
+        
+        if (exists $param_spec->{'help_text'}) {
+            print "  Description:\n\n" ;
+            $state->report_message($param_spec->{'help_text'});
+            print "\n\n";
+        }
         
         $state->register_print();
         
@@ -81,9 +84,11 @@ sub new {
             print "\n  $calling_format[$i]";
         }
         
-        print "\n\n";
-        print "  Description:\n" if (exists $param_spec->{'help_text'}) and ($processed->{'help'});
-        $state->report_message($param_spec->{'help_text'}) if (exists $param_spec->{'help_text'}) and ($processed->{'help'});
+        if ((exists $param_spec->{'help_text'}) and ($processed->{'help'})) {
+            print "  Description:\n\n";
+            $state->report_message($param_spec->{'help_text'});
+            print "\n\n";
+        }
         print "\n\n" unless $processed->{'error'};
         
         $state->register_print();
@@ -125,13 +130,13 @@ sub _report_calling_format {
             push @optional_list, "--$opt";
         }
         elsif ($optional->{$opt} =~ /\-?\d+\.\d+/) {
-            push @optional_list, "--$opt float";
+            push @optional_list, "--$opt $optional->{$opt}";
         }
         elsif ($optional->{$opt} =~ /\-?\d+/) {
-            push @optional_list, "--$opt int";
+            push @optional_list, "--$opt $optional->{$opt}";
         }
         else {
-            push @optional_list, qq[--$opt "string"];
+            push @optional_list, qq[--$opt "$optional->{$opt}"];
         }
     }
     
@@ -157,6 +162,12 @@ sub _report_calling_format {
             my $desc = $param_spec->{'required_descriptions'}[$i-1];
             push @format, "  param $i: $desc";
         }
+    }
+    
+    if (@optional_list > 0) {
+        push @format, "\n    Flag arguments (e.g. --thesethings) are always optional. The";
+        push @format, "  value after the flag is the default value; flags without a ";
+        push @format, "  value are considered true/false, and default to false.";
     }
     
     if ($param_spec->{'allow_implied_result'}) {

@@ -1,0 +1,22 @@
+run_script "tutorials/t4/banana.civ4mc" => $player1
+run_script "tutorials/t4/banana.civ4mc" => $player2
+run_script "tutorials/t4/banana.civ4mc" => $player3
+run_script "tutorials/t4/banana.civ4mc" => $player4
+run_script "tutorials/t4/banana.civ4mc" => $player5
+
+new_group 45 18 => $banana_bunch
+copy_layer_from_group $player1.bfc => $banana_bunch.banana1
+copy_layer_from_group $player2.bfc => $banana_bunch.banana2
+copy_layer_from_group $player3.bfc => $banana_bunch.banana3
+copy_layer_from_group $player4.bfc => $banana_bunch.banana4
+copy_layer_from_group $player5.bfc => $banana_bunch.banana5
+
+# stack banana till the morning come!
+move_layer_to $banana_bunch.banana2 9 4
+move_layer_to $banana_bunch.banana3 18 8
+move_layer_to $banana_bunch.banana4 27 12
+move_layer_to $banana_bunch.banana5 36 16
+
+flatten_group $banana_bunch
+dump_group $banana_bunch
+export_sims $banana_bunch

@@ -613,6 +613,19 @@ sub reassign_player {
     }
 }
 
+sub get_player_data {
+    my ($self, $owner_id) = @_;
+    
+    return ($self->{'Players'}[$owner_id], $self->{'Teams'}{$owner_id});
+}
+
+sub set_player_from_other {
+    my ($self, $owner_id, $player, $team) = @_;
+    
+    $self->{'Players'}[$owner_id] = $player;
+    $self->{'Teams'}{$owner_id} = $team;
+}
+
 sub strip_hidden_strategic {
     my ($self) = @_;
 

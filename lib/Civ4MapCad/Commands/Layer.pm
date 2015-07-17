@@ -5,9 +5,9 @@ use warnings;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(move_layer set_layer_priority cut_layer crop_layer extract_layer find_difference
+our @EXPORT_OK = qw(move_layer_to move_layer_by set_layer_priority cut_layer crop_layer extract_layer find_difference
                     flip_layer_tb flip_layer_lr copy_layer_from_group merge_two_layers expand_layer_canvas
-                    increase_layer_priority decrease_layer_priority set_tile
+                    increase_layer_priority decrease_layer_priority set_tile rename_layer delete_layer
                    );
 
 use Civ4MapCad::ParamParser;
@@ -80,22 +80,41 @@ sub recenter {
     return 1;
 }
 
-my $move_layer_help_text = qq[
-    The specified layer is moved by offsetX, offsetY within its group.
+my $move_layer_to_help_text = qq[
+    The specified layer is moved to location x,y within its group.
 ];
-sub move_layer {
+sub move_layer_to {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['layer', 'int', 'int'],
-        'required_descriptions' => ['layer to move', 'x coordinate', 'y coordinate'],
-        'help_text' => $move_layer_help_text
+        'required_descriptions' => ['layer to move', 'layer\'s 0,0 will be moved to this x coordinate within its group', 'layer\'s 0,0 will be moved to this y coordinate within its group'],
+        'help_text' => $move_layer_to_help_text
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my ($layer, $locationX, $locationY) = $pparams->get_required();
+    $layer->move_to($locationX, $locationY);
+    return 1;
+}
+
+my $move_layer_by_help_text = qq[
+    The specified layer is moved by offsetX, offsetY within its group.
+];
+sub move_layer_by {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'required' => ['layer', 'int', 'int'],
+        'required_descriptions' => ['layer to move', 'move by this amount in the x direction', 'move by this amount in the y direction'],
+        'help_text' => $move_layer_by_help_text
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
     
     my ($layer, $offsetX, $offsetY) = $pparams->get_required();
-    $layer->move($offsetX, $offsetY);
+    $layer->move_by($offsetX, $offsetY);
     return 1;
 }
 
@@ -275,7 +294,7 @@ sub copy_layer_from_group {
     my $result_name = $pparams->get_result_name();
     my ($layer) = $pparams->get_required();
     my $copy = deepcopy($layer);
-    $copy->move(0,0);
+    $copy->move_to(0,0);
     $state->set_variable($result_name, 'layer', $copy);
     
     return 1;
@@ -315,5 +334,56 @@ sub set_tile {
 }
 
 
+my $delete_layer_help_text = qq[
+    Deletes a layer from a group.
+];
+sub delete_layer {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'help_text' => $delete_layer_help_text,
+        'required' => ['layer'],
+        'required_descriptions' => ['the layer to delete']
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my ($layer) = $pparams->get_required();
+    $state->delete_variable($layer->get_full_name(), 'layer');
+    
+    return 1;
+}
+
+my $rename_layer_help_text = qq[
+    Renames a layer, if you don't want to use copy_layer_from_group + delete_layer.
+];
+sub rename_layer {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'help_text' => $rename_layer_help_text,
+        'required' => ['layer', 'str'],
+        'required_descriptions' => ['the layer to rename', 'the short name of the layer; no "$" or group name needed']
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my ($layer, $new_name) = $pparams->get_required();
+    my $group = $layer->get_group();
+    my $old_layer_name = $layer->get_name();
+    
+    if ($new_name =~ /\W/) {
+        $state->report_error("new layer name \"$new_name\" is illegal; please use only _ and alphanumeric characters");
+        return -1;
+    }
+    
+    my $p = $group->get_layer_priority($old_layer_name);
+    $state->delete_variable($layer->get_full_name(), 'layer');
+    $layer->rename($new_name);
+    $state->set_variable($layer->get_full_name(), 'layer', $layer);
+    $group->set_layer_priority($new_name, $p);
+    
+    return 1;
+}
 
 1;

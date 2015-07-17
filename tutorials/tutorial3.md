@@ -4,7 +4,7 @@ Ah, after relaxing with a quiet evening spent playing your pitboss turns, you se
 ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) 
 </div>
 
-Obviously, these fools will insist on a banana map, and they ain't lettin' you leave this place until you give it to them. Surely, this will be the worst thing you've ever been apart of. But hold on tight, I'll help you get through it.
+Obviously, these fools will insist on a banana map, and they ain't lettin' you leave this place until you give it to them. Surely, this will be the worst thing you've ever been apart of - and Donovan Zoi isn't gonna come heroically swooping to the rescue this time. But hold on tight, I'll help you get through it.
 
 Ok, the first thing we'll need to do is figure out how draw a banana. We'll need one banana island per player at the very least. We could just click this out in the worldbuilder and import it with *import_group*, but where's the fun in that? Besides, it might be the case that we need to make some changes later, so instead let's try creating one using Civ4 MC's special terrain generation tools: Masks, Weights, and Shapes.
 

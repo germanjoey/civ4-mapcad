@@ -310,15 +310,35 @@ sub get_shape_params {
 
 sub set_shape_params {
     my ($self, $shape_name, $params) = @_;
-    
     $self->{'shape_param'}{$shape_name} = $params;
 }
 
+# name is a "full" name, with sigil, plus group for layers
+sub delete_variable {
+    my ($self, $name, $type) = @_;
+    
+    if ($type eq 'layer') {
+        my $layer = $self->get_variable($name, $type);
+    
+        my $name = $layer->get_name();
+        my $full_name = $layer->get_full_name();
+    
+        $layer->get_group()->delete_layer($name);
+        delete $self->{'layer'}{$full_name};
+        return;
+    }
+    else {
+        delete $self->{$type}{$name};
+    }
+}
+
+# name is a "full" name, with sigil, plus group for layers
 sub get_variable {
     my ($self, $name, $type) = @_;
     return $self->{$type}{$name};
 }
 
+# name is a "full" name, with sigil, plus group for layers
 sub set_variable {
     my ($self, $name, $type, $value) = @_;
     

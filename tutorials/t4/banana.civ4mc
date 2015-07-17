@@ -1,0 +1,32 @@
+# generate our banana!
+import_mask_from_ascii "tutorials/t3/circle.txt" => @circle1
+new_mask_from_shape *circle 17 17 --centerX 8 --centerY 8 --radius 7 => @circle2
+mask_difference @circle2 @circle2 --offsetX 5 -offsetY 2 => @banana_mask
+
+# but now lets make it random!
+import_mask_from_table "tutorials/t4/random.txt" => @rand_field
+mask_intersect @banana_mask @rand_field => @random_banana
+
+new_weight_table >= 0.90 => %banana,
+                 >= 0.87 => %luxury,
+                 >= 0.84 => %plantation,
+                 >= 0.81 => %strategic,
+                 >= 0.76 => %landfood,
+                 >= 0.70 => coast
+                 >= 0.01 => %any_land,
+                 => %bananaland
+
+# now summon!
+new_group 25 25 => $the_real_banana
+generate_layer_from_mask @random_banana %bananaland => $the_real_banana.background
+
+import_group "tutorials/t4/bfc.CivBeyondSwordWBSave" => $bfc
+extract_starts $bfc
+
+copy_layer_from_group $bfc.start0 => $the_real_banana.bfc
+move_layer_to $the_real_banana.bfc 2 4
+increase_layer_priority $the_real_banana.bfc
+flatten_group $the_real_banana
+crop_group $the_real_banana 0 0 13 16
+
+return $the_real_banana

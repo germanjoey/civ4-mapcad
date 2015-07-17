@@ -49,6 +49,11 @@ sub get_name {
     return $self->{'name'};
 }
 
+sub get_full_name {
+    my ($self) = @_;
+    return '$' . $self->get_group()->get_name() . '.' . $self->{'name'};
+}
+
 sub rename {
     my ($self, $new_name) = @_;
     $self->{'name'} = $new_name;
@@ -97,10 +102,16 @@ sub get_height {
     return $self->{'map'}->info('grid height');
 }
 
-sub move {
+sub move_to {
     my ($self, $toX, $toY) = @_;
     $self->{'offsetX'} = $toX;
     $self->{'offsetY'} = $toY;
+}
+
+sub move_by {
+    my ($self, $byX, $byY) = @_;
+    $self->{'offsetX'} += $byX;
+    $self->{'offsetY'} += $byY;
 }
 
 sub fill_tile {
@@ -299,7 +310,7 @@ sub select_with_mask {
         }
     }
     
-    $selection->move($mask_offsetX, $mask_offsetY);
+    $selection->move_to($mask_offsetX, $mask_offsetY);
     return $selection;
 }
 
@@ -328,26 +339,32 @@ sub normalize_starts {
             push @{ $starts_found{$owner} }, [$x, $y];
         }
         else {
-            $starts_found{$owner} = [$x, $y];
+            $starts_found{$owner} = [[$x, $y]];
         }
     }
     
-    foreach my $duplicate_start (grep {$_ > 1 } (keys %starts_found)) {
-        my @dups = $starts_found{$duplicate_start};
-        my $assigned = shift @dups;
+    my @duplicates = grep { @{$starts_found{$_}} > 1 } (keys %starts_found);
+    foreach my $duplicate_owner_id (@duplicates) {
+        my $dups = $starts_found{$duplicate_owner_id};
+        my $assigned_start = shift @$dups; # this first one doesn't get re-assigned
         
         while (1) {
-            last if @dups == 0;
-            my $assigned = shift @dups;
-            my ($x, $y) = @$assigned;
+            last if @$dups == 0;
+            my $start_to_reassign = shift @$dups;
+            my ($x, $y) = @$start_to_reassign;
             
-            my $new_id = _get_next_open_start_id(\%starts_found);
-            $starts_found{$new_id} = 1;
-            $self->{'map'}->reassign_start_at($x, $y, $duplicate_start, $new_id);
+            my $new_owner_id = _get_next_open_start_id(\%starts_found);
+            $starts_found{$new_owner_id} = 1;
+            $self->reassign_start_at($x, $y, $duplicate_owner_id, $new_owner_id);
         }
     }
     
     return 1;
+}
+
+sub reassign_start_at {
+    my ($self, $x, $y, $original_owner_id, $new_owner_id) = @_;
+    $self->{'map'}->reassign_start_at($x, $y, $original_owner_id, $new_owner_id);
 }
 
 sub _get_next_open_start_id {
@@ -359,6 +376,16 @@ sub _get_next_open_start_id {
         $id ++;
     }
     return $id;
+}
+
+sub get_player_data {
+    my ($self, $owner_id) = @_;
+    return $self->{'map'}->get_player_data($owner_id);
+}
+
+sub set_player_from_other {
+    my ($self, $owner_id, $player, $team) = @_;
+    $self->{'map'}->set_player_from_other($owner_id, $player, $team);
 }
 
 sub find_starts {
