@@ -99,7 +99,7 @@ Just kidding... you'd have to be truly B-A-N-A-N-A-S to do something like that..
     
 We ran the script 5 times, and generated 5 bananas! That means we're in the home stretch now; we just need to combine them into one group and move them around a bit. Let's set the mood!
 
-[![ScreenShot](https://raw.github.com/GabLeRoux/WebMole/master/ressources/WebMole_Youtube_Video.png)](https://www.youtube.com/watch?v=PMigXnXMhQ4)
+[![ScreenShot](t4/banana_boat.jpg)](https://www.youtube.com/watch?v=PMigXnXMhQ4)
     
     run_script "tutorials/t4/banana.civ4mc" => $player1
     run_script "tutorials/t4/banana.civ4mc" => $player2
