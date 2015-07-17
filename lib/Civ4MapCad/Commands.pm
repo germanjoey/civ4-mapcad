@@ -28,7 +28,7 @@ use Civ4MapCad::Commands::Mask qw(
 );
 
 use Civ4MapCad::Commands::Layer qw(
-    move_layer_to move_layer_by set_layer_priority cut_layer crop_layer extract_layer find_difference
+    move_layer_to move_layer_by set_layer_priority crop_layer
     flip_layer_tb flip_layer_lr copy_layer_from_group merge_two_layers expand_layer_canvas
     increase_layer_priority decrease_layer_priority set_tile rename_layer delete_layer
 );

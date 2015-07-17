@@ -75,7 +75,7 @@ sub new_weight_table {
     if ((@params == 1) and ($params[0] eq '--help')) {
         $state->buffer_bar();
         print $new_weight_table_help_text, "\n";
-        $state->register_prints();
+        $state->register_print();
         return 1;
     }
     

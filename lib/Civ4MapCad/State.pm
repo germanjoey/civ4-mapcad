@@ -7,6 +7,7 @@ use Text::Wrap qw(wrap);
 
 use Civ4MapCad::Commands;
 our $repl_table = create_dptable Civ4MapCad::Commands; 
+delete $repl_table->{'register_shape'};
 
 use Civ4MapCad::Util qw(deepcopy);
 
@@ -35,7 +36,9 @@ sub new {
 
 sub process_command {
     my ($self, $command) = @_;
-    my $ret = $self->_process_command($command);
+    
+    my $ret = eval { $self->_process_command($command) };
+    print $@ if $@;
     
     $self->ready_buffer_bar();
     $self->clear_printed();
@@ -69,6 +72,7 @@ sub _process_command {
             print "\n";
             print "  Command format:\n\n";
             print "  return <result>\n\n";
+            print "  Description:\n";
             print "  Returns a result from a script to be assigned to some other objec. The \n";
             print "  return type may be any type of group/layer/mask/weight, but not shape. If\n";
             print "  this result is ignored, a warning will be produced.\n\n";
@@ -131,7 +135,9 @@ sub _process_command {
         if ((@params == 1) and ($params[0] eq '--help')) {
             print "\n";
             print "  Command format:\n\n";
-            print "  eval <code>\n\n  Evaluates perl code and prints the result. Everything on the command line\n";
+            print "  eval <code>\n\n";
+            print "  Description:\n";
+            print "  Evaluates perl code and prints the result. Everything on the command line\n";
             print "  after the 'eval' keyword will be evaluated.\n\n";
             return 1;
         }
@@ -144,6 +150,15 @@ sub _process_command {
     }
     
     elsif ($command_name eq 'exit') {
+        if ((@params == 1) and ($params[0] eq '--help')) {
+            print "\n";
+            print "  Command format:\n\n";
+            print "  exit\n\n";
+            print "  Description:\n";
+            print "  Exits.\n\n";
+            return 1;
+        }
+            
         $self->process_command('write_log');
         exit(0);
     }

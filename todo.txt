@@ -21,6 +21,10 @@ Medium Ticket TODO:
     - A: organize module methods
     - B: handle signs
     - B: command list auto-extracted into its own markdown file
+    - A: mask_from_seawater_coast
+        -- include_adjacent_ocean
+    - A: mask_from_freshwater_coast
+    - A: layer->flag_freshwater
 
 Small Ticket TODO:
     

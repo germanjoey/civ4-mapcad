@@ -39,12 +39,38 @@ sub new {
     my $class = ref $proto || $proto;
     my ($state, $raw_params, $param_spec) = @_;
     
-    my $processed = _process($state, $raw_params, $param_spec);
+    my $calling_command = _find_calling_command($param_spec);
+    $param_spec->{'command'} = $calling_command;
     my @calling_format = _report_calling_format($state, $param_spec);
+    
+    if ((@$raw_params == 1) and ($raw_params->[0] eq '--help')) {
+        print "\n";
+        print "  Command format:\n\n";
+        $state->report_message($calling_format[0]);
+        foreach my $i (1..$#calling_format) {
+            print "\n  $calling_format[$i]";
+        }
+        
+        if (exists $param_spec->{'help_text'}) {
+            print "  Description:\n\n";
+            $state->report_message($param_spec->{'help_text'});
+            print "\n\n";
+        }
+        print "\n\n";
+        
+        return bless {'error' => 0, 'done' => 1}, $class;
+    }
+    
+    my $processed = _process($state, $raw_params, $param_spec);
     
     $processed->{'done'} = 0;
     
-    if ($processed->{'error'} and (@$raw_params == 1) and ($raw_params->[0] eq '--help')) {
+    my $has_help = 0;
+    foreach my $param (@$raw_params) {
+        $has_help = 1 if $param eq '--help';
+    }
+    
+    if ($processed->{'error'} and $has_help) {
         $state->buffer_bar();
         
         print "\n";
@@ -181,11 +207,8 @@ sub _report_calling_format {
 sub _process {
     my ($state, $raw_params, $param_spec) = @_;
     
-    my $calling_command = _find_calling_command($param_spec);
-    
-    $param_spec->{'command'} = $calling_command;
-
     # TODO: universal help option
+    my $calling_command = $param_spec->{'command'};
     my $optional = $param_spec->{'optional'} || {};
     my $required = $param_spec->{'required'} || [];
     my $required_descriptions = $param_spec->{'required_descriptions'} || [];
@@ -450,11 +473,11 @@ sub _process {
     return \%processed_params;
 }
 
-# CAN ONLY BE CALLED FROM _process(), which can only be called from new() !!!!
+# CAN ONLY BE CALLED FROM new() !!!!
 sub _find_calling_command {
     my ($param_spec) = @_;
     
-    my $far_back = 3;
+    my $far_back = 2;
     my $root;
     
     while (1) {

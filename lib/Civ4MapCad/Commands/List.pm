@@ -363,6 +363,7 @@ sub show_weights {
         }
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($weight) = $pparams->get_required();
     my $flatten = $pparams->get_named('flatten');
@@ -392,6 +393,8 @@ sub dump_mask_to_console {
         'help_text' => $dump_mask_to_console_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
     $state->buffer_bar();
     
     my ($mask) = $pparams->get_required();
@@ -427,6 +430,7 @@ sub dump_mask {
         }
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($mask) = $pparams->get_required();
     my ($mask_name) = $pparams->get_required_names();
@@ -441,7 +445,7 @@ sub dump_mask {
         $set_index = _find_max_set($template)+1;
     }
     else {
-        $template = 'doc/dump.html.tmpl';
+        $template = 'debug/dump.html.tmpl';
         $set_index = 1;
         $start_index = 0;
     }
@@ -459,7 +463,7 @@ sub dump_mask {
             my $c = sprintf '#%02x00%02x', $value*255, 255-$value*255;
             
             my $title = "$x, $y: $value";
-            my $cell = qq[<a title="$title"><img src="doc/icons/none.png" /></a>];
+            my $cell = qq[<a title="$title"><img src="debug/icons/none.png" /></a>];
             push @row, qq[<td class="tooltip"><div style="background-color: $c;">$cell</div></td>];
         }
         
@@ -485,6 +489,7 @@ sub dump_group {
         }
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($group) = $pparams->get_required();
     my $do_info = $pparams->get_named('info_too');
@@ -499,7 +504,7 @@ sub dump_group {
         $set_index = _find_max_set($template) + 1;
     }
     else {
-        $template = 'doc/dump.html.tmpl';
+        $template = 'debug/dump.html.tmpl';
         $set_index = 1;
         $start_index = 0;
     }
@@ -532,6 +537,7 @@ sub dump_layer {
         }
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($layer) = $pparams->get_required();
     my $do_info = $pparams->get_named('info_too');
@@ -546,7 +552,7 @@ sub dump_layer {
         $set_index = _find_max_set($template)+1;
     }
     else {
-        $template = 'doc/dump.html.tmpl';
+        $template = 'debug/dump.html.tmpl';
         $set_index = 1;
         $start_index = 0;
     }

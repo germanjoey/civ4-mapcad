@@ -248,20 +248,20 @@ sub to_cell {
     my $terrain = $tt;
     $terrain =~ s/terrain_//;
     
-    my $icon = qq[<img src="doc/icons/none.png" />];
+    my $icon = qq[<img src="debug/icons/none.png" />];
     
     my $bonus = $self->get('BonusType');
     if ($bonus) {
         $bonus = lc($bonus);
         $bonus =~ s/bonus_//;
-        $icon = qq[<img src="doc/icons/$bonus.png" />];
+        $icon = qq[<img src="debug/icons/$bonus.png" />];
     }
     
     my $variety = '';
     my $feature = $self->get('FeatureType');
     if ($feature) {
         if ($feature =~ /oasis/i) {
-            $icon = qq[<img src="doc/icons/oasis.png" />];
+            $icon = qq[<img src="debug/icons/oasis.png" />];
         }
         
         if ($feature =~ /forest/i) {
@@ -279,7 +279,7 @@ sub to_cell {
     my $title = " $bonus $terrain $variety";
     
     if ($self->has_settler()) {
-        $icon = qq[<img src="doc/icons/razz.gif" />];
+        $icon = qq[<img src="debug/icons/razz.gif" />];
         my @starts = map { $_->[2] } ($self->get_starts());
         $title = " start for player " . join ("/", @starts) . ", " . $title;
     }

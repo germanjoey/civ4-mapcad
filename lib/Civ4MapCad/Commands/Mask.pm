@@ -29,6 +29,7 @@ sub new_mask_from_magic_wand {
         'help_text' => $new_mask_from_magic_wand_help_text
     });
     return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     die "not yet implemented";
 }

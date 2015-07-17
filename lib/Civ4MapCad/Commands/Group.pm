@@ -202,6 +202,8 @@ sub copy_group {
         'has_result' => 'group',
         'help_text' => $copy_group_help_text
     });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
     
     my ($group) = $pparams->get_required();
     my $copy = deepcopy($group);
@@ -500,7 +502,7 @@ sub find_difference {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
-        'has_result' => ['group'],
+        'has_result' => 'group',
         'required' => ['group', 'group'],
         'required_descriptions' => ['group A', 'group B'],
         'help_text' => $find_difference_help_text
