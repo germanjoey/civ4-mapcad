@@ -36,7 +36,7 @@ Ah, now our banana is "legit" and ready to turn into a script. But, one thing fi
 
     export_mask_to_file @rand_field, "tutorials/t4/random.txt"
     
-And we can build our script like this, which I've saved at [t4/banana.civ4mc](t4/banana.civ4mc):
+And we can build our script like this, which I've saved at [tutorials/t4/banana.civ4mc](t4/banana.civ4mc):
 
     # generate our banana!
     import_mask_from_ascii "tutorials/t3/circle.txt" => @circle1
@@ -124,7 +124,7 @@ We ran the script 5 times, and generated 5 bananas! That means we're in the home
     dump_group $banana_bunch
     export_sims $banana_bunch
     
-And that's it, we're done!!!! Here's our monster, the perfect toroidal banana nightmare. I named this script [bunch.civ4mc](t4/bunch.civ4mc), if you want to look at it.
+And that's it, we're done!!!! Here's our monster, the perfect toroidal banana nightmare. I put this script at [tutorials/t4/bunch.civ4mc](t4/bunch.civ4mc), if you want to look at it.
 
 I started by sizing the main group to 60 by 60, and spaced out the bananas 11 by 11, but then quickly realized that was way too spacey. (and probably way too big to post a screenshot of in this tutorial page) Because of the toroidal wrap, we could bring in everything a lot closer. Now it's the perfect size, I think - way, way too small to be acutally playable by normal people, but perfect for these goofballs considering that they'll probably abandon the game after 40-50 turns. At least this way they'll get some action! ![img-lol](t4/lol.gif)
 
