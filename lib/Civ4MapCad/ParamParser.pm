@@ -96,7 +96,7 @@ sub _report_calling_format {
     my ($state, $param_spec) = @_;
     
     my $command_name = $param_spec->{'command'};
-    my %prefix = ('group' => '$', 'mask' => '@', 'weight' => '%', 'shape' => '*');
+    my %prefix = ('group' => '$', 'mask' => '@', 'weight' => '%', 'shape' => '*', 'terrain' => '');
     
     my @required_list;
     foreach my $type (@{ $param_spec->{'required'} }) {
@@ -366,7 +366,6 @@ sub _process {
                 }
             }
             else {
-                my %prefix = ('group' => '$', 'mask' => '@', 'weight' => '%', 'shape' => '*');
                 $processed_params{'error_msg'} = "a variable of type '$expected_type' named '$name' does not exist.";
                 return \%processed_params;
             }

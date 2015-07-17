@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(list_shapes list_groups list_layers list_masks list_weights list_terrain 
-                    show_weights dump_mask_to_console dump_group dump_mask dump_layer);
+                    show_weights dump_mask_to_console dump_group dump_mask dump_layer evaluate_weight);
  
 use Config::General;
 
@@ -223,21 +223,10 @@ sub list_terrain {
     if (@params == 1) {
         @terrain_names = grep { $_ =~ /\Q$params[0]\E/ } @terrain_names;
         
-        my @height_types = ('Peak', 'Hill', 'Flat', 'Water');
-        
         my @full;
         foreach my $terrain_name (@terrain_names) {
             push @full, $terrain_name;
-            
-            foreach my $key (sort keys %{ $state->{'terrain'}{$terrain_name} }) {
-                push @full, "  $key = $state->{'terrain'}{$terrain_name}{$key}";
-                
-                if ($key eq 'PlotType') {
-                    my $height = $state->{'terrain'}{$terrain_name}{$key} + 0;
-                    $full[-1] .= " ($height_types[$height])";
-                }
-            }
-            
+            push @full, _describe_terrain($state->{'terrain'}{$terrain_name});
             $full[-1] .= "\n";
         }
         
@@ -257,6 +246,52 @@ sub list_terrain {
     }
     
     $state->list( @terrain_names );
+    return 1;
+}
+
+sub _describe_terrain {
+    my ($terrain) = @_;
+    my @height_types = ('Peak', 'Hill', 'Flat', 'Water');
+        
+    my @full;
+    foreach my $key (sort keys %$terrain) {
+        push @full, "  $key = $terrain->{$key}";
+        
+        if ($key eq 'PlotType') {
+            my $height = $terrain->{$key} + 0;
+            $full[-1] .= " ($height_types[$height])";
+        }
+    }
+    
+    return @full;
+}
+
+my $evaluate_weight_help_text = "
+   The 'evaluate_weight' command returns the result of a Weight Table were it to be evaluated with a floating point value,
+   as if that value were the coordinate of a mask. Thus, that value needs to be between 0 and 1. 'evaluate_weight' is only
+   intended to be a debugging command; please see the Mask-related commands, e.g. 'generate_layer_from_mask',
+   'modify_layer_from_mask', for actually using weights to generate/modify tiles. 
+";
+sub evaluate_weight {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'required' => ['weight', 'float'],
+        'required_descriptions' => ['weight', 'value to evaluate'],
+        'help_text' => $evaluate_weight_help_text
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my ($weight, $value) = $pparams->get_required();
+    my ($terrain_name, $terrain) = $weight->evaluate($value);
+    
+    my @full = ($terrain_name);
+    push @full, _describe_terrain($terrain);
+    
+    $state->list(@full);
+    $weight->deflate();
+    
     return 1;
 }
 
@@ -338,7 +373,7 @@ sub show_weights {
         @to_show = map { sprintf "$_->[0] %6.4f => $_->[2],", $_->[1] } ( $weight->flatten(1) );
     }
     else {
-        @to_show = map { sprintf "$_->[0] %6.4f => $_->[2],", $_->[1] } (@{ $weight->{'pairs'} });
+        @to_show = map { sprintf "%s %6.4f => %s,", @$_ } (@{ $weight->{'pairs'} });
     }
     
     $to_show[-1] =~ s/,$//;
@@ -406,7 +441,7 @@ sub dump_mask {
         $set_index = _find_max_set($template)+1;
     }
     else {
-        $template = 'def/dump.html.tmpl';
+        $template = 'doc/dump.html.tmpl';
         $set_index = 1;
         $start_index = 0;
     }
@@ -425,7 +460,7 @@ sub dump_mask {
             
             my $title = "$x, $y: $value";
             my $cell = qq[<a title="$title"><img src="doc/icons/none.png" /></a>];
-            push @row, qq[<td class="tooltip" style="background-color: $c;">$cell</td>];
+            push @row, qq[<td class="tooltip"><div style="background-color: $c;">$cell</div></td>];
         }
         
         push @cells, \@row;
@@ -464,7 +499,7 @@ sub dump_group {
         $set_index = _find_max_set($template) + 1;
     }
     else {
-        $template = 'def/dump.html.tmpl';
+        $template = 'doc/dump.html.tmpl';
         $set_index = 1;
         $start_index = 0;
     }
@@ -477,7 +512,7 @@ sub dump_group {
         push @layer_cells, dump_single_layer($layer, "$set_index: " . $layer->get_name(), $do_info);
     }
     
-    dump_framework($template, 'dump.html', $group->get_name(), $start_index, \@layer_cells);
+    dump_framework($template, 'dump.html', '$' . $group->get_name(), $start_index, \@layer_cells);
     return 1;
 }
 
@@ -510,7 +545,7 @@ sub dump_layer {
         $set_index = _find_max_set($template)+1;
     }
     else {
-        $template = 'def/dump.html.tmpl';
+        $template = 'doc/dump.html.tmpl';
         $set_index = 1;
         $start_index = 0;
     }
@@ -519,7 +554,8 @@ sub dump_layer {
     $copy->fix_coast();
     
     my $cells = dump_single_layer($copy, "$set_index: " . $layer->get_name(), $do_info);
-    dump_framework($template, 'dump.html', $layer->get_name(), $start_index, [$cells]);
+    my $full_name = '$' . $layer->get_group->get_name() . '.' . $layer->get_name();
+    dump_framework($template, 'dump.html', $layer->full_name(), $start_index, [$cells]);
     return 1;
 }
 

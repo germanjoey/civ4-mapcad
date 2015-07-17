@@ -393,6 +393,10 @@ sub get_variable_type_from_name {
     my ($sigil) = $raw_name =~ /^([\$\%\@\*])/;
     my %prefix = ('$' => 'group', '@' => 'mask', '%' => 'weight', '*' => 'shape');
     unless (defined($sigil)) {
+        if ($raw_name =~ /^\w/) {
+            return {'type' => 'terrain'};
+        }
+    
         return {
             'error' => 1,
             'error_msg' => "unknown variable type for '$raw_name'."
@@ -451,6 +455,12 @@ sub check_vartype {
         return {
             'error' => 1,
             'error_msg' => "variable $raw_name is expected to be of type 'shape' but was actually parsed as type '$actual'."
+        };
+    }
+    elsif (($sigil eq '') and ($expected_type ne 'terrain')) {
+        return {
+            'error' => 1,
+            'error_msg' => "variable $raw_name is expected to be of type 'terrain' but was actually parsed as type '$actual'."
         };
     }
     

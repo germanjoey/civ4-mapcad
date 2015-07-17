@@ -8,7 +8,7 @@ our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(import_mask_from_ascii new_mask_from_shape mask_difference mask_union mask_intersect 
                     mask_invert mask_threshold modify_layer_with_mask cutout_layer_with_mask apply_shape_to_mask  
                     generate_layer_from_mask new_mask_from_magic_wand export_mask_to_ascii
-                    export_mask_to_table import_mask_from_table);
+                    export_mask_to_table import_mask_from_table set_mask_coord);
 
 use Civ4MapCad::Util qw(deepcopy);
 use Civ4MapCad::ParamParser;
@@ -452,5 +452,44 @@ sub apply_shape_to_mask {
     
     die;
 }
+
+my $set_mask_coord_help_text = qq[
+    Sets a mask's value at a specific coordinate to a specific value.
+];
+sub set_mask_coord {
+    my ($state, @params) = @_;
+
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'has_result' => 'mask',
+        'allow_implied_result' => 1,
+        'help_text' => $set_mask_coord_help_text,
+        'required' => ['mask', 'int', 'int', 'float'],
+        'required_descriptions' => ['the mask to modify', 'x coordinate', 'y coordinate', 'value to set']
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my ($mask, $x, $y, $value) = $pparams->get_required();
+    my @names = $pparams->get_required_names();
+    
+    if (($x >= $mask->get_width()) or ($y >= $mask->get_height())) {
+        my $size = $mask->get_width() . ' x ' . $mask->get_height();
+        $state->report_error("Coordinate value ($x,$y) is out of bounds of mask (size: $size)");
+        return -1;
+    }
+    
+    my $copy = deepcopy($mask);
+    
+    warn "$copy->{'canvas'}[$x][$y]";
+    
+    $copy->{'canvas'}[$x][$y] = $value;
+    
+    warn "$copy->{'canvas'}[$x][$y]";
+    warn "<$names[0]>";
+    
+    $state->set_variable($names[0], 'mask', $copy);
+    return 1;
+}
+
 
 1;

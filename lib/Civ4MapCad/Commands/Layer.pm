@@ -7,7 +7,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(move_layer set_layer_priority cut_layer crop_layer extract_layer find_difference
                     flip_layer_tb flip_layer_lr copy_layer_from_group merge_two_layers expand_layer_canvas
-                    increase_layer_priority decrease_layer_priority
+                    increase_layer_priority decrease_layer_priority set_tile
                    );
 
 use Civ4MapCad::ParamParser;
@@ -281,25 +281,39 @@ sub copy_layer_from_group {
     return 1;
 }
 
-sub _assign_layer_result {
-    my ($state, $result_name, $result_layer) = @_;
+my $set_tile_help_text = qq[
+    Sets a specific coordinate in a layer to a specific terrain value.
+];
+sub set_tile {
+    my ($state, @params) = @_;
     
-    my ($result_group_name, $result_layer_name) = $result_name =~ /\$(\w+)\.(\w+)/;
-    my $group = $state->get_variable('$' . $result_group_name, 'group');
-    $result_layer->rename($result_layer_name);
-        
-    if ($group->layer_exists($result_layer_name)) {
-        $group->set_layer($result_layer_name, $result_layer);
-    }
-    else {
-        my $result = $group->add_layer($result_layer);
-        if (exists $result->{'error'}) {
-            $state->report_warning($result->{'error_msg'});
-        }
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'has_result' => 'layer',
+        'allow_implied_result' => 1,
+        'help_text' => $set_tile_help_text,
+        'required' => ['layer', 'int', 'int', 'terrain'],
+        'required_descriptions' => ['the layer to modify', 'x coordinate', 'y coordinate', 'terrain name to set']
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my ($layer, $x, $y, $terrain) = $pparams->get_required();
+    my @names = $pparams->get_required_names();
+    
+    if (($x >= $layer->get_width()) or ($y >= $layer->get_height())) {
+        my $size = $layer->get_width() . ' x ' . $layer->get_height();
+        my $name = $layer->get_name();
+        $state->report_error("Coordinate value ($x,$y) is out of bounds of layer $name (size: $size)");
+        return -1;
     }
     
-    $result_layer->set_membership($group);
-    $state->set_variable('$' . $result_name, 'layer', $result_layer);
+    my $copy = deepcopy($layer);
+    $copy->set_tile($terrain);
+    $state->set_variable($names[0], 'layer', $copy);
+    
+    return 1;
 }
+
+
 
 1;

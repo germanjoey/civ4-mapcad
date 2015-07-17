@@ -13,24 +13,24 @@ use Civ4MapCad::Commands::Config qw(
 );
 
 use Civ4MapCad::Commands::Weight qw(
-    load_terrain new_weight_table import_weight_table_from_file evaluate_weight
+    load_terrain new_weight_table import_weight_table_from_file
 );
 use Civ4MapCad::Commands::List qw(
     list_shapes list_groups list_layers list_masks list_weights list_terrain
-    show_weights dump_group dump_mask dump_layer dump_mask_to_console
+    show_weights dump_group dump_mask dump_layer dump_mask_to_console evaluate_weight
 );
 
 use Civ4MapCad::Commands::Mask qw(
     new_mask_from_magic_wand new_mask_from_shape mask_difference mask_union mask_intersect
     mask_invert mask_threshold modify_layer_with_mask cutout_layer_with_mask apply_shape_to_mask
     generate_layer_from_mask import_mask_from_ascii export_mask_to_ascii export_mask_to_table
-    import_mask_from_table
+    import_mask_from_table set_mask_coord
 );
 
 use Civ4MapCad::Commands::Layer qw(
     move_layer set_layer_priority cut_layer crop_layer extract_layer find_difference flip_layer_tb
     flip_layer_lr copy_layer_from_group merge_two_layers expand_layer_canvas
-    increase_layer_priority decrease_layer_priority
+    increase_layer_priority decrease_layer_priority set_tile
 );
 
 use Civ4MapCad::Commands::Group qw(
@@ -119,9 +119,9 @@ sub run_script {
         print "  run_script \"string\"\ => optional_result_name\n    param 1: filename of script to run";
         print "\n\n";
         print "  Loads a script and runs the commands within. A result to this command may be\n";
-        print "  specified; if so, then the 'return' command may be used in the script to return\n";
-        print "  a result. The result may be any type (group/layer/mask/weight) but must match\n";
-        print "  the type returned by the script.\n\n";
+        print "  specified; if so, then the 'return' command may be used in the script to\n";
+        print "  return a result. The result may be any type (group/layer/mask/weight) but must\n";
+        print "  match the type returned by the script.\n\n";
         
         $state->register_print();
         return 1;
@@ -154,7 +154,6 @@ sub run_script {
     
     if ($error) {
         $state->report_error("run_script requires a single string argument containing the path to the script to run, and allows an optional result.");
-        print "\n";
         print "  Command format:\n\n";
         print "  run_script \"string\"\ => optional_result_name\n    param 1: filename of script to run\n\n";
         

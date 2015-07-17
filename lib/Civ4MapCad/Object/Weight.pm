@@ -63,7 +63,7 @@ sub evaluate {
         }
         
         if ($optable{$op}->($value, $thresh)) {
-            return $state->get_variable($result, 'terrain');
+            return ($result, $state->get_variable($result, 'terrain'));
         }
     }
     

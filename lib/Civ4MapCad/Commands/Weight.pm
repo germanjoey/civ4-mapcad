@@ -5,7 +5,7 @@ use warnings;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(load_terrain new_weight_table import_weight_table_from_file evaluate_weight);
+our @EXPORT_OK = qw(load_terrain new_weight_table import_weight_table_from_file);
 
 use Civ4MapCad::ParamParser;
 use Civ4MapCad::Object::Weight;
@@ -202,31 +202,6 @@ sub _process_weight_import {
     
     my $obj = Civ4MapCad::Object::Weight->new_from_pairs($state, @weights);
     $state->set_variable($result_name, 'weight', $obj);
-    return 1;
-}
-
-my $evaluate_weight_help_text = "
-   The 'evaluate_weight' command returns the result of a Weight Table were it to be evaluated with a floating point value,
-   as if that value were the coordinate of a mask. Thus, that value needs to be between 0 and 1. 'evaluate_weight' is only
-   intended to be a debugging command; please see the Mask-related commands, e.g. 'generate_layer_from_mask',
-   'modify_layer_from_mask', for actually using weights to generate/modify tiles. 
-";
-sub evaluate_weight {
-    my ($state, @params) = @_;
-    
-    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
-        'required' => ['weight', 'float'],
-        'required_descriptions' => ['weight', 'value to evaluate'],
-        'help_text' => $evaluate_weight_help_text
-    });
-    return -1 if $pparams->has_error;
-    return 1 if $pparams->done;
-    
-    my ($weight, $value) = $pparams->get_required();
-    my $result = $weight->evaluate($value);
-    $state->list($result);
-    $weight->deflate();
-    
     return 1;
 }
 

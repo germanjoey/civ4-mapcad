@@ -237,6 +237,16 @@ sub translate_mask_coords {
     return ($tx, $ty);
 }
 
+sub set_tile {
+    my ($self, $x, $y, $terrain) = @_;
+    $self->{'map'}{'Tiles'}[$x][$y]->set_tile($terrain);
+}
+
+sub update_tile {
+    my ($self, $x, $y, $terrain) = @_;
+    $self->{'map'}{'Tiles'}[$x][$y]->update_tile($terrain);
+}
+
 sub apply_mask {
     my ($self, $mask, $weight, $mask_offsetX, $mask_offsetY, $overwrite) = @_;
     
@@ -246,14 +256,14 @@ sub apply_mask {
             next if ($tx < 0) or ($tx >= $self->get_width());
             next if ($ty < 0) or ($ty >= $self->get_width());
         
-            my $terrain = $weight->evaluate($mask->{'canvas'}[$x][$y]);
+            my ($terrain_name, $terrain) = $weight->evaluate($mask->{'canvas'}[$x][$y]);
             next unless defined $terrain;
             
             if ($overwrite) {
-                $self->{'map'}{'Tiles'}[$tx][$ty]->set_tile($terrain);
+                $self->set_tile($tx, $ty, $terrain);
             }
             else {
-                $self->{'map'}{'Tiles'}[$tx][$ty]->update_tile($terrain);
+                $self->update_tile($tx, $ty, $terrain);
             }
         }
     }
