@@ -118,6 +118,7 @@ sub run_script {
         print "\n\n";
         print "  run_script \"string\"\ => optional_result_name\n    param 1: filename of script to run";
         print "\n\n";
+        print "  Description:\n\n";
         print "  Loads a script and runs the commands within. A result to this command may be\n";
         print "  specified; if so, then the 'return' command may be used in the script to\n";
         print "  return a result. The result may be any type (group/layer/mask/weight) but must\n";

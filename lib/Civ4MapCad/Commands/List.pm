@@ -19,6 +19,8 @@ my $list_shapes_help_text = qq[
   
     list_shapes search_term
 
+  Description:
+  
   The search_term is optional; if not supplied, all shapes will be listed.
 ];
 sub list_shapes {
@@ -72,6 +74,8 @@ my $list_groups_help_text = qq[
   
     list_groups search_term
 
+  Description:
+  
   The search_term is optional; if not supplied, all groups will be listed.
 ];
 sub list_groups {
@@ -131,6 +135,7 @@ sub list_layers {
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['group'],
+        'required_descriptions' => ['group to describe'],
         'help_text' => $list_layers_help_text
     });
     return -1 if $pparams->has_error;
@@ -163,6 +168,8 @@ my $list_masks_help_text = qq[
   
     list_masks search_term
 
+  Description:
+  
   The search_term is optional; if not supplied, all masks will be listed.
 ];
 sub list_masks {
@@ -207,6 +214,8 @@ my $list_terrain_help_text = qq[
   
     list_terrain search_term
 
+  Description:
+  
   The search_term is optional; if not supplied, all terrain will be listed.
 ];
 sub list_terrain {
@@ -300,6 +309,8 @@ my $list_weights_help_text = qq[
   
     list_weights search_term
 
+  Description:
+  
   The search_term is optional; if not supplied, all weights will be listed.
 ];
 sub list_weights {
@@ -357,6 +368,7 @@ sub show_weights {
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['weight'],
+        'required_descriptions' => ['weight to describe'],
         'help_text' => $show_weights_help_text,
         'optional' => {
             'flatten' => 'false'
@@ -390,6 +402,7 @@ sub dump_mask_to_console {
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['mask'],
+        'required_descriptions' => ['mask to dump'],
         'help_text' => $dump_mask_to_console_help_text
     });
     return -1 if $pparams->has_error;
@@ -425,6 +438,8 @@ sub dump_mask {
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['mask'],
+        'required_descriptions' => ['mask to dump'],
+        'help_text' => $dump_mask_help_text,
         'optional' => {
             'add_to_existing' => 'false'
         }
@@ -482,6 +497,7 @@ sub dump_group {
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['group'],
+        'required_descriptions' => ['group to dump'],
         'help_text' => $dump_group_help_text,
         'optional' => {
             'info_too' => 'false',
@@ -530,6 +546,7 @@ sub dump_layer {
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['layer'],
+        'required_descriptions' => ['layer to dump'],
         'help_text' => $dump_layer_help_text,
         'optional' => {
             'info_too' => 'false',

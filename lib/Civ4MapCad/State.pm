@@ -151,11 +151,13 @@ sub _process_command {
     
     elsif ($command_name eq 'exit') {
         if ((@params == 1) and ($params[0] eq '--help')) {
+            $self->buffer_bar();
             print "\n";
             print "  Command format:\n\n";
             print "  exit\n\n";
             print "  Description:\n";
             print "  Exits.\n\n";
+            $self->register_print();
             return 1;
         }
             
@@ -172,8 +174,16 @@ sub _process_command {
         
         if (@params == 1) {
             if ($params[0] eq '--help') {
-                print "\n...\n\n";
-                return -1;
+                $self->buffer_bar();
+                print "\n";
+                print "  Command format:\n\n";
+                print "  help searchstring\n\n";
+                print "  Description:\n";
+                print "  Prints the list of available commands. A search string is optional, but,\n";
+                print "  if present, the list of available commands will be filtered.\n";
+                
+                $self->register_print();
+                return 1;
             }
         
             @com_list = grep { $_ =~ /$params[0]/ } @com_list;
@@ -198,7 +208,6 @@ sub _process_command {
     
     else {
         $self->report_error("unknown command '$command_name'");
-        
         return -1;
     }
 }

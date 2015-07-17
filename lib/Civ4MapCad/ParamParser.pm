@@ -51,12 +51,13 @@ sub new {
             print "\n  $calling_format[$i]";
         }
         
+        print "\n\n";
+        
         if (exists $param_spec->{'help_text'}) {
             print "  Description:\n\n";
             $state->report_message($param_spec->{'help_text'});
             print "\n\n";
         }
-        print "\n\n";
         
         return bless {'error' => 0, 'done' => 1}, $class;
     }
@@ -183,6 +184,7 @@ sub _report_calling_format {
     $optional_str = " [ @optional_list ]" if @optional_list > 0;
     
     my @format = ("$command_name @required_list$optional_str$shape$result");
+    
     if ((@required_list > 0) and exists($param_spec->{'required_descriptions'})) {
         foreach my $i (1 .. @{ $param_spec->{'required_descriptions'} }) {
             my $desc = $param_spec->{'required_descriptions'}[$i-1];

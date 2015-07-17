@@ -16,7 +16,7 @@ use Civ4MapCad::Object::Mask;
 use Civ4MapCad::Ascii qw(clean_ascii import_ascii_mapping_file);
 
 my $new_mask_from_magic_wand_help_text = qq[
-    
+    todo
 ];
 sub new_mask_from_magic_wand {
     my ($state, @params) = @_;
@@ -360,11 +360,17 @@ sub generate_layer_from_mask {
     return 1;
 }
 
+my $modify_layer_from_mask_help_text = qq[
+    Modifies a layer by applying a weight table to a mask. The value at each mask coordinate is evaluated according to the weight table, which is used
+    to *modify* the existing tile. Only differing attributes will be changed; this is useful if you want to just add bonuses to existing terrain with
+    the bare_ weights and terrain, or if you want to modify terrain without touching the bonuses.
+];
 sub modify_layer_with_mask {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'has_result' => 'layer',
+        'help_text' => $modify_layer_from_mask_help_text,
         'allow_implied_result' => 1,
         'required' => ['layer', 'mask', 'weight'],
         'required_descriptions' => ['layer to modify', 'mask to generate from', 'weight table to generate terrain from'],
@@ -397,11 +403,15 @@ sub modify_layer_with_mask {
     return 1;
 }
 
+my $cutout_layer_with_mask_help_text = qq[
+    todo 
+];
 sub cutout_layer_with_mask {
     my ($state, @params) = @_;
 
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'has_result' => 'layer',
+        'help_text' => $cutout_layer_with_mask_help_text,
         'required' => ['layer', 'mask'],
         'required_descriptions' => ['layer to cutout from', 'mask to define selection'],
         'optional' => {
@@ -433,12 +443,16 @@ sub cutout_layer_with_mask {
     $state->set_variable("\$$group_name.$layer_name", 'layer', $selected);
 }
 
+my $apply_shape_to_mask_help_text = qq[
+    todo
+];
 sub apply_shape_to_mask {
     my ($state, @params) = @_;
 
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'has_result' => 'layer',
         'has_shape_params' => 1,
+        'help_text' => $apply_shape_to_mask_help_text,
         'allow_implied_result' => 1,
         'required' => ['mask', 'layer'],
         'required_descriptions' => [],
