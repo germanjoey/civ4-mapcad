@@ -507,7 +507,6 @@ sub extract_starts_with_mask {
     foreach my $start (@$all_starts) {
         push @sorted_starts, map {[$start->[0], @$_]} @{ $start->[1] };
     }
-    
     @sorted_starts = sort { $b->[3] <=> $a->[3] } @sorted_starts;
     
     foreach my $start (@sorted_starts) {

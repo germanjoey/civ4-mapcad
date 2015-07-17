@@ -124,7 +124,7 @@ We ran the script 5 times, and generated 5 bananas! That means's we're in the ho
     
 And that's it, we're done!!!! Here's our monster, the perfect toroidal banana nightmare. I named this script [bunch.civ4mc](tutorials/t3/bunch.civ4mc)
 
-I started by sizing the main group to 60 by 60, and spaced out the bananas 11 by 11, but then quickly realized that was way too spacey. (and probably way too big to post a screenshot of in this tutorial page) Because of the toroidal wrap, we could bring in everything a lot closer. Now it's the perfect size, I think - way, way too small to be acutally playable by normal people, but perfect for these jerks considering that they'll probably abandon the game after 40-50 turns. At least this way they'll get some action!
+I started by sizing the main group to 60 by 60, and spaced out the bananas 11 by 11, but then quickly realized that was way too spacey. (and probably way too big to post a screenshot of in this tutorial page) Because of the toroidal wrap, we could bring in everything a lot closer. Now it's the perfect size, I think - way, way too small to be acutally playable by normal people, but perfect for these goofballs considering that they'll probably abandon the game after 40-50 turns. At least this way they'll get some action! ![img-lol](tutorials/t4/lol.gif)
 
 Anyways, that's it for this tutorial. Hopefully, you can find your way around using the help commands:
 
