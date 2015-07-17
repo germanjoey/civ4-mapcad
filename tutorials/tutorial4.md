@@ -56,22 +56,24 @@ And we can build our script like this, which I've saved at [tutorials/t4/banana.
                      >= 0.01 => %any_land,
                      => %bananaland
 
-    # now summon!
+    # now summon the demon!
     new_group 25 25 => $the_real_banana
     generate_layer_from_mask @random_banana %bananaland => $the_real_banana.background
 
+    # rivet on the BFC
     import_group "tutorials/t4/bfc.CivBeyondSwordWBSave" => $bfc
     extract_starts $bfc
-
     copy_layer_from_group $bfc.start0 => $the_real_banana.bfc
-    move_layer $the_real_banana.bfc 2 4
+    move_layer_to $the_real_banana.bfc 2 4
     increase_layer_priority $the_real_banana.bfc
+
+    # and we're done!
     flatten_group $the_real_banana
     crop_group $the_real_banana 0 0 13 16
 
     return $the_real_banana
     
-Only 30 lines, including comments - not too shabby, right? Now.... make them dance!
+Only about 30 lines, including comments - not too shabby, right? Now.... to make them dance!
 
     fliplr $the_real_banana
     dump_group $the_real_banana
@@ -83,11 +85,11 @@ Only 30 lines, including comments - not too shabby, right? Now.... make them dan
     dump_group $the_real_banana --add_to_existing
     ...
     
-Just kidding... you'd have to be truly B-A-N-A-N-A-S to do something like that... *tugs collar* ![img-sweatdrop](tutorials/t4/sweatdrop.gif)
+Just kidding... you'd have to be truly B-A-N-A-N-A-S to do something like that... *<b></b>tugs collar<b></b>* ![img-sweatdrop](t4/sweatdrop.gif)
 
-![img-dance](tutorials/t4/dance.png)
+![img-dance](t4/dance.png)
 
-*ahem* The only real new thing here is that "return" statement at the end, which makes *run_script* produce a result. It's sort of like a function, if this were a programming language. A return statement is not needed in scripts, but it's pretty handy because it allows the run_script command to return a value. Thus, we can do this:
+*<b></b>ahem<b></b>* The only real new thing here is that "return" statement at the end, which makes *run_script* produce a result. It's sort of like a function, if this were a programming language. A return statement is not needed in scripts, but it's pretty handy because it allows the run_script command to return a value. Thus, we can do this:
 
     run_script "tutorials/t4/banana.civ4mc" => $player1
     run_script "tutorials/t4/banana.civ4mc" => $player2
@@ -95,9 +97,9 @@ Just kidding... you'd have to be truly B-A-N-A-N-A-S to do something like that..
     run_script "tutorials/t4/banana.civ4mc" => $player4
     run_script "tutorials/t4/banana.civ4mc" => $player5
     
-We ran the script 5 times, and generated 5 bananas! That means's we're in the home stretch now; we just need to combine them into one group and move them around a bit. Let's set the mood!
+We ran the script 5 times, and generated 5 bananas! That means we're in the home stretch now; we just need to combine them into one group and move them around a bit. Let's set the mood!
 
-<iframe width="420" height="315" src="https://www.youtube.com/watch?v=PMigXnXMhQ4"></iframe>
+[![ScreenShot](https://raw.github.com/GabLeRoux/WebMole/master/ressources/WebMole_Youtube_Video.png)](https://www.youtube.com/watch?v=PMigXnXMhQ4)
     
     run_script "tutorials/t4/banana.civ4mc" => $player1
     run_script "tutorials/t4/banana.civ4mc" => $player2
@@ -122,9 +124,9 @@ We ran the script 5 times, and generated 5 bananas! That means's we're in the ho
     dump_group $banana_bunch
     export_sims $banana_bunch
     
-And that's it, we're done!!!! Here's our monster, the perfect toroidal banana nightmare. I named this script [bunch.civ4mc](tutorials/t3/bunch.civ4mc)
+And that's it, we're done!!!! Here's our monster, the perfect toroidal banana nightmare. I named this script [bunch.civ4mc](tutorials/t3/bunch.civ4mc), if you want to look at it.
 
-I started by sizing the main group to 60 by 60, and spaced out the bananas 11 by 11, but then quickly realized that was way too spacey. (and probably way too big to post a screenshot of in this tutorial page) Because of the toroidal wrap, we could bring in everything a lot closer. Now it's the perfect size, I think - way, way too small to be acutally playable by normal people, but perfect for these goofballs considering that they'll probably abandon the game after 40-50 turns. At least this way they'll get some action! ![img-lol](tutorials/t4/lol.gif)
+I started by sizing the main group to 60 by 60, and spaced out the bananas 11 by 11, but then quickly realized that was way too spacey. (and probably way too big to post a screenshot of in this tutorial page) Because of the toroidal wrap, we could bring in everything a lot closer. Now it's the perfect size, I think - way, way too small to be acutally playable by normal people, but perfect for these goofballs considering that they'll probably abandon the game after 40-50 turns. At least this way they'll get some action! ![img-lol](t4/lol.gif)
 
 Anyways, that's it for this tutorial. Hopefully, you can find your way around using the help commands:
 
