@@ -1,6 +1,8 @@
 Ah, after relaxing with a quiet evening spent playing your pitboss turns, you settle into bed with expectations of blissful dreams of your glorious empire. The drama and tension of the game... it all begins to fades away, just as you notice that something seems amiss. You stir... and suddenly, flames erupt in a ring around your room! A gaunt, disheveled stranger with eyes of coal materializes before you. Materializes? Huh? Or was he always there...? Your mouth agape, you leap back, knocking your head against the wall. You stir... "Is this h-hell...?", you manage to whisper. Oh, perhaps, perhaps, he smirks with a low growl. At least, it is if these guys have anything to do with it. Out of your closest pop five men in raggeddy banana suits... and they begin to dance. Oh, you feel the true horror now, as it begins to down on you what's really going on here... that's right, it's the original members of [TEAM BANANA](http://www.garath.net/Sullla/Civ4/ADG12.html) from the infamous Apolyton Demogame... and they want YOU to make a map for their reunion game!!
 
-![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) 
+<div style="text-align:center">
+![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) ![dancing](t3/dancing.gif) 
+</div>
 
 Obviously, these fools will insist on a banana map, and they ain't lettin' you leave this place until you give it to them. Surely, this will be the worst thing you've ever been apart of. But hold on tight, I'll help you get through it.
 
@@ -8,7 +10,7 @@ Ok, the first thing we'll need to do is figure out how draw a banana. We'll need
 
 Before we continue, let me explain what these things are and what they do. The first, Masks, are kind of like a stencil that sits on top of the map. The mask is essentially a 2d plane, just like a map, and can be of any size. Instead of tiles, a mask is made up of values between "1" and "0". Thinking about the most simple case, where values are *only* 1 and 0, a Mask is like a cookie cutter. The cookie dough is the background, and the shape of the cutter itself (if it were solid inside) would be a bunch of 1's.
 
-![tutorial1-img1](t2/i1.jpg)
+![tutorial3-img1](t3/i1.jpg)
 
 If we think of it like ascii art, it might look like this, where the '*' have a value of 1.0 and the blank spaces have a value of 0.0:
 
@@ -74,7 +76,7 @@ So, with Masks we have a way to describe a shape. How do we then turn that into 
         PlotType = 2 (Flat)
         TerrainType = TERRAIN_GRASS
     
-    ... (a few dozen others)
+    ... (and a few dozen terrains with "grass" in their name)
     
 Weights work like a ladder; the evaluation starts at the top, and then we work down through each one until we find a condition that fits. For example, we were to apply the %land weight to the @circle1 mask via the *generate_layer_from_mask* command (we'll see more on this later), coordinates where the mask had a value of 1.0 would become grass, while coordinates where the value was greater than or equal to 0 (so, everything not a 1) will become ocean. Another example, using the %any_land mask:
 
@@ -184,7 +186,7 @@ We've got a lot of bananas, a mix of resources, a few lakes, and the rest is lan
 
 ![tutorial3-i6](t3/i7.png)
 
-The nice thing about this is that if we want (or they insist) on making the banana bigger, we just need to modify the sizes in our *new_shape_from_mask* commands and the banana will be resized!
+The nice thing about this is that if we want (or they insist) on making the banana bigger, we just need to modify the sizes in our *new_shape_from_mask* commands and the banana will be resized, just like Magic!
 
 Alright, we've got our banana - now to put on the finishing touches. In the next tutorial, we'll look at how to rivet on a custom-built BFC for the banana capitals and how to neatly tie up our design using scripts.
 

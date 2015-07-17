@@ -509,7 +509,8 @@ sub dump_group {
     my @layer_cells;
     foreach my $layer ($copy->get_layers()) {
         $layer->fix_coast();
-        push @layer_cells, dump_single_layer($layer, "$set_index: " . $layer->get_name(), $do_info);
+        my $full_name = '$' . $layer->get_group->get_name() . '.' . $layer->get_name();
+        push @layer_cells, dump_single_layer($layer, "$set_index: $full_name", $do_info);
     }
     
     dump_framework($template, 'dump.html', '$' . $group->get_name(), $start_index, \@layer_cells);
@@ -553,9 +554,9 @@ sub dump_layer {
     my $copy = deepcopy($layer);
     $copy->fix_coast();
     
-    my $cells = dump_single_layer($copy, "$set_index: " . $layer->get_name(), $do_info);
     my $full_name = '$' . $layer->get_group->get_name() . '.' . $layer->get_name();
-    dump_framework($template, 'dump.html', $layer->full_name(), $start_index, [$cells]);
+    my $cells = dump_single_layer($copy, "$set_index: $full_name", $do_info);
+    dump_framework($template, 'dump.html', $full_name, $start_index, [$cells]);
     return 1;
 }
 
