@@ -4,13 +4,9 @@ Because Civ4 already comes with an excellent map editor, that's even been expand
 
 Groups and Layers
 
-Layers will likely be pretty easy understand. If you've ever used Photoshop, The Gimp, Powerpoint, etc, you're already familiar with the idea: seperate parts of an image are seperated from each other so that you can move them around independently of each other. When you're finally done with your design, layers get merged together (with content from layers on "top" overwriting that of those on the "bottom", but transparent areas from the top allowing content from the bottom to remain) so that the final product is one single image/presentation/map. Layers in this tool are grouped together as "Groups"
+Layers will likely be pretty easy understand. If you've ever used Photoshop, The Gimp, Powerpoint, etc, you're already familiar with the idea: seperate parts of an image are seperated from each other so that you can move them around independently of each other. When you're finally done with your design, layers get merged together (with content from layers on "top" overwriting that of those on the "bottom", but transparent areas from the top allowing content from the bottom to remain) so that the final product is one single image/presentation/map. Layers in this tool are grouped together as "Groups." Some of you might be wondering how we can support layers when Civ4 does not have a transparent/empty tile type. We need to cheat a little bit, and use ocean/coast tiles instead.
 
-There are a few different ways to create Groups and Layers in this tool:
 
-1.) Import an already-existing map file as a new project, which creates a Group with a single layer. (see the XXX command.)
-2.) Copy a layer from a different group. (see the XXX command)
-3.) Cut out a layer from another layer, as if you were using a cookie-cutter on a sheet of dough and forcing the cutout to float above. 
-4.) Generate a layer with new terrain from a Mask  (more on these later)
 
-Some of you might be wondering how we can support layers when Civ4 does not have a transparent/empty tile type. We need to cheat a little bit, and use ocean/coast tiles instead. Thus, a Group with these two layers:
+Work still in progress here...
+

@@ -1,6 +1,8 @@
-finishing the banana
-
 We're back... or, should we say, we've never really left - because the banana brats have circled around you now and are still clamouring for their map. From what you can tell, they like their banana, "yay," but insist that this be a "real" game with a "real capital BFC." I mean, gimmie a break, right?
+
+<div style="text-align:center">
+<img src="t3/dancing.gif" /> <img src="t3/dancing.gif" /> <img src="t3/dancing.gif" /> <img src="t3/dancing.gif" /> <img src="t3/dancing.gif" /> <img src="t3/dancing.gif" /> <img src="t3/dancing.gif" /> <img src="t3/dancing.gif" />
+</div>
 
 (We're picking up where we were at the end of the last tutorial... if you've closed your command prompt since then, you can get back to where we were by running [this script](t3/t3.civ4mc):
 
