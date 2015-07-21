@@ -15,6 +15,7 @@ sub new {
     my $class = ref $proto || $proto;
     my $obj = bless {}, $class;
     
+    $obj->{'freshwater'} = 0;
     $obj->{'Revealed'} = {};
     $obj->{'Units'} = [];
     
@@ -26,6 +27,7 @@ sub new_default {
     my $class = ref $proto || $proto;
     my $obj = bless {}, $class;
     
+    $obj->{'freshwater'} = 0;
     $obj->{'Revealed'} = {};
     $obj->{'Units'} = [];
     
@@ -41,6 +43,7 @@ sub default {
     $self->set('y', $y);
     $self->set('TerrainType', 'TERRAIN_OCEAN');
     $self->set('PlotType', 3);
+    $self->{'freshwater'} = 0;
 }
 
 sub clear {
@@ -49,6 +52,7 @@ sub clear {
     delete $self->{$_} foreach (@fields);
     $self->{'Revealed'} = {};
     $self->{'Units'} = [];
+    $self->{'freshwater'} = 0;
 }
 
 sub add_reveals {
@@ -146,6 +150,8 @@ sub parse {
     if ($strip_nonsettlers) {
         $self->strip_nonsettlers();
     }
+    
+    $self->{'freshwater'} = 0;
 }
 
 sub write {
@@ -207,7 +213,7 @@ sub is_water {
 
 sub is_blank {
     my ($self) = @_;
-    return (($self->{'TerrainType'} eq 'TERRAIN_OCEAN') or ($self->{'TerrainType'} eq 'TERRAIN_COAST')) ? 1 : 0;
+    return (($self->{'freshwater'} == 0) and ($self->is_water())) ? 1 : 0;
 }
 
 sub update_tile {
@@ -397,6 +403,43 @@ sub reassign_reveals {
         delete $self->{'Revealed'}{$old};
         $self->{'Revealed'}{$new} = 1;
     }
+}
+
+# either we have a river explicitly on us, or freshwater was marked by Map because of some other tile
+sub is_fresh {
+    my ($self) = @_;
+    if (($self->{'freshwater'}) or exists($self->{'isNOfRiver'}) or exists($self->{'isWOfRiver'})) {
+        return 1;
+    }
+    return 0;
+}
+
+sub mark_freshwater {
+    my ($self) = @_;
+    $self->{'freshwater'} = 1;
+}
+
+sub unmark_freshwater {
+    my ($self) = @_;
+    $self->{'freshwater'} = 0;
+}
+
+sub has_river {
+    my ($self) = @_;
+    if (exists($self->{'isNOfRiver'}) or exists($self->{'isWOfRiver'})) {
+        return 1;
+    }
+    return 0;
+}
+
+sub is_NOfRiver {
+    my ($self) = @_;
+    return (exists $self->{'isNOfRiver'}) ? 1 : 0;
+}
+
+sub is_WOfRiver {
+    my ($self) = @_;
+    return (exists $self->{'isWOfRiver'}) ? 1 : 0;
 }
 
 1;

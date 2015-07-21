@@ -36,7 +36,7 @@ sub default {
     $self->set('CivType', 'NONE');
     $self->set('Color', 'NONE');
     $self->set('ArtStyle', 'NONE');
-    $self->set('Handicap', 'HANDICAP_NOBLE');
+    $self->set('Handicap', $main::config{'difficulty'});
 }
 
 sub clear {
@@ -131,8 +131,35 @@ sub write {
 
 sub is_active {
     my ($self) = @_;
+    
     return 1 if $self->{'LeaderType'} ne 'NONE';
     return 0;
+}
+
+sub set_from_data {
+    my ($self, $data) = @_;
+    $self->clear();
+    
+    # we don't expect every single field here, so only do these
+    my @expected_fields = ('CivType', 'CivDesc', 'CivShortDesc', 'CivAdjective', 'Color', 'ArtStyle', 'PlayableCiv', 'WhiteFlag',
+                           'MinorNationStatus', 'StartingX', 'StartingY', 'StateReligion', 'RandomStartLocation', 'FlagDecal');
+    
+    foreach my $key (@expected_fields) {
+        $self->set($key, $data->{$key});
+    }
+            
+    $self->set('Handicap', $main::config{'difficulty'});
+    
+    # assign a random leader for that civ
+    my $leader_count = 0 + @{ $data->{'_LeaderType'} };
+    my $rand_leader = int( $leader_count*rand(1) );
+    $self->set('LeaderType', $data->{'_LeaderType'}[$rand_leader][0]);
+    $self->set('LeaderName', $data->{'_LeaderType'}[$rand_leader][1]);
+    
+    # each civic will be formatted properly in the load_xml_data command
+    foreach my $civic (@{ $data->{'_Civics'} }) {
+        $self->add_civics($civic);
+    }
 }
 
 1;

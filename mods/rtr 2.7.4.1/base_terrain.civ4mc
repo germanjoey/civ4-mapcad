@@ -1,0 +1,66 @@
+new_weight_table >= 0.75 => plainshill_forest0,
+                 >= 0.50 => plainshill_forest1,
+                 >= 0.25 => plainshill_forest2,
+                 >= 0.00 => plainshill_forest3
+                 => %any_forest_plainshill
+
+new_weight_table >= 0.75 => plains_forest0,
+                 >= 0.50 => plains_forest1,
+                 >= 0.25 => plains_forest2,
+                 >= 0.00 => plains_forest3
+                 => %any_forest_plains
+
+new_weight_table >= 0.75 => grass_forest0,
+                 >= 0.50 => grass_forest1,
+                 >= 0.25 => grass_forest2,
+                 >= 0.00 => grass_forest3
+                 => %anyforest_grass
+                 
+new_weight_table >= 0.75 => grasshill_forest0,
+                 >= 0.50 => grasshill_forest1,
+                 >= 0.25 => grasshill_forest2,
+                 >= 0.00 => grasshill_forest3
+                 => %any_forest_grasshill
+
+new_weight_table >= 0.80 => grass_forest,
+                 >= 0.60 => plains_forest,
+                 >= 0.40 => grasshill_forest,
+                 >= 0.20 => plainshill_forest
+                 >= 0.10 => tundra_forest,
+                 >= 0.00 => tundrahill_forest
+                 => %any_forest
+                 
+new_weight_table >= 0.90 => plains_forest,
+                 >= 0.80 => plainshill_forest,
+                 >= 0.40 => plains,
+                 >= 0.00 => plainshill
+                 => %any_plains
+                 
+new_weight_table >= 0.90 => grass_forest,
+                 >= 0.80 => grasshill_forest,
+                 >= 0.75 => grasshill_jungle,
+                 >= 0.70 => grass_jungle,
+                 >= 0.35 => grass,
+                 >= 0.00 => grasshill
+                 => %any_grass
+                 
+new_weight_table >= 0.90 => tundrahill_forest,
+                 >= 0.80 => tundra_forest,
+                 >= 0.50 => tundra,
+                 >= 0.00 => tundrahill
+                 => %any_tundra
+                 
+new_weight_table >= 0.95 => oasis,
+                 >= 0.35 => desert,
+                 >= 0.00 => deserthill
+                 => %any_desert
+
+new_weight_table >= 0.40 => %any_grass,
+                 >= 0.10 => %any_plains,
+                 >= 0.05 => %any_tundra,
+                 >= 0.00 => %any_desert
+                 => %any_land
+                 
+new_weight_table >= 1.00 => grass,
+                 >= 0.00 => ocean
+                 => %land

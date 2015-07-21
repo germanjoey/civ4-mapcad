@@ -6,9 +6,9 @@ use warnings;
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(
-    export_sims find_starts export_group combine_groups flatten_group import_group new_group find_difference
+    export_sims export_group combine_groups flatten_group import_group new_group find_difference set_wrap
     extract_starts_as_mask normalize_starts strip_nonsettlers add_scouts_to_settlers extract_starts export_sims
-    copy_group crop_group expand_group_canvas set_wrap
+    copy_group crop_group expand_group_canvas 
 );
 
 use Civ4MapCad::Util qw(deepcopy);
@@ -39,39 +39,6 @@ sub set_wrap {
     
     $group->set_wrapX(($nowrapX) ? 0 : 1);
     $group->set_wrapX(($nowrapY) ? 0 : 1);
-    
-    return 1;
-}
-
-my $find_starts_help_text = qq[
-    Finds starts (settlers) in a group and reports their locations.
-];
-sub find_starts {
-    my ($state, @params) = @_;
-    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
-        'required' => ['group'],
-        'required_descriptions' => ['group to find settlers in'],
-        'help_text' => $find_starts_help_text
-    });
-    return -1 if $pparams->has_error;
-    return 1 if $pparams->done;
-    
-    my ($group) = $pparams->get_required();
-    my $all_starts = $group->find_starts();
-    
-    my @sorted_starts;
-    foreach my $start (@$all_starts) {
-        push @sorted_starts, map {[$start->[0], @$_]} @{ $start->[1] };
-    }
-    @sorted_starts = sort { $b->[3] <=> $a->[3] } @sorted_starts;
-    
-    if (@sorted_starts == 0) {
-        $state->list('No starts found.');
-    }
-    else {
-        my @descriptions = map { sprintf "player %s is in layer '%s' at %d,%d", $_->[3], $_->[0], $_->[1], $_->[2] } @sorted_starts;
-        $state->list( @descriptions );
-    }
     
     return 1;
 }
@@ -178,7 +145,6 @@ sub import_group {
     
     my $result_name = $pparams->get_result_name();
     my ($filename) = $pparams->get_required();
-    $filename =~ s/"//g;
     
     my $result = Civ4MapCad::Object::Group->new_from_import($filename);
     if (ref($result) eq '') {
@@ -186,6 +152,7 @@ sub import_group {
         return -1;
     }
     
+    $result->set_difficulty($main::config{'difficulty'});
     $state->set_variable($result_name, 'group', $result);
     return 1;
 }

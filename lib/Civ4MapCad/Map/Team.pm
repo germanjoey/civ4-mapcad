@@ -242,5 +242,4 @@ sub write {
     print $fh "EndTeam\n";
 }
 
-
 1;

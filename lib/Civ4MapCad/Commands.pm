@@ -6,18 +6,21 @@ use warnings;
 use Exporter::Dispatch;
 use Civ4MapCad::ParamParser;
 
-use Civ4MapCad::Util;
-
 use Civ4MapCad::Commands::Config qw(
-   set_output_dir set_mod write_log history
+   set_output_dir list_mods set_mod write_log history load_xml_data set_player_data set_difficulty
 );
 
 use Civ4MapCad::Commands::Weight qw(
     load_terrain new_weight_table import_weight_table_from_file
 );
+
+use Civ4MapCad::Commands::Debug qw(
+    dump_group dump_mask dump_layer dump_mask_to_console evaluate_weight show_weights 
+);
+
 use Civ4MapCad::Commands::List qw(
-    list_shapes list_groups list_layers list_masks list_weights list_terrain
-    show_weights dump_group dump_mask dump_layer dump_mask_to_console evaluate_weight
+    list_shapes list_groups list_layers list_masks list_weights show_difficulty
+    list_terrain list_civs list_leaders list_colors list_techs list_traits find_starts
 );
 
 use Civ4MapCad::Commands::Mask qw(
@@ -28,16 +31,15 @@ use Civ4MapCad::Commands::Mask qw(
 );
 
 use Civ4MapCad::Commands::Layer qw(
-    move_layer_to move_layer_by set_layer_priority crop_layer
+    move_layer_to move_layer_by set_layer_priority crop_layer rename_layer delete_layer
     flip_layer_tb flip_layer_lr copy_layer_from_group merge_two_layers expand_layer_canvas
-    increase_layer_priority decrease_layer_priority set_tile rename_layer delete_layer
+    increase_layer_priority decrease_layer_priority set_tile 
 );
 
 use Civ4MapCad::Commands::Group qw(
-    export_sims find_starts export_group combine_groups flatten_group import_group
-    new_group find_difference extract_starts_as_mask normalize_starts find_starts 
-    strip_nonsettlers add_scouts_to_settlers extract_starts export_sims copy_group
-    crop_group expand_group_canvas set_wrap
+    export_sims  export_group combine_groups flatten_group import_group crop_group
+    new_group find_difference extract_starts_as_mask normalize_starts expand_group_canvas
+    strip_nonsettlers add_scouts_to_settlers extract_starts export_sims copy_group set_wrap
 );
 
 # use Civ4MapCad::Commands::Balance qw();
@@ -61,7 +63,6 @@ sub import_shape {
     
     my $shape_name = $pparams->get_result_name();
     my ($path) = $pparams->get_required();
-    $path =~ s/"//g;    
     
     if (exists $state->{'shape'}{$shape_name}) {
         $state->report_warning("shape with name '$shape_name' already exists.");
@@ -127,13 +128,44 @@ sub run_script {
         $state->register_print();
         return 1;
     }
+  
+    # duplicate some code from ParamParser; condense strings with spaces in the name
+    my $open_string = 0;
+    my $current_string = '';
+    my @proc_params;
+    foreach my $part (@params) {
+        if (($open_string == 1) or ($part =~ /^\"/)) {
+            $open_string = 1;
+            
+            $current_string .= $part;
+            
+            if ($part =~ /\"$/) {
+                push @proc_params, $current_string;
+                
+                $open_string = 0;
+                $current_string = '';
+            }
+            else {
+                $current_string .= ' ';
+            }
+            
+            next;
+        }
+        
+        push @proc_params, $part;
+    }
     
+    if ($open_string) {
+        $state->report_error("parse error, string was found to have an open quote.");
+        return -1;
+    }
+  
     my $error = 0;
     my $result_name = '';
-    if (@params == 3) {
-        if ($params[1] eq '=>' and ($params[2] =~ /[\*\$\@\%]?\w+(?:\.\w+)?/)) {
-            my $result_name = pop @params;
-            my $op = pop @params;
+    if (@proc_params == 3) {
+        if ($proc_params[1] eq '=>' and ($proc_params[2] =~ /[\*\$\@\%]?\w+(?:\.\w+)?/)) {
+            my $result_name = pop @proc_params;
+            my $op = pop @proc_params;
             
             my $type = $state->get_variable_type_from_name($result_name);
             if (exists $type->{'error'}) {
@@ -149,7 +181,7 @@ sub run_script {
         }
     }
     
-    if ((@params != 1) or ((@params == 1) and ($params[0] !~ /^"[^"]+"$/))) {
+    if ((@proc_params != 1) or ((@proc_params == 1) and ($proc_params[0] !~ /^"[^"]+"$/))) {
         $error = 1;
     }
     
@@ -161,7 +193,7 @@ sub run_script {
         return -1;
     }
 
-    my $filename = $params[0];
+    my $filename = $proc_params[0];
     $filename =~ s/\"//g;
     
     $state->in_script();

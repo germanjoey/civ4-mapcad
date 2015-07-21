@@ -29,7 +29,6 @@ sub load_terrain {
     return 1 if $pparams->done;
     
     my ($filename) = $pparams->get_required();
-    $filename =~ s/"//g;
     
     my $ret = open (my $test, $filename) || 0;
     unless ($ret) {

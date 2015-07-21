@@ -6,21 +6,15 @@ use lib 'lib';
 
 use Config::General;
 use Civ4MapCad::State;
-use Civ4MapCad::Util qw(find_max_players);
 
 use sigtrap qw(handler dump_log error-signals);
+
 our %config = Config::General->new('def/config.cfg')->getall();
-
 our $state = Civ4MapCad::State->new();
-my $max = find_max_players($config{'mod'});
 
-if ($max < 0) {
-    print "ERROR: unknown mod set in def/config.cfg!\n";
-    exit(1);
-}
-
-$config{'max_players'} = $max;
+$config{'max_players'} = 0;
 $config{'state'} = $state;
+
 $SIG{'INT'} = sub { $main::config{'state'}->process_command('write_log'); exit(0) };
 $SIG{__DIE__} = sub { $main::config{'state'}->process_command('write_log'); my $message = shift; die $message };
 

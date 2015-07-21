@@ -1,0 +1,15 @@
+load_terrain "mods/none/base_terrain.terrain"
+load_terrain "mods/none/luxury.terrain"
+load_terrain "mods/none/seafood.terrain"
+load_terrain "mods/none/landfood.terrain"
+load_terrain "mods/none/strategic.terrain"
+load_terrain "mods/none/plantation.terrain"
+
+run_script "mods/none/base_terrain.civ4mc"
+run_script "mods/none/luxury.civ4mc"
+run_script "mods/none/seafood.civ4mc"
+run_script "mods/none/landfood.civ4mc"
+run_script "mods/none/strategic.civ4mc"
+run_script "mods/none/plantation.civ4mc"
+
+load_xml_data

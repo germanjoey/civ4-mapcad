@@ -22,6 +22,8 @@ sub new {
     my $class = ref $proto || $proto;
     
     my $obj = {
+        'freshwater_marked' => 0,
+        'coast_fixed' => 0,
         'Game' => '',
         'Teams' => {},
         'MapInfo' => '',
@@ -39,6 +41,8 @@ sub new_default {
     my ($width, $height) = @_;
     
     my $obj = {
+        'freshwater_marked' => 0,
+        'coast_fixed' => 0,
         'Version' => 'Version=11',
         'Game' => '',
         'Teams' => {},
@@ -78,6 +82,9 @@ sub default {
             $self->{'Tiles'}[$x][$y] = Civ4MapCad::Map::Tile->new_default($x, $y);
         }
     }
+    
+    $self->{'freshwater_marked'} = 0;
+    $self->{'coast_fixed'} = 0;
 }
 
 sub clear {
@@ -109,6 +116,9 @@ sub clear_map {
             $self->{'Tiles'}[$x][$y]->default($x, $y);
         }
     }
+    
+    $self->{'freshwater_marked'} = 0;
+    $self->{'coast_fixed'} = 0;
 }
 
 sub expand_dim {
@@ -298,6 +308,7 @@ sub import_map {
     }
     
     close $fh;
+    $self->{'coast_fixed'} = 0;
     
     return '';
 }
@@ -445,40 +456,6 @@ sub get_tile {
     }
     
     return $self->{'Tiles'}[$ux][$uy];
-}
-
-sub fix_coast {
-    my ($self) = @_;
-
-    foreach my $x (0..$#{$self->{'Tiles'}}) {
-        foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
-            warn "$x $y" unless defined $self->{'Tiles'}[$x][$y];
-            if ($self->{'Tiles'}[$x][$y]->is_water()) {
-                $self->{'Tiles'}[$x][$y]->set('PlotType', 3);
-
-                my $xp1_yp1 = (defined $self->get_tile($x+1, $y+1)) ? ($self->get_tile($x+1, $y+1)->is_land()) : 0;
-                my $x00_yp1 = (defined $self->get_tile($x+0, $y+1)) ? ($self->get_tile($x+0, $y+1)->is_land()) : 0;
-                my $xm1_yp1 = (defined $self->get_tile($x-1, $y+1)) ? ($self->get_tile($x-1, $y+1)->is_land()) : 0;
-                my $xp1_y00 = (defined $self->get_tile($x+1, $y+0)) ? ($self->get_tile($x+1, $y+0)->is_land()) : 0;
-                
-                my $xm1_y00 = (defined $self->get_tile($x-1, $y+0)) ? ($self->get_tile($x-1, $y+0)->is_land()) : 0;
-                my $xp1_ym1 = (defined $self->get_tile($x+1, $y-1)) ? ($self->get_tile($x+1, $y-1)->is_land()) : 0;
-                my $x00_ym1 = (defined $self->get_tile($x+0, $y-1)) ? ($self->get_tile($x+0, $y-1)->is_land()) : 0;
-                my $xm1_ym1 = (defined $self->get_tile($x-1, $y-1)) ? ($self->get_tile($x-1, $y-1)->is_land()) : 0;
-                
-                my $make_coast = $xp1_yp1 + $x00_yp1 + $xm1_yp1 + $xp1_y00 + $xm1_y00 + $xp1_ym1 + $x00_ym1 + $xm1_ym1;
-                
-                if ($make_coast > 0) {
-                    $self->{'Tiles'}[$x][$y]->set('TerrainType','TERRAIN_COAST');
-                }
-                else {
-                    $self->{'Tiles'}[$x][$y]->set('TerrainType','TERRAIN_OCEAN');
-                }
-            }
-        }
-    }
-    
-    return 1;
 }
 
 sub add_dummy_start {
@@ -642,7 +619,7 @@ sub set_difficulty {
     my ($self, $level) = @_;
     
     foreach my $player (@{ $self->{'Players'} }) {
-        $player->set('Handicap', 'HANDICAP_' . uc($level));
+        $player->set('Handicap', $level) if $player->get('CivType') ne 'NONE';
     }
 }
 
@@ -730,5 +707,178 @@ sub fliptb {
     
     $self->{'Tiles'} = \@new;
 }
+
+sub fix_coast {
+    my ($self) = @_;
+    return 1 if $self->{'coast_fixed'};
     
+    my @directions = ('1 1', '0 1', '-1 1', '1 0', '0 1', '1 -1', '0 -1', '-1 -1'); 
+    
+    foreach my $x (0..$#{$self->{'Tiles'}}) {
+        foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
+            if ($self->{'Tiles'}[$x][$y]->is_water()) {
+                $self->{'Tiles'}[$x][$y]->set('PlotType', 3);
+                
+                my $make_coast = 0;
+                foreach my $direction (@directions) {
+                    my ($xd, $yd) = split ' ', $direction;
+                    my $tile = $self->get_tile($x+$xd, $y+$yd);
+                    my $is_not_water = (defined $tile) ? $tile->is_land() : 0;
+                    $make_coast += $is_not_water;
+                    last if $make_coast > 0;
+                }
+                
+                if ($make_coast > 0) {
+                    $self->{'Tiles'}[$x][$y]->set('TerrainType','TERRAIN_COAST');
+                }
+                else {
+                    $self->{'Tiles'}[$x][$y]->set('TerrainType','TERRAIN_OCEAN');
+                }
+            }
+        }
+    }
+    
+    $self->{'coast_fixed'} = 1;
+    
+    return 1;
+}  
+
+sub mark_freshwater {
+    my ($self) = @_;
+    
+    $self->fix_coast();
+    
+    my %already_checked;
+    foreach my $x (0..$#{$self->{'Tiles'}}) {
+        foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
+            my $tile = $self->{'Tiles'}[$x][$y];
+            next if exists $already_checked{"$x/$y"};
+            next unless $tile->is_water();
+            
+            _ripple_mark($self, $tile, \%already_checked);
+        }
+    }
+    
+    $self->{'freshwater_marked'} = 1;
+    
+    return 1;
+}
+
+sub clear_coasts {
+    my ($self) = @_;
+    
+    my %already_checked;
+    foreach my $x (0..$#{$self->{'Tiles'}}) {
+        foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
+            my $tile = $self->{'Tiles'}[$x][$y];
+            $tile->{'TerrainType'}->unmark_freshwater();
+            
+            if ($tile->{'TerrainType'} eq 'TERRAIN_COAST') {
+                $tile->{'TerrainType'} = 'TERRAIN_OCEAN';
+            }
+        }
+    }
+    
+    $self->{'freshwater_marked'} = 1;
+    
+    return 1;
+}
+
+sub _ripple_mark {
+    my ($self, $start_tile, $already_checked) = @_;
+    
+    my $start_x = $start_tile->get('x');
+    my $start_y = $start_tile->get('y');
+    my @queue = [$start_x, $start_y];
+    my %water_bin = ("$start_x/$start_y" => $start_tile);
+    my %land_bin;
+    
+    my @directions = ('1 1', '0 1', '-1 1', '1 0', '0 1', '1 -1', '0 -1', '-1 -1'); 
+    
+    # check all surrounding tiles to the ones we've already found
+    while (1) {
+        last if @queue == 0;
+        my $point = shift @queue;
+        my ($x, $y) = @$point;
+    
+        foreach my $direction (@directions) {
+            my ($xd, $yd) = split ' ', $direction;
+            my $tx = $x + $xd;
+            my $ty = $y + $yd;
+            
+            next if exists $already_checked->{"$tx/$ty"};
+            next if exists $land_bin{"$tx/$ty"};
+            
+            my $tile = $self->get_tile($tx, $ty);
+            
+            # non-existant tiles, i.e. if the map doesn't wrap a particular direction
+            if (! defined($tile)) {
+                $already_checked->{"$tx/$ty"} = 1;
+                next;
+            }
+            
+            next if $tile->is_fresh(); # this picks out land tiles with a river explicitly
+                                       # on them or land tiles adjacent to a river that we've marked
+            
+            # collect all water in this particular ocean/lake
+            if ($tile->is_water()) { 
+                $already_checked->{"$tx/$ty"} = 1; # mark here so we don't keep adding this to the queue
+                $water_bin{"$tx/$ty"} = 1;
+                push @queue, [$x, $y];
+            }
+            
+            # collect all land adjacent to a coast
+            elsif ($tile->is_land()) {
+                # we don't add land to %already_checked because a land 
+                # could be next to both coast and a lake, for example,
+                # so we need to keep checking it over and over
+                
+                $land_bin{"$x/$y"} = $tile;
+                
+                # check if a tile is east or south of a river
+                my $right_tile = $self->get_tile($tx-1, $ty);
+                if (defined($right_tile) and $right_tile->is_WOfRiver()) {
+                    $tile->mark_freshwater();
+                    next;
+                }
+                
+                my $bottom_tile = $self->get_tile($tx, $ty-1);
+                if (defined($bottom_tile) and $bottom_tile->is_NOfRiver()) {
+                    $tile->mark_freshwater();
+                    next;
+                }
+            }
+        }
+    }
+    
+    my @water = keys %water_bin;
+    if (@water <= 8) {
+        $_->mark_freshwater() foreach (values %water_bin);
+        $_->mark_freshwater() foreach (values %land_bin);
+    }
+    
+    return (\%land_bin, \%water_bin);
+}
+
+sub set_player_from_civdata {
+    my ($self, $owner, $civ_data) = @_;
+    $self->{'Players'}[$owner]->set_from_data($civ_data);
+    $self->{'Teams'}{$owner}->set('Techs', deepcopy($civ_data->{'_Tech'}));
+}
+
+sub set_player_leader {
+    my ($self, $owner, $leader_data) = @_;
+    $self->{'Players'}[$owner]->set('LeaderType', $leader_data->{'Name'});
+}
+
+sub set_player_color {
+    my ($self, $owner, $color) = @_;
+    $self->{'Players'}[$owner]->set('Color', $color);
+}
+
+sub set_player_name {
+    my ($self, $owner, $name) = @_;
+    $self->{'Players'}[$owner]->set('LeaderName', $name);
+}
+  
 1;

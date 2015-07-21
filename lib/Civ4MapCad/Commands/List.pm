@@ -5,15 +5,13 @@ use warnings;
  
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(list_shapes list_groups list_layers list_masks list_weights list_terrain 
-                    show_weights dump_mask_to_console dump_group dump_mask dump_layer evaluate_weight);
- 
-use Config::General;
+our @EXPORT_OK = qw(list_shapes list_groups list_layers list_masks list_weights show_difficulty find_starts
+                    list_terrain list_civs list_leaders list_colors list_techs list_traits);
 
 use Civ4MapCad::ParamParser;
 use Civ4MapCad::Util qw(deepcopy slurp);
 use Civ4MapCad::Dump qw(dump_out dump_framework dump_single_layer);
- 
+
 my $list_shapes_help_text = qq[
   Command Format: 
   
@@ -275,35 +273,6 @@ sub _describe_terrain {
     return @full;
 }
 
-my $evaluate_weight_help_text = "
-   The 'evaluate_weight' command returns the result of a Weight Table were it to be evaluated with a floating point value,
-   as if that value were the coordinate of a mask. Thus, that value needs to be between 0 and 1. 'evaluate_weight' is only
-   intended to be a debugging command; please see the Mask-related commands, e.g. 'generate_layer_from_mask',
-   'modify_layer_from_mask', for actually using weights to generate/modify tiles. 
-";
-sub evaluate_weight {
-    my ($state, @params) = @_;
-    
-    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
-        'required' => ['weight', 'float'],
-        'required_descriptions' => ['weight', 'value to evaluate'],
-        'help_text' => $evaluate_weight_help_text
-    });
-    return -1 if $pparams->has_error;
-    return 1 if $pparams->done;
-    
-    my ($weight, $value) = $pparams->get_required();
-    my ($terrain_name, $terrain) = $weight->evaluate($value);
-    
-    my @full = ($terrain_name);
-    push @full, _describe_terrain($terrain);
-    
-    $state->list(@full);
-    $weight->deflate();
-    
-    return 1;
-}
-
 my $list_weights_help_text = qq[
   Command Format: 
   
@@ -358,248 +327,390 @@ sub list_weights {
     
     $state->list( @full );
     return 1;
-}
-
-my $show_weights_help_text = qq[
-    Shows the definition for a weight. The optional 'flatten' arguments determines whether nested weights are expanded or not. (off by default)
+}   
+    
+my $list_civs_help_text = qq[
+    Lists all allowed civs. Optionally, add a civ name via '--civ' to see all default data associated with that civ.
 ];
-sub show_weights {
+sub list_civs {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
-        'required' => ['weight'],
-        'required_descriptions' => ['weight to describe'],
-        'help_text' => $show_weights_help_text,
+        'help_text' => $list_civs_help_text,
         'optional' => {
-            'flatten' => 'false'
+            'civ' => ''
         }
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
     
-    my ($weight) = $pparams->get_required();
-    my $flatten = $pparams->get_named('flatten');
+    my $civ_name_exact = $pparams->get_named("civ");
+    my $civ_name = _format_civ_name($pparams->get_named("civ"));
     
-    my @to_show;
-    
-    if ($flatten) {
-        @to_show = map { sprintf "$_->[0] %6.4f => $_->[2],", $_->[1] } ( $weight->flatten(1) );
-    }
-    else {
-        @to_show = map { sprintf "%s %6.4f => %s,", @$_ } (@{ $weight->{'pairs'} });
-    }
-    
-    $to_show[-1] =~ s/,$//;
-    $state->list( @to_show );
-    return 1;
-}
+    my $civ_name_proper = "$civ_name";
+    $civ_name_proper =~ s/\s+/_/g;
+    $civ_name_proper = 'CIVILIZATION_' . uc($civ_name_proper);
 
-my $dump_mask_to_console_help_text = qq[
-    Dump a mask as ascii-art for quick debugging.
-];
-sub dump_mask_to_console {
-    my ($state, @params) = @_;
-    
-    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
-        'required' => ['mask'],
-        'required_descriptions' => ['mask to dump'],
-        'help_text' => $dump_mask_to_console_help_text
-    });
-    return -1 if $pparams->has_error;
-    return 1 if $pparams->done;
-    
-    $state->buffer_bar();
-    
-    my ($mask) = $pparams->get_required();
-    
-    my @lines;
-    foreach my $xx (0..$mask->get_width()-1) {
-        my $line = '';
-        foreach my $yy (0..$mask->get_height()-1) {
-            my $x = $mask->get_width() - 1 - $xx;
-            my $y = $mask->get_height() - 1 - $yy;
-            my $value = ($mask->{'canvas'}[$x][$y] > 0) ? 1 : ' ';
-            $line .= $value;
+    if ($civ_name_exact ne '') {
+        if (! exists $state->{'data'}{'civs'}{$civ_name_proper}) {
+            $state->report_error("Unknown civ name: \"$civ_name_exact\".");
+            return -1;
         }
         
-        push @lines, $line;
-    }
-    
-    $state->list( @lines );
-    return 1;
-}
-
-my $dump_mask_help_text = qq[
-    Displays a mask into the dump.html debugging window. Mask values closer to zero will appear blue, while those closer to 1 will appear red. If 'add_to_existing'
-    is specified, the dump will appear as a new tab in the existing dump.html.
-];
-sub dump_mask {
-    my ($state, @params) = @_;
-    
-    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
-        'required' => ['mask'],
-        'required_descriptions' => ['mask to dump'],
-        'help_text' => $dump_mask_help_text,
-        'optional' => {
-            'add_to_existing' => 'false'
-        }
-    });
-    return -1 if $pparams->has_error;
-    return 1 if $pparams->done;
-    
-    my ($mask) = $pparams->get_required();
-    my ($mask_name) = $pparams->get_required_names();
-    my $add_to_existing = $pparams->get_named("add_to_existing");
-    
-    my $template;
-    my $set_index;
-    my $start_index;
-    if ($add_to_existing) {
-        $template = 'dump.html';
-        $start_index = _find_max_tab($template)+1;
-        $set_index = _find_max_set($template)+1;
-    }
-    else {
-        $template = 'debug/dump.html.tmpl';
-        $set_index = 1;
-        $start_index = 0;
-    }
-    
-    my $canvas = $mask->{'canvas'};
-    my $maxrow = $#$canvas;
-    my $maxcol = $#{ $canvas->[0] };
-    
-    my @cells;
-    foreach my $y (reverse(0..$maxcol)) {
-    
-        my @row;
-        foreach my $x (0..$maxrow) {
-            my $value = $canvas->[$x][$y];
-            my $c = sprintf '#%02x00%02x', $value*255, 255-$value*255;
+        my $data = $state->{'data'}{'civs'}{$civ_name_proper};
+        my @techs = map { _format_tech_name($_) } @{ $data->{'_Tech'} };
+        my @leaders = map {_format_leader($state, $_->[0])} @{ $data->{'_Leaders'} };
+        
+        $state->buffer_bar();
+        print "\n  $civ_name:\n";
+        print "\n    Techs: ", join(", ", @techs), "\n";
+        print "\n    Leaders: ", join(", ", @leaders), "\n";
+        #print "\n    DefaultCivics:\n";
+        #foreach my $key (sort @{ $data->{'_Civics'} }) {
+        #    print "      $key\n";
+        #}
+        
+        print "\n    Attributes:\n";
+        foreach my $key (sort keys %$data) {
+            next if $key =~ /^_/;
+            my $value = $data->{$key};
+            $value = _format_color_name($value) if $key eq 'Color';
+            $value = _format_civ_name($value) if $key eq 'CivType';
             
-            my $title = "$x, $y: $value";
-            my $cell = qq[<a title="$title"><img src="debug/icons/none.png" /></a>];
-            push @row, qq[<td class="tooltip"><div style="background-color: $c;">$cell</div></td>];
+            print "      $key=$value}\n";
         }
         
-        push @cells, \@row;
+        print "\n";
+        
+        $state->register_print();
+        return 1;
     }
     
-    dump_framework($template, 'dump.html', $mask_name, $start_index, [["$set_index: " . $mask_name, [], \@cells]]);
+    my @civs = map { _format_civ_name($_) } (sort keys %{ $state->{'data'}{'civs'} });
+    
+    $state->list( @civs );    
+    return 1;     
+}
+
+my $list_colors_help_text = qq[
+    List all valid color names. If '--color' is specified, only civs using that color by default will be listed.
+];
+sub list_colors {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'help_text' => $list_colors_help_text,
+        'optional' => {
+            'color' => ''
+        }
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my $color_name_exact = $pparams->get_named("color");
+    my $color_name = $pparams->get_named("color");
+    $color_name = _format_color_name($color_name);
+    my $color_name_proper = 'PLAYERCOLOR_' . uc("$color_name");
+    $color_name_proper =~ s/\s+/_/g;
+    
+    if ($color_name_exact ne '') {
+        if (! exists $state->{'data'}{'colors'}{$color_name_proper}) {
+            $state->report_error("Unknown color name: \"$color_name_exact\".");
+            return -1;
+        }
+    
+        my $data = $state->{'data'}{'colors'}{$color_name_proper};
+        $state->list("List of civs using color \"$color_name\":\n", map { _format_civ_name($_) } sort @$data);
+        return 1;
+    }
+    
+    my @colors = map { _format_color_name($_) } (sort keys %{ $state->{'data'}{'colors'} });
+    $state->list( @colors );
     return 1;
 }
 
-my $dump_group_help_text = qq[
-    Displays a group in the dump.html debugging window. Each layer will appear as its own tab. If 'add_to_existing' is specified, the dump will add additional tabs to the existing dump.html. If '--info_too' is specified, all per-layer map information will be specified in a table.
+my $list_techs_help_text = qq[
+    List all valid starting techs. If '--tech' is specified, civs having that tech as a starting tech will be listed instead.
 ];
-sub dump_group {
+sub list_techs {
     my ($state, @params) = @_;
     
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'help_text' => $list_techs_help_text,
+        'optional' => {
+            'tech' => ''
+        }
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my $tech_name_exact = $pparams->get_named("tech");
+    my $tech_name = $pparams->get_named("tech");
+    $tech_name = _format_tech_name($tech_name);
+    my $tech_name_proper = 'TECH_' . uc("$tech_name");
+    $tech_name_proper =~ s/\s+/_/g;
+    
+    if ($tech_name_exact ne '') {
+        if (! exists $state->{'data'}{'techs'}{$tech_name_proper}) {
+            $state->report_error("Unknown tech name: \"$tech_name_exact\".");
+            return -1;
+        }
+    
+        my $data = $state->{'data'}{'techs'}{$tech_name_proper};
+        
+        my @civs;
+        foreach my $civ (@$data) {
+            my $other = _find_other_techs_name($state, $tech_name_proper, $civ);
+            push @civs, _format_civ_name($civ) . " $other";
+        }
+        $state->list("List of civs starting with tech \"$tech_name\":\n", @civs);
+        return 1;
+    }
+    
+    my @techs = map { _format_tech_name($_) } (sort keys %{ $state->{'data'}{'techs'} });
+    $state->list( @techs );
+    return 1;
+}
+
+sub _find_other_techs_name {
+    my ($state, $first_tech, $civ_name) = @_;
+    
+    my @techs = @{ $state->{'data'}{'civs'}{$civ_name}{'_Tech'} };
+    @techs = grep { $_ ne $first_tech } @techs;
+    return '' if @techs == 0;
+    return '(' . join(',', map { _format_tech_name($_) } @techs) . ')';
+}
+
+my $list_leaders_help_text = qq[
+    List all valid leader names. If '--trait' is specified, only leaders having that trait will be listed.
+];
+sub list_leaders {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'help_text' => $list_leaders_help_text,
+        'optional' => {
+            'trait' => ''
+        }
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my $trait_name_exact = $pparams->get_named("trait");
+    my $trait_name = $pparams->get_named("trait");
+    $trait_name =~ s/^TRAIT_//;
+    $trait_name = ucfirst(lc($trait_name));
+    
+    my $trait_name_proper;
+    if (length($trait_name) == 3) {
+        foreach my $trait (keys %{ $state->{'data'}{'traits'} }) {
+            if ($trait =~ /TRAIT_$trait_name/i) {
+                $trait_name_proper = $trait;
+                
+            }
+        }
+    }
+    else {
+        $trait_name_proper = 'TRAIT_' . uc($trait_name);
+        $trait_name = _format_trait($trait_name);
+    }
+    
+    if ($trait_name_exact ne '') {
+        if (! exists $state->{'data'}{'traits'}{$trait_name_proper}) {
+            $state->report_error("Unknown trait name: \'$trait_name_exact\'.");
+            return -1;
+        }
+        
+        my @leaders;
+        foreach my $leader_name (sort @{ $state->{'data'}{'traits'}{$trait_name_proper} }) {
+            push @leaders, _format_leader($state, $leader_name);
+        }
+        
+        $state->list("List of leaders with trait \"$trait_name\":\n", @leaders );
+        return 1;
+    }
+    
+    my @leaders;
+    foreach my $leader (sort keys %{ $state->{'data'}{'leaders'}}) {
+        push @leaders, _format_leader($state, $leader);
+    }
+
+    $state->list( @leaders );
+    return 1;
+}
+
+my $list_traits_help_text = qq[
+    List all valid traits. If '--trait' is specified, only leaders for that trait will be listed.
+];
+sub list_traits {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'help_text' => $list_traits_help_text,
+        'optional' => {
+            'trait' => ''
+        }
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my $trait_name_exact = $pparams->get_named("trait");
+    my $trait_name = $pparams->get_named("trait");
+    $trait_name =~ s/^TRAIT_//;
+    $trait_name = ucfirst(lc($trait_name));
+    
+    my $trait_name_proper;
+    if (length($trait_name) == 3) {
+        foreach my $trait (keys %{ $state->{'data'}{'traits'} }) {
+            if ($trait =~ /TRAIT_$trait_name/i) {
+                $trait_name_proper = $trait;
+                
+            }
+        }
+    }
+    else {
+        $trait_name_proper = 'TRAIT_' . uc($trait_name);
+        $trait_name = _format_trait($trait_name);
+    }
+    
+    if ($trait_name_exact ne '') {
+        if (! exists $state->{'data'}{'traits'}{$trait_name_proper}) {
+            $state->report_error("Unknown trait name: \'$trait_name_exact\'.");
+            return -1;
+        }
+    
+        my $data = $state->{'data'}{'traits'}{$trait_name_proper};
+        my @leaders;
+        foreach my $leader (sort @$data) {
+            push @leaders, _format_leader($state, $leader);
+        }
+
+        $state->list( "List of leaders with trait \"$trait_name\":\n", @leaders );
+        return 1;
+    }
+    
+    my @traits = sort keys %{ $state->{'data'}{'traits'} };
+    @traits = map { _format_trait($_) } @traits;
+    $state->list( @traits );
+    return 1;
+}
+
+my $show_difficulty_help_text = qq[
+    Shows the current difficulty level, which all players in all layers in all groups will share.
+];
+sub show_difficulty {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'help_text' => $show_difficulty_help_text
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my $diff = $main::config{'difficulty'};
+    $diff =~ s/^HANDICAP_//;
+    $state->list ( ucfirst(lc($diff)) );
+    return 1;
+}
+
+my $find_starts_help_text = qq[
+    Finds starts (settlers) in a group and reports their locations.
+];
+
+sub find_starts {
+    my ($state, @params) = @_;
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['group'],
-        'required_descriptions' => ['group to dump'],
-        'help_text' => $dump_group_help_text,
-        'optional' => {
-            'info_too' => 'false',
-            'add_to_existing' => 'false'
-        }
+        'required_descriptions' => ['group to find settlers in'],
+        'help_text' => $find_starts_help_text
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
     
     my ($group) = $pparams->get_required();
-    my $do_info = $pparams->get_named('info_too');
-    my $add_to_existing = $pparams->get_named("add_to_existing");
+    my $all_starts = $group->find_starts();
     
-    my $template;
-    my $set_index;
-    my $start_index;
-    if ($add_to_existing) {
-        $template = 'dump.html';
-        $start_index = _find_max_tab($template) + 1;
-        $set_index = _find_max_set($template) + 1;
+    my @sorted_starts;
+    foreach my $start (@$all_starts) {
+        push @sorted_starts, map {[$start->[0], @$_]} @{ $start->[1] };
+    }
+    @sorted_starts = sort { $b->[3] <=> $a->[3] } @sorted_starts;
+    
+    if (@sorted_starts == 0) {
+        $state->list('No starts found.');
     }
     else {
-        $template = 'debug/dump.html.tmpl';
-        $set_index = 1;
-        $start_index = 0;
-    }
-    
-    my $copy = deepcopy($group);
-    
-    my @layer_cells;
-    foreach my $layer ($copy->get_layers()) {
-        $layer->fix_coast();
-        my $full_name = '$' . $layer->get_group->get_name() . '.' . $layer->get_name();
-        push @layer_cells, dump_single_layer($layer, "$set_index: $full_name", $do_info);
-    }
-    
-    dump_framework($template, 'dump.html', '$' . $group->get_name(), $start_index, \@layer_cells);
-    return 1;
-}
-
-my $dump_layer_help_text = qq[
-    Displays a single layer in the dump.html debugging window. If 'add_to_existing' is specified, the dump will add additional tabs to the existing dump.html. If '--info_too' is specified, all per-layer map information will be specified in a table.
-];
-sub dump_layer {
-    my ($state, @params) = @_;
-    
-    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
-        'required' => ['layer'],
-        'required_descriptions' => ['layer to dump'],
-        'help_text' => $dump_layer_help_text,
-        'optional' => {
-            'info_too' => 'false',
-            'add_to_existing' => 'false'
+        my %dups; my $any_dup = 0;
+        foreach my $start (@sorted_starts) {
+            $dups{ $start->[3] } = 0 unless exists $dups{ $start->[3] };
+            $dups{ $start->[3] } ++;
+            $any_dup = 1 if $dups{ $start->[3] } > 1;
         }
-    });
-    return -1 if $pparams->has_error;
-    return 1 if $pparams->done;
-    
-    my ($layer) = $pparams->get_required();
-    my $do_info = $pparams->get_named('info_too');
-    my $add_to_existing = $pparams->get_named("add_to_existing");
-    
-    my $template;
-    my $set_index;
-    my $start_index;
-    if ($add_to_existing) {
-        $template = 'dump.html';
-        $start_index = _find_max_tab($template)+1;
-        $set_index = _find_max_set($template)+1;
+        
+        my @descriptions;
+        foreach my $start (@sorted_starts) {
+            my $full_layer_name = '$' . $group->get_name() . '.' . $start->[0];
+            my $layer = $state->get_variable($full_layer_name, 'layer');
+            my $civ = '';
+            
+            if (! $any_dup) {
+                my ($player, $team) = $layer->get_player_data($start->[3]);
+                my $leader = _format_leader($state, $player->get('LeaderType'));
+                $leader =~ s/ \(\w+\/\w+\)//;
+                $civ = sprintf ", %s of %s", $leader, _format_civ_name($player->get('CivType'));
+            }
+            
+            my $desc = sprintf "player %s%s; layer '%s' at %d,%d", $start->[3], $civ, $start->[0], $start->[1], $start->[2];
+            push @descriptions, $desc;
+        }
+        
+        if ($any_dup) {
+            push @descriptions, "\n  Duplicates detected; starts need to be normalized by 'normalize_starts'";
+            push @descriptions, "or 'flatten_group' for player data to be extracted.";
+        }
+        $state->list( @descriptions );
     }
-    else {
-        $template = 'debug/dump.html.tmpl';
-        $set_index = 1;
-        $start_index = 0;
-    }
     
-    my $copy = deepcopy($layer);
-    $copy->fix_coast();
-    
-    my $full_name = '$' . $layer->get_group->get_name() . '.' . $layer->get_name();
-    my $cells = dump_single_layer($copy, "$set_index: $full_name", $do_info);
-    dump_framework($template, 'dump.html', $full_name, $start_index, [$cells]);
     return 1;
 }
 
-sub _find_max_tab {
-    my ($template_filename) = @_;
-    
-    my ($template) = slurp($template_filename);
-    
-    my @tabs = $template =~ /id="tabs-(\d+)"/g;
-    @tabs = sort {$b <=> $a} @tabs;
-    return $tabs[0];
+sub _format_civ_name {
+    my ($name) = @_;
+    $name =~ s/^CIVILIZATION_//i;
+    return join ' ', (map { ucfirst(lc($_)) } (split /_|\s+/, $name));
 }
 
-sub _find_max_set {
-    my ($template_filename) = @_;
+sub _format_leader {
+    my ($state, $leader_name) = @_;
     
-    my ($template) = slurp($template_filename);
-    my @sets = $template =~ /a href=\"\#tabs-\d+\">(\d+):/g;
-    @sets = sort {$b <=> $a} @sets;
-    return $sets[0];
+    my @traits = @{ $state->{'data'}{'leaders'}{$leader_name}{'Traits'} };
+    @traits = sort map { _format_trait($_) } @traits;
+    my $trait_str = '(' . join('/', @traits) . ')';
+    
+    $leader_name =~ s/^LEADER_//i;
+    $leader_name = join(' ', (map { ucfirst(lc($_)) } (split /_|\s+/, $leader_name)));
+    
+    return "$leader_name $trait_str";
+}
+
+sub _format_tech_name {
+    my ($name) = @_;
+    $name =~ s/^TECH_//i;
+    
+    return join ' ', (map { ucfirst(lc($_)) } (split /_|\s+/, $name));
+}
+
+sub _format_color_name {
+    my ($name) = @_;
+    $name =~ s/^PLAYERCOLOR_//i;
+    return join ' ', (map { ucfirst(lc($_)) } (split /_|\s+/, $name));
+}
+
+sub _format_trait {
+    my ($name) = @_;
+    $name =~ s/^TRAIT_//i;
+    $name = substr(ucfirst(lc($name)), 0, 3);
+    return $name
 }
 
 1;

@@ -17,6 +17,7 @@ sub new {
     my ($spec) = @_;
     
     my $obj = {
+        'data' => {},
         'output_dir' => './',
         'variables' => {},
         'group' => {},
@@ -38,7 +39,13 @@ sub process_command {
     my ($self, $command) = @_;
     
     my $ret = eval { $self->_process_command($command) };
-    print $@ if $@;
+    
+    if ($@) {
+        print "*** FATAL ERROR: ";
+        print $@;
+        print "\n";
+        return -1;
+    }
     
     $self->ready_buffer_bar();
     $self->clear_printed();
@@ -601,7 +608,7 @@ sub report_message {
     $Text::Wrap::columns = 76;
     $Text::Wrap::separator="\n  ";
     $msg =~ s/\r|\n/ /g;
-    $msg =~ s/\s+/ /;
+    $msg =~ s/\s+/ /g;
     $msg =~ s/^\s+//;
     $msg =~ s/\s+$//;
     

@@ -3,10 +3,12 @@
 use strict;
 use warnings;
 
-use lib '../lib';
+use lib 'lib';
 use Config::General;
 
-foreach my $terrain_filename (glob('../def/*.terrain')) {
+# THIS SHOULD BE CALLED FROM MAIN "civ4 mapcad" directory"
+
+foreach my $terrain_filename (glob('def/*.terrain')) {
     next if $terrain_filename =~ /base_terrain/;
     my %terrain = Config::General->new($terrain_filename)->getall();
    

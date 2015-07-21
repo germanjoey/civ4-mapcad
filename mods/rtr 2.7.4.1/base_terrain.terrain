@@ -1,0 +1,316 @@
+<null>
+    TerrainType = TERRAIN_OCEAN
+    PlotType = 3
+</null>
+<coast>
+    TerrainType = TERRAIN_COAST
+    PlotType = 3
+</coast>
+<ocean>
+    TerrainType = TERRAIN_COAST
+    PlotType = 3
+</ocean>
+
+ 
+ 
+<grass>
+    TerrainType = TERRAIN_GRASS
+    PlotType = 2
+</grass>
+<grasshill>
+    TerrainType = TERRAIN_GRASS
+    PlotType = 1
+</grasshill>
+<grass_jungle>
+    TerrainType = TERRAIN_GRASS
+    FeatureType = FEATURE_JUNGLE
+    FeatureVariety = 0
+    PlotType = 2
+</grass_jungle>
+<grasshill_jungle>
+    TerrainType = TERRAIN_GRASS
+    FeatureType = FEATURE_JUNGLE
+    FeatureVariety = 0
+    PlotType = 1
+</grasshill_jungle>
+<grass_forest>
+    TerrainType = TERRAIN_GRASS
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 1
+    PlotType = 2
+</grass_forest>
+<grass_forest0>
+    TerrainType = TERRAIN_GRASS
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 0
+    PlotType = 2
+</grass_forest0>
+<grass_forest1>
+    TerrainType = TERRAIN_GRASS
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 1
+    PlotType = 2
+</grass_forest1>
+<grass_forest2>
+    TerrainType = TERRAIN_GRASS
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 2
+    PlotType = 2
+</grass_forest2>
+<grass_forest3>
+    TerrainType = TERRAIN_GRASS
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 3
+    PlotType = 2
+</grass_forest3>
+<grasshill_forest>
+    TerrainType = TERRAIN_GRASS
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 1
+    PlotType = 1
+</grasshill_forest>
+<grasshill_forest0>
+    TerrainType = TERRAIN_GRASS
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 0
+    PlotType = 1
+</grasshill_forest0>
+<grasshill_forest1>
+    TerrainType = TERRAIN_GRASS
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 1
+    PlotType = 1
+</grasshill_forest1>
+<grasshill_forest2>
+    TerrainType = TERRAIN_GRASS
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 2
+    PlotType = 1
+</grasshill_forest2>
+<grasshill_forest3>
+    TerrainType = TERRAIN_GRASS
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 3
+    PlotType = 1
+</grasshill_forest3>
+ 
+ 
+ 
+<plains>
+    TerrainType = TERRAIN_PLAINS
+    PlotType = 2
+</plains>
+<plainshill>
+    TerrainType = TERRAIN_PLAINS
+    PlotType = 1
+</plainshill>
+<plains_forest>
+    TerrainType = TERRAIN_PLAINS
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 2
+    PlotType = 2
+</plains_forest>
+<plains_forest0>
+    TerrainType = TERRAIN_PLAINS
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 0
+    PlotType = 2
+</plains_forest0>
+<plains_forest1>
+    TerrainType = TERRAIN_PLAINS
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 1
+    PlotType = 2
+</plains_forest1>
+<plains_forest2>
+    TerrainType = TERRAIN_PLAINS
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 2
+    PlotType = 2
+</plains_forest2>
+<plains_forest3>
+    TerrainType = TERRAIN_PLAINS
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 3
+    PlotType = 2
+</plains_forest3>
+<plainshill_forest>
+    TerrainType = TERRAIN_PLAINS
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 2
+    PlotType = 1
+</plainshill_forest>
+<plainshill_forest0>
+    TerrainType = TERRAIN_PLAINS
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 0
+    PlotType = 1
+</plainshill_forest0>
+<plainshill_forest1>
+    TerrainType = TERRAIN_PLAINS
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 1
+    PlotType = 1
+</plainshill_forest1>
+<plainshill_forest2>
+    TerrainType = TERRAIN_PLAINS
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 2
+    PlotType = 1
+</plainshill_forest2>
+<plainshill_forest3>
+    TerrainType = TERRAIN_PLAINS
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 3
+    PlotType = 1
+</plainshill_forest3>
+ 
+ 
+ 
+<tundra>
+    TerrainType = TERRAIN_TUNDRA
+    PlotType = 2
+</tundra>
+<tundrahill>
+    TerrainType = TERRAIN_TUNDRA
+    PlotType = 1
+</tundrahill>
+<tundra_forest>
+    TerrainType = TERRAIN_TUNDRA
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 3
+    PlotType = 2
+</tundra_forest>
+<tundra_forest0>
+    TerrainType = TERRAIN_TUNDRA
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 0
+    PlotType = 2
+</tundra_forest0>
+<tundra_forest1>
+    TerrainType = TERRAIN_TUNDRA
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 1
+    PlotType = 2
+</tundra_forest1>
+<tundra_forest2>
+    TerrainType = TERRAIN_TUNDRA
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 2
+    PlotType = 2
+</tundra_forest2>
+<tundra_forest3>
+    TerrainType = TERRAIN_TUNDRA
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 3
+    PlotType = 2
+</tundra_forest3>
+<tundrahill_forest>
+    TerrainType = TERRAIN_TUNDRA
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 3
+    PlotType = 1
+</tundrahill_forest>
+<tundrahill_forest0>
+    TerrainType = TERRAIN_TUNDRA
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 0
+    PlotType = 1
+</tundrahill_forest0>
+<tundrahill_forest1>
+    TerrainType = TERRAIN_TUNDRA
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 1
+    PlotType = 1
+</tundrahill_forest1>
+<tundrahill_forest2>
+    TerrainType = TERRAIN_TUNDRA
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 2
+    PlotType = 1
+</tundrahill_forest2>
+<tundrahill_forest3>
+    TerrainType = TERRAIN_TUNDRA
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 3
+    PlotType = 1
+</tundrahill_forest3>
+ 
+ 
+<peak>
+    TerrainType = TERRAIN_PLAINS
+    PlotType = 0
+</peak>
+<desert>
+    TerrainType = TERRAIN_DESERT
+    PlotType = 2
+</desert>
+<deserthill>
+    TerrainType = TERRAIN_DESERT
+    PlotType = 1
+</deserthill>
+<oasis>
+    TerrainType = TERRAIN_DESERT
+    PlotType = 2
+	FeatureType=FEATURE_OASIS
+    FeatureVariety=0
+</oasis>
+ 
+ 
+ 
+<floodplain_w_n>
+    isWOfRiver=1
+    RiverNSDirection=0
+    TerrainType = TERRAIN_DESERT
+    PlotType = 2
+</floodplai_nw_n>
+<floodplain_w_s>
+    isWOfRiver=1
+    RiverNSDirection=2
+    TerrainType = TERRAIN_DESERT
+    PlotType = 2
+</floodplain_w_s>
+<floodplain_n_w>
+    isNOfRiver=1
+    RiverWEDirection=3
+    TerrainType = TERRAIN_DESERT
+    PlotType = 2
+</floodplain_n_w>
+<floodplain_n_e>
+    isNOfRiver=1
+    RiverNSDirection=1
+    TerrainType = TERRAIN_DESERT
+    PlotType = 2
+</floodplain_n_e>
+<floodplain_nw>
+    isNOfRiver=1
+    isWOfRiver=1
+    RiverNSDirection=0
+    RiverWEDirection=3
+    TerrainType = TERRAIN_DESERT
+    PlotType = 2
+</floodplain_nw>
+<floodplain_sw>
+    isNOfRiver=1
+    isWOfRiver=1
+    RiverNSDirection=2
+    RiverWEDirection=3
+    TerrainType = TERRAIN_DESERT
+    PlotType = 2
+</floodplain_sw>
+<floodplain_se>
+    isNOfRiver=1
+    isWOfRiver=1
+    RiverNSDirection=2
+    RiverWEDirection=1
+    TerrainType = TERRAIN_DESERT
+    PlotType = 2
+</floodplain_se>
+<floodplain_ne>
+    isNOfRiver=1
+    isWOfRiver=1
+    RiverNSDirection=0
+    RiverWEDirection=1
+    TerrainType = TERRAIN_DESERT
+    PlotType = 2
+</floodplain_ne>

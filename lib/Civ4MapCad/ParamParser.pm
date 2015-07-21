@@ -114,9 +114,9 @@ sub new {
         if ((exists $param_spec->{'help_text'}) and ($processed->{'help'})) {
             print "  Description:\n\n";
             $state->report_message($param_spec->{'help_text'});
-            print "\n\n";
         }
-        print "\n\n" unless $processed->{'error'};
+        
+        print "\n\n";
         
         $state->register_print();
     }
@@ -266,6 +266,9 @@ sub _process {
                 $open_string = 0;
                 $current_string = '';
             }
+            else {
+                $current_string .= ' ';
+            }
             
             next;
         }
@@ -293,6 +296,16 @@ sub _process {
     # get optional flags
     my $optional_list = _make_opt_list ($optional, \%processed_params);
     GetOptionsFromArray(\@preproc, \%processed_params, @$optional_list);
+    
+    # strip " from optional strings
+    foreach my $opt (keys %$optional) {
+        if (exists $processed_params{$opt}) {
+            # only strip from strings
+            if (($optional->{$opt} !~ /^(?:true|false)$/) and ($optional->{$opt} !~ /\-?\d+\.\d+/) and ($optional->{$opt} !~ /\-?\d+/)) {
+                $processed_params{$opt} =~ s/"//g;
+            }
+        }
+    }
     
     if ((!$has_shape_params) && (@preproc != @$required)) {
         my @unknown;

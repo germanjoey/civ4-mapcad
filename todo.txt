@@ -9,6 +9,7 @@ Big Ticket TODO:
     - A: tutorials
     - A: test difference/merge
     - B: tests
+    - B: examples directory
 
 Medium Ticket TODO:
 
@@ -20,13 +21,33 @@ Medium Ticket TODO:
     - B: set leader/civ/color commands
     - A: organize module methods
     - B: handle signs
-    - B: command list auto-extracted into its own markdown file
     - A: mask_from_seawater_coast
         -- include_adjacent_ocean
     - A: mask_from_freshwater_coast
     - A: layer->flag_freshwater
 
 Small Ticket TODO:
+    - add <SPACER> directive in help_text
+    - add a see_also field to params
+    
+    
+Leaders/Civs
+    - @difficulty_list needs to be filled in
+        - config::difficulty should be validated
+    - mod
+        - each mod has its own config file and init.civ4mc file
+            - def/mods/
+            - one for RtR 2.7.0.4 and one for none
+            - mod set at startup
+            - set_mod command checks mods folder for possible values
+            - find_max_players should be reworked
+            
+        - there's a "main" config file in def/ which sets the mod and difficulty
+    - setting
+        - difficulty is global, like max_players
+        - list commands
+        - set_player_from_data method of Map
+        - set_from_data method of Player
     
 Five tutorials
     - index page
@@ -34,5 +55,6 @@ Five tutorials
     - starting the banana - masks/weights/terrain
     - intro to layers/groups (a break from the banana)
     - finishing up the banana
+    - BONUS tutorial on setting player/leader info
     - balance
     

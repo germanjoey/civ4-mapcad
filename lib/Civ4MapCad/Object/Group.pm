@@ -450,51 +450,6 @@ sub _get_next_open_start_id {
     return $id;
 }
 
-sub find_starts {
-    my ($self) = @_;
-
-    my @all_starts;
-    foreach my $layer ($self->get_layers()) {
-        push @all_starts, [$layer->get_name(), $layer->find_starts()];
-    }
-    
-    return \@all_starts;
-}
-
-sub reassign_start {
-    my ($self, $old, $new) = @_;
-
-    foreach my $layer ($self->get_layers()) {
-        $layer->reassign_start($old, $new);
-    }
-}
-
-sub strip_all_units {
-    my ($self) = @_;
-
-    foreach my $layer ($self->get_layers()) {
-        $layer->strip_all_units();
-    }
-}
-
-sub strip_nonsettlers {
-    my ($self) = @_;
-
-    foreach my $layer ($self->get_layers()) {
-        $layer->strip_nonsettlers();
-    }
-}
-
-sub add_scouts_to_settlers {
-    my ($self) = @_;
-
-    foreach my $layer ($self->get_layers()) {
-        $layer->add_scouts_to_settlers();
-    }
-    
-    return 1;
-}
-
 # its assumed that the group is flattened and normalized by this point
 sub extract_starts_with_mask {
     my ($self, $mask, $as_sim, $clear_selected) = @_;
@@ -561,6 +516,90 @@ sub export {
     
     print "\n";
     return 1;
+}
+
+sub set_difficulty {
+    my ($self, $level) = @_;
+
+    foreach my $layer ($self->get_layers()) {
+        $layer->set_difficulty($level);
+    }
+}
+
+sub set_player_from_civdata {
+    my ($self, $owner, $civ_data) = @_;
+
+    foreach my $layer ($self->get_layers()) {
+        $layer->set_player_from_civdata($owner, $civ_data);
+    }
+}
+
+sub set_player_leader {
+    my ($self, $owner, $leader_data) = @_;
+
+    foreach my $layer ($self->get_layers()) {
+        $layer->set_player_leader($owner, $leader_data);
+    }
+}
+
+sub set_player_color {
+    my ($self, $owner, $color) = @_;
+
+    foreach my $layer ($self->get_layers()) {
+        $layer->set_player_color($owner, $color);
+    }
+}
+
+sub set_player_name {
+    my ($self, $owner, $name) = @_;
+
+    foreach my $layer ($self->get_layers()) {
+        $layer->set_player_name($owner, $name);
+    }
+}
+
+
+sub find_starts {
+    my ($self) = @_;
+
+    my @all_starts;
+    foreach my $layer ($self->get_layers()) {
+        push @all_starts, [$layer->get_name(), $layer->find_starts()];
+    }
+    
+    return \@all_starts;
+}
+
+sub reassign_start {
+    my ($self, $old, $new) = @_;
+
+    foreach my $layer ($self->get_layers()) {
+        $layer->reassign_start($old, $new);
+    }
+}
+
+sub strip_all_units {
+    my ($self) = @_;
+
+    foreach my $layer ($self->get_layers()) {
+        $layer->strip_all_units();
+    }
+}
+
+sub strip_nonsettlers {
+    my ($self) = @_;
+
+    foreach my $layer ($self->get_layers()) {
+        $layer->strip_nonsettlers();
+    }
+}
+
+sub add_scouts_to_settlers {
+    my ($self) = @_;
+
+    foreach my $layer ($self->get_layers()) {
+        $layer->add_scouts_to_settlers();
+    }
 }
 
 1;

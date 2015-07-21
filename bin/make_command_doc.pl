@@ -11,6 +11,8 @@ use Config::General;
 use Civ4MapCad::State;
 use Civ4MapCad::Util qw(find_max_players);
 
+# THIS SHOULD BE CALLED FROM MAIN "civ4 mapcad" directory"
+
 our %config = Config::General->new('def/config.cfg')->getall();
 
 our $state = Civ4MapCad::State->new();

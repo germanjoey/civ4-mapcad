@@ -378,77 +378,6 @@ sub _get_next_open_start_id {
     return $id;
 }
 
-sub get_player_data {
-    my ($self, $owner_id) = @_;
-    return $self->{'map'}->get_player_data($owner_id);
-}
-
-sub set_player_from_other {
-    my ($self, $owner_id, $player, $team) = @_;
-    $self->{'map'}->set_player_from_other($owner_id, $player, $team);
-}
-
-sub find_starts {
-    my ($self) = @_;
-    return $self->{'map'}->find_starts();
-}
-
-sub reassign_start {
-    my ($self, $old, $new) = @_;
-    $self->{'map'}->reassign_start($old, $new);
-}
-
-sub strip_all_units {
-    my ($self) = @_;
-    $self->{'map'}->strip_all_units();
-}
-
-sub strip_nonsettlers {
-    my ($self) = @_;
-    $self->{'map'}->strip_nonsettlers();
-}
-
-sub add_scouts_to_settlers {
-    my ($self) = @_;
-    $self->{'map'}->add_scouts_to_settlers();
-}
-
-sub reduce_players {
-    my ($self) = @_;
-    $self->{'map'}->reduce_players();
-}
-
-sub num_players {
-    my ($self) = @_;
-    return $self->{'map'}->num_players();
-}
-
-sub add_dummy_start {
-    my ($self) = @_;
-    return $self->{'map'}->add_dummy_start();
-}
-
-sub fix_coast {
-    my ($self) = @_;
-    return $self->{'map'}->fix_coast();
-}
-
-sub strip_hidden_strategic {
-    my ($self) = @_;
-    return $self->{'map'}->strip_hidden_strategic();
-}
-
-sub strip_victories {
-    my ($self) = @_;
-    return $self->{'map'}->strip_victories();
-}
-
-sub set_max_num_players {
-    my ($self, $new_max) = @_;
-    return $self->{'map'}->set_max_num_players($new_max);
-}
-
-
 sub get_surrounding {
     my ($self, $x, $y) = @_;
     
@@ -544,6 +473,76 @@ sub crop {
     $self->{'map'}->crop($left - $self->{'offsetX'}, $bottom - $self->{'offsetY'}, $right - $self->{'offsetX'}, $top - $self->{'offsetY'});
 }
 
+sub get_player_data {
+    my ($self, $owner_id) = @_;
+    return $self->{'map'}->get_player_data($owner_id);
+}
+
+sub set_player_from_other {
+    my ($self, $owner_id, $player, $team) = @_;
+    $self->{'map'}->set_player_from_other($owner_id, $player, $team);
+}
+
+sub find_starts {
+    my ($self) = @_;
+    return $self->{'map'}->find_starts();
+}
+
+sub reassign_start {
+    my ($self, $old, $new) = @_;
+    $self->{'map'}->reassign_start($old, $new);
+}
+
+sub strip_all_units {
+    my ($self) = @_;
+    $self->{'map'}->strip_all_units();
+}
+
+sub strip_nonsettlers {
+    my ($self) = @_;
+    $self->{'map'}->strip_nonsettlers();
+}
+
+sub add_scouts_to_settlers {
+    my ($self) = @_;
+    $self->{'map'}->add_scouts_to_settlers();
+}
+
+sub reduce_players {
+    my ($self) = @_;
+    $self->{'map'}->reduce_players();
+}
+
+sub num_players {
+    my ($self) = @_;
+    return $self->{'map'}->num_players();
+}
+
+sub add_dummy_start {
+    my ($self) = @_;
+    return $self->{'map'}->add_dummy_start();
+}
+
+sub fix_coast {
+    my ($self) = @_;
+    return $self->{'map'}->fix_coast();
+}
+
+sub strip_hidden_strategic {
+    my ($self) = @_;
+    return $self->{'map'}->strip_hidden_strategic();
+}
+
+sub strip_victories {
+    my ($self) = @_;
+    return $self->{'map'}->strip_victories();
+}
+
+sub set_max_num_players {
+    my ($self, $new_max) = @_;
+    return $self->{'map'}->set_max_num_players($new_max);
+}
+
 sub fliplr {
     my ($self) = @_;
     $self->{'map'}->fliplr();
@@ -552,6 +551,26 @@ sub fliplr {
 sub fliptb {
     my ($self) = @_;
     $self->{'map'}->fliptb();
+}
+
+sub set_player_from_civdata {
+    my ($self, $owner, $civ_data) = @_;
+    $self->{'map'}->set_player_from_civdata($owner, $civ_data);
+}
+
+sub set_player_leader {
+    my ($self, $owner, $leader_data) = @_;
+    $self->{'map'}->set_player_leader($owner, $leader_data);
+}
+
+sub set_player_color {
+    my ($self, $owner, $color) = @_;
+    $self->{'map'}->set_player_color($owner, $color);
+}
+
+sub set_player_name {
+    my ($self, $owner, $name) = @_;
+    $self->{'map'}->set_player_name($owner, $name);
 }
 
 1;
