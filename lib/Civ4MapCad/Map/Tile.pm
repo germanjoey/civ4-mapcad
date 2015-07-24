@@ -442,4 +442,20 @@ sub is_WOfRiver {
     return (exists $self->{'isWOfRiver'}) ? 1 : 0;
 }
 
+sub compare {
+    my ($self, $terrain) = @_;
+    
+    foreach my $key (@fields) {
+        next unless exists $self->{$key};
+        next if ($key eq 'TeamReveal') or ($key eq 'x') or ($key eq 'y');
+        next if $key =~ /^River/;
+        return 0 unless exists $terrain->{$key};
+        
+        next if ($key eq 'isNOfRiver') or ($key eq 'isWOfRiver');
+        return 0 unless $self->{$key} eq $terrain->{$key};
+    }
+    
+    return 1;
+}
+
 1;

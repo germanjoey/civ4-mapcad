@@ -42,7 +42,7 @@ Two commands were found that have "mod" in their name, one of which, "set mod," 
 
 This sounds good. We can set our mod to RtR very easily; as soon as we switch mod, all map-type objects are automatically converted. (Windows users can press up or down on their keyboards to cycle through commands, by the way).
 
-    > set_mod "RtR"
+    > set_mod "rtr 2.7.4.1"
     
 ![tutorial1-img6](t1/i6.png)
 

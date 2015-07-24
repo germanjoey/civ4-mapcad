@@ -7,32 +7,13 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(import_mask_from_ascii new_mask_from_shape mask_difference mask_union mask_intersect 
                     mask_invert mask_threshold modify_layer_with_mask cutout_layer_with_mask apply_shape_to_mask  
-                    generate_layer_from_mask new_mask_from_magic_wand export_mask_to_ascii
-                    export_mask_to_table import_mask_from_table set_mask_coord);
+                    generate_layer_from_mask new_mask_from_magic_wand export_mask_to_ascii set_mask_coord
+                    export_mask_to_table import_mask_from_table mask_from_water mask_from_landmass);
 
 use Civ4MapCad::Util qw(deepcopy);
 use Civ4MapCad::ParamParser;
 use Civ4MapCad::Object::Mask;
 use Civ4MapCad::Ascii qw(clean_ascii import_ascii_mapping_file);
-
-my $new_mask_from_magic_wand_help_text = qq[
-    todo
-];
-sub new_mask_from_magic_wand {
-    my ($state, @params) = @_;
-    
-    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
-        'has_shape_params' => 1,
-        'has_result' => 'mask',
-        'required' => ['layer', 'weight', 'int', 'int'],
-        'required_descriptions' => ['layer to select from', 'inverse weight to match to tiles', 'start coordinate X', 'start coordinate Y'],
-        'help_text' => $new_mask_from_magic_wand_help_text
-    });
-    return -1 if $pparams->has_error;
-    return 1 if $pparams->done;
-    
-    die "not yet implemented";
-}
 
 my $new_mask_from_shape_help_text = qq[
     The 'new_mask_from_shape' command generates a mask by applying a shape function to a blank canvas of size width/height.
@@ -351,6 +332,8 @@ sub generate_layer_from_mask {
     my ($layer) = Civ4MapCad::Object::Layer->new_default($layer_name, $width + abs($offsetX), $height + abs($offsetY));
     $layer->apply_mask($mask, $weight, $offsetX, $offsetY, 1);
     
+    
+    # TODO: this should just use set_variable
     my $result = $group->add_layer($layer);
     if (exists $result->{'error'}) {
         $state->report_warning($result->{'error_msg'});
@@ -494,17 +477,186 @@ sub set_mask_coord {
     }
     
     my $copy = deepcopy($mask);
-    
-    warn "$copy->{'canvas'}[$x][$y]";
-    
     $copy->{'canvas'}[$x][$y] = $value;
-    
-    warn "$copy->{'canvas'}[$x][$y]";
-    warn "<$names[0]>";
     
     $state->set_variable($names[0], 'mask', $copy);
     return 1;
 }
 
+my $mask_from_landmass_help_text = qq[
+    Generate a mask based on a landmass. The starting tile must be a land tile; otherwise an error will be thrown. If '--choose_coast' is set, the mask will instead be all water tiles adjacent to the landmass (i.e. its coast).
+];
+sub mask_from_landmass {
+    my ($state, @params) = @_;
+
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'has_result' => 'mask',
+        'help_text' => $mask_from_landmass_help_text,
+        'required' => ['layer', 'int', 'int'],
+        'required_descriptions' => ['the layer to generate a mask from', 'x coordinate of starting tile', 'y coordinate of starting tile'],
+        'optional' => {
+            'choose_coast' => 'false',
+        }
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my $result_name = $pparams->get_result_name();
+    my $choose_coast = $pparams->get_named('choose_coast');
+    my ($layer, $start_x, $start_y) = $pparams->get_required();
+    my $copy = deepcopy($layer);
+    
+    $copy->fix_coast();
+    my $start_tile = $copy->get_tile($start_x, $start_y);
+    
+    if (! defined($start_tile)) {
+        $state->report_error("Layer " . $copy->get_full_name() . " is not defined at $start_x, $start_y.");
+        return -1;
+    }
+    
+    if (! $start_tile->is_land()) {
+        $state->report_error("The starting tile at $start_x, $start_y is not land.");
+        return -1;
+    }
+    
+    my ($land, $water) = $copy->follow_land_tiles($start_tile);
+    ($land, $water) = ($water, $land) if $choose_coast == 1;
+    
+    my $mask = Civ4MapCad::Object::Mask->new_blank($copy->get_width(), $copy->get_height());
+    
+    while ( my($k,$v) = each %$land) {
+        my ($x,$y) = split '/', $k;
+        $mask->{'canvas'}[$x][$y] = 1;
+    }
+    
+    $state->set_variable($result_name, 'mask', $mask);
+    return 1;
+}
+
+my $mask_from_water_help_text = qq[
+    Generate a mask based on a body of water. The starting tile must be a water tile; otherwise an error will be thrown. If '--only_coast' is set, the mask will only select tiles adjacent to land (i.e. the coast). If '--choose_land' is set, only land tiles adjacent to the body of water will be selected. '--only_coast' and '--choose_land' cannot both be 1 at the same time.
+];
+sub mask_from_water {
+    my ($state, @params) = @_;
+
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'has_result' => 'mask',
+        'help_text' => $mask_from_water_help_text,
+        'required' => ['layer', 'int', 'int'],
+        'required_descriptions' => ['the layer to generate a mask from', 'x coordinate of starting tile', 'y coordinate of starting tile'],
+        'optional' => {
+            'only_coast' => 'false',
+            'choose_land' => 'false',
+        }
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my $result_name = $pparams->get_result_name();
+    my $only_coast = $pparams->get_named('only_coast');
+    my $choose_land = $pparams->get_named('choose_land');
+    my ($layer, $start_x, $start_y) = $pparams->get_required();
+    my $copy = deepcopy($layer);
+    
+    $copy->fix_coast();
+    my $start_tile = $copy->get_tile($start_x, $start_y);
+    
+    if (! defined($start_tile)) {
+        $state->report_error("Layer " . $copy->get_full_name() . " is not defined at $start_x, $start_y.");
+        return -1;
+    }
+    
+    if (! $start_tile->is_water()) {
+        $state->report_error("The starting tile at $start_x, $start_y is not water.");
+        return -1;
+    }
+    
+    if ($choose_land and $only_coast) {
+        $state->report_error("--choose_land and --only_coast cannot both be used together.");
+        return -1;
+    }
+    
+    my ($land, $water) = $copy->follow_water_tiles($start_tile, $only_coast);
+    ($land, $water) = ($water, $land) if $choose_land == 1;
+    
+    my $mask = Civ4MapCad::Object::Mask->new_blank($copy->get_width(), $copy->get_height());
+    
+    while ( my($k,$v) = each %$water) {
+        my ($x,$y) = split '/', $k;
+        $mask->{'canvas'}[$x][$y] = 1;
+    }
+    
+    $state->set_variable($result_name, 'mask', $mask);
+    return 1;
+}
+
+my $new_mask_from_magic_wand_help_text = qq[
+    todo
+];
+sub new_mask_from_magic_wand {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'has_shape_params' => 1,
+        'has_result' => 'mask',
+        'required' => ['layer', 'weight', 'int', 'int'],
+        'required_descriptions' => ['layer to select from', 'inverse weight to match to tiles', 'start coordinate X', 'start coordinate Y'],
+        'help_text' => $new_mask_from_magic_wand_help_text
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my $result_name = $pparams->get_result_name();
+    my ($layer, $weight, $start_x, $start_y) = $pparams->get_required();
+    my $copy = deepcopy($layer);
+    
+    $copy->fix_coast();
+    my $start_tile = $copy->get_tile($start_x, $start_y);
+    
+    if (! defined($start_tile)) {
+        $state->report_error("Layer " . $copy->get_full_name() . " is not defined at $start_x, $start_y.");
+        return -1;
+    }
+    
+    my $mask = Civ4MapCad::Object::Mask->new_blank($copy->get_width(), $copy->get_height());
+    
+    my (%checked, %nonexistant);
+    
+    my $is_already_checked = sub {
+        my ($x, $y) = @_;
+        return 1 if exists($checked{"$x/$y"}) or exists($nonexistant{"$x/$y"});
+        return 0;
+    };
+    
+    my $mark_as_checked = sub {
+        my ($x, $y, $tile) = @_;
+        
+        if (! defined($tile)) {
+            $nonexistant{"$x/$y"} = $tile;
+        }
+        else {
+            $checked{"$x/$y"} = $tile;
+        }
+    };
+    
+    my $process = sub {
+        my ($mark_as_checked, $tile) = @_;
+        my ($x, $y) = ($tile->get('x'), $tile->get('y'));
+        $mark_as_checked->($x, $y, $tile);
+        
+        my $value = $weight->inverse_evaluate($tile);
+        if (defined($value)) {
+            $mask->{'canvas'}[$x][$y] = $value;
+            return 1;
+        }
+        
+        return 0;
+    };
+    
+    $layer->{'map'}->bfs_region_search($start_tile, $is_already_checked, $mark_as_checked, $process);
+    $state->set_variable($result_name, 'mask', $mask);
+    
+    return 1;
+}
 
 1;

@@ -573,4 +573,73 @@ sub set_player_name {
     $self->{'map'}->set_player_name($owner, $name);
 }
 
+sub get_tile {
+    my ($self, $x, $y) = @_;
+    return $self->{'map'}->get_tile($x, $y);
+}
+
+sub follow_land_tiles {
+    my ($self, $start_tile) = @_;
+    
+    my $process = sub {
+        my ($mark_as_checked, $tile) = @_;
+        $mark_as_checked->($tile->get('x'), $tile->get('y'), $tile);
+        return 1 if $tile->is_land();
+        return 0;
+    };
+    
+    return $self->follow_tiles($start_tile, $process);
+}
+
+sub follow_water_tiles {
+    my ($self, $start_tile, $only_coast) = @_;
+    
+    my $process = sub {
+        my ($mark_as_checked, $tile) = @_;
+        $mark_as_checked->($tile->get('x'), $tile->get('y'), $tile);
+        return 1 if $tile->is_water();
+        return 0;
+    };
+    
+    my ($land, $water) = $self->follow_tiles($start_tile, $process);
+    
+    if ($only_coast) {
+        while ( my($k,$v) = each %$water) {
+            if ($v->get('TerrainType') eq 'TERRAIN_OCEAN') {
+                delete $water->{$k};
+            }
+        }
+    }
+    
+    return ($land, $water);
+}
+
+sub follow_tiles {
+    my ($self, $start_tile, $process) = @_;
+    
+    my (%land, %water, %nonexistant);
+    
+    my $is_already_checked = sub {
+        my ($x, $y) = @_;
+        return 1 if exists($land{"$x/$y"}) or exists($water{"$x/$y"}) or exists($nonexistant{"$x/$y"});
+        return 0;
+    };
+
+    my $mark_as_checked = sub {
+        my ($x, $y, $tile) = @_;
+        if (! defined($tile)) {
+            $nonexistant{"$x/$y"} = $tile;
+        }
+        elsif ($tile->is_land()) {
+            $land{"$x/$y"} = $tile;
+        }
+        else {
+            $water{"$x/$y"} = $tile;
+        }
+    };
+    
+    $self->{'map'}->bfs_region_search($start_tile, $is_already_checked, $mark_as_checked, $process);
+    return (\%land, \%water);
+}
+
 1;

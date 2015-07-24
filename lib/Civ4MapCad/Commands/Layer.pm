@@ -327,7 +327,7 @@ sub set_tile {
     }
     
     my $copy = deepcopy($layer);
-    $copy->set_tile($terrain);
+    $copy->set_tile($x, $y, $terrain);
     $state->set_variable($names[0], 'layer', $copy);
     
     return 1;

@@ -435,7 +435,7 @@ sub variable_exists {
         return 0;
     }
     
-    return exists($self->{$expected_type}{$name});
+    return (exists($self->{$expected_type}{$name}) ? 1 : 0);
 }
 
 sub get_variable_type_from_name {
@@ -566,7 +566,7 @@ sub report_error {
     print "\n\n";
     print wrap("    ", "    ", $self->{'current_line'});
     print "\n\n";
-    print wrap(" ", "  ", "* " . $msg);
+    print wrap(" ", "   ", "* " . $msg);
     print "\n\n";
     
     $self->register_print();

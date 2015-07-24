@@ -15,7 +15,7 @@ use Civ4MapCad::Commands::Weight qw(
 );
 
 use Civ4MapCad::Commands::Debug qw(
-    dump_group dump_mask dump_layer dump_mask_to_console evaluate_weight show_weights 
+    dump_group dump_mask dump_layer dump_mask_to_console evaluate_weight evaluate_weight_inverse show_weights 
 );
 
 use Civ4MapCad::Commands::List qw(
@@ -26,8 +26,8 @@ use Civ4MapCad::Commands::List qw(
 use Civ4MapCad::Commands::Mask qw(
     new_mask_from_magic_wand new_mask_from_shape mask_difference mask_union mask_intersect
     mask_invert mask_threshold modify_layer_with_mask cutout_layer_with_mask apply_shape_to_mask
-    generate_layer_from_mask import_mask_from_ascii export_mask_to_ascii export_mask_to_table
-    import_mask_from_table set_mask_coord
+    generate_layer_from_mask import_mask_from_ascii export_mask_to_ascii set_mask_coord
+    export_mask_to_table import_mask_from_table mask_from_water mask_from_landmass
 );
 
 use Civ4MapCad::Commands::Layer qw(

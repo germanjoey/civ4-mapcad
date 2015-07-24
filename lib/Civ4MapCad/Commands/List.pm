@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(list_shapes list_groups list_layers list_masks list_weights show_difficulty find_starts
-                    list_terrain list_civs list_leaders list_colors list_techs list_traits);
+                    list_terrain list_civs list_leaders list_colors list_techs list_traits _describe_terrain);
 
 use Civ4MapCad::ParamParser;
 use Civ4MapCad::Util qw(deepcopy slurp);

@@ -80,6 +80,8 @@ sub evaluate_inverse {
     }
     
     my %optable = (
+        '>'  => sub { return $_[0]->compare($state->{'terrain'}{$_[1]} ) },
+        '>=' => sub { return $_[0]->compare($state->{'terrain'}{$_[1]} ) },
         '==' => sub { return $_[0]->compare($state->{'terrain'}{$_[1]} ) },
     );
     

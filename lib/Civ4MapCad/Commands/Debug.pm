@@ -5,17 +5,19 @@ use warnings;
  
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(dump_mask_to_console dump_group dump_mask dump_layer evaluate_weight show_weights);
+our @EXPORT_OK = qw(dump_mask_to_console dump_group dump_mask dump_layer evaluate_weight evaluate_weight_inverse show_weights);
 
 use Civ4MapCad::ParamParser;
 use Civ4MapCad::Util qw(deepcopy slurp);
 use Civ4MapCad::Dump qw(dump_out dump_framework dump_single_layer);
 
+use Civ4MapCad::Commands::List qw(_describe_terrain);
+
 my $evaluate_weight_help_text = qq[
-   The 'evaluate_weight' command returns the result of a Weight Table were it to be evaluated with a floating point value,
-   as if that value were the coordinate of a mask. Thus, that value needs to be between 0 and 1. 'evaluate_weight' is only
-   intended to be a debugging command; please see the Mask-related commands, e.g. 'generate_layer_from_mask',
-   'modify_layer_from_mask', for actually using weights to generate/modify tiles. 
+   Evaluates the result of a weight table with an arbitrary floating point value between 0 and 1, e.g. as if that
+   value were the coordinate 'evaluate_weight' is only intended to be a debugging command; please see the
+   Mask-related commands, e.g. 'generate_layer_from_mask', 'modify_layer_from_mask', for actually using weights
+   to generate/modify tiles. 
 ];
 sub evaluate_weight {
     my ($state, @params) = @_;
@@ -30,12 +32,49 @@ sub evaluate_weight {
     
     my ($weight, $value) = $pparams->get_required();
     my ($terrain_name, $terrain) = $weight->evaluate($value);
+    $weight->deflate();
     
-    my @full = ($terrain_name);
-    push @full, _describe_terrain($terrain);
+    my @full;
+    if (defined($terrain_name)) {
+        @full = ($terrain_name, _describe_terrain($terrain));
+    }
+    else {
+        @full = ('Evaluated to nothing.');
+    }
     
     $state->list(@full);
+    
+    return 1;
+}
+
+my $evaluate_weight_inverse_help_text = qq[
+   Evaluates the inverse result of a weight table with an terrain in order to get the corresponding value, e.g. 
+   as if this terrain were at the coordinates of a layer tile. 'evaluate_weight_inverse' is only intended to be
+   a debugging command; please see the Mask-related commands, e.g. 'generate_layer_from_mask', 'modify_layer_from_mask',
+   for actually using weights to generate/modify tiles. 
+];
+sub evaluate_weight_inverse {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'required' => ['weight', 'terrain'],
+        'required_descriptions' => ['weight', 'terrain to evaluate'],
+        'help_text' => $evaluate_weight_inverse_help_text
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my ($weight, $terrain) = $pparams->get_required();
+    my ($value) = $weight->evaluate_inverse($terrain);
     $weight->deflate();
+    
+    my @full;
+    if (defined($value)) {
+        $state->list( $value );
+    }
+    else {
+        $state->list( 'Evaluated to nothing.' );
+    }
     
     return 1;
 }

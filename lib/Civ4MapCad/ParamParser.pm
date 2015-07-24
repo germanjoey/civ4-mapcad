@@ -390,6 +390,19 @@ sub _process {
             next;
         }
         
+        elsif ($expected_type eq 'terrain') {
+            if (! $state->variable_exists($preproc[$i], 'terrain')) {
+                $processed_params{'error'} = 1;
+                $processed_params{'error_msg'} = "a variable of type terrain named '$preproc[$i]' does not exist.";
+                return \%processed_params;
+            }
+        
+            push @{ $processed_params{'_required_names'} }, $preproc[$i];
+            push @{ $processed_params{'_required'} }, $state->get_variable($preproc[$i], 'terrain');
+            $i++;
+            next;
+        }
+        
         my $check_result = $state->check_vartype($preproc[$i], $expected_type);
         if ($check_result->{'error'} == 1) {
             $processed_params{'error_msg'} = $check_result->{'error_msg'};
@@ -443,12 +456,25 @@ sub _process {
     # otherwise, we set it to the new destination
     elsif ($has_result and exists($processed_params{'_result'})) {
         my $check_result = $state->check_vartype($processed_params{'_result'}, $has_result);
+        
         if ($check_result->{'error'} == 1) {
             $processed_params{'error_msg'} = $check_result->{'error_msg'};
             $processed_params{'error'} = 1;
             return \%processed_params;
         };
+        
         my $result_name = $check_result->{'name'};
+        
+        # if we have a layer result, we have to make sure the group exists first!
+        # however, the layer itself doesn't need to exist, since we'll be generating it
+        if ($result_name =~ /^\$(\w+)\.(\w+)/) {
+            my ($group_name) = $result_name =~ /^(\$\w+)/;
+            if (! $state->variable_exists($group_name, 'group')) {
+                $processed_params{'error_msg'} = "a variable of type group named '$group_name' used in the result does not exist.";
+                $processed_params{'error'} = 1;
+                return \%processed_params;
+            }
+        }
         
         $processed_params{'_result'} = $result_name;
         $processed_params{'_result_type'} = $has_result;

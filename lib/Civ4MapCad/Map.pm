@@ -708,11 +708,32 @@ sub fliptb {
     $self->{'Tiles'} = \@new;
 }
 
+sub set_player_from_civdata {
+    my ($self, $owner, $civ_data) = @_;
+    $self->{'Players'}[$owner]->set_from_data($civ_data);
+    $self->{'Teams'}{$owner}->set('Techs', deepcopy($civ_data->{'_Tech'}));
+}
+
+sub set_player_leader {
+    my ($self, $owner, $leader_data) = @_;
+    $self->{'Players'}[$owner]->set('LeaderType', $leader_data->{'Name'});
+}
+
+sub set_player_color {
+    my ($self, $owner, $color) = @_;
+    $self->{'Players'}[$owner]->set('Color', $color);
+}
+
+sub set_player_name {
+    my ($self, $owner, $name) = @_;
+    $self->{'Players'}[$owner]->set('LeaderName', $name);
+}
+
 sub fix_coast {
     my ($self) = @_;
     return 1 if $self->{'coast_fixed'};
     
-    my @directions = ('1 1', '0 1', '-1 1', '1 0', '0 1', '1 -1', '0 -1', '-1 -1'); 
+    my @directions = ('1 1', '0 1', '-1 1', '1 0', '-1 0', '1 -1', '0 -1', '-1 -1'); 
     
     foreach my $x (0..$#{$self->{'Tiles'}}) {
         foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
@@ -741,7 +762,7 @@ sub fix_coast {
     $self->{'coast_fixed'} = 1;
     
     return 1;
-}  
+}
 
 sub mark_freshwater {
     my ($self) = @_;
@@ -755,7 +776,59 @@ sub mark_freshwater {
             next if exists $already_checked{"$x/$y"};
             next unless $tile->is_water();
             
-            _ripple_mark($self, $tile, \%already_checked);
+            $self->bfs_region_search($tile, \%already_checked);
+            
+=head1
+
+        # collect all water in this particular ocean/lake
+            if ($tile->is_water()) { 
+                $already_checked->{"$tx/$ty"} = 1; # mark here so we don't keep adding this to the queue
+                $water_bin{"$tx/$ty"} = $tile;
+                push @queue, [$x, $y];
+            }
+            
+            # collect all land adjacent to a coast
+            elsif ($tile->is_land()) {
+                # we don't add land to %already_checked because a land 
+                # could be next to both coast and a lake, for example,
+                # so we need to keep checking it over and over
+                
+                $land_bin{"$x/$y"} = $tile;
+                
+                # check if a tile is east or south of a river
+                my $right_tile = $self->get_tile($tx+1, $ty);
+                if (defined($right_tile) and $right_tile->is_WOfRiver()) {
+                    $tile->mark_freshwater();
+                    next;
+                }
+                
+                my $bottom_tile = $self->get_tile($tx, $ty-1);
+                if (defined($bottom_tile) and $bottom_tile->is_NOfRiver()) {
+                    $tile->mark_freshwater();
+                    next;
+                }
+                
+                # this picks out land tiles with a river explicitly
+                # on them or land tiles adjacent to a river that we've marked
+                
+                if($tile->is_fresh()) {
+
+                }
+            }
+
+            
+            
+            
+            
+    my @water = keys %water_bin;
+    #if (@water <= 8) {
+    #    $_->mark_freshwater() foreach (values %water_bin);
+    #    $_->mark_freshwater() foreach (values %land_bin);
+    #}
+    
+=cut
+            
+            
         }
     }
     
@@ -779,21 +852,25 @@ sub clear_coasts {
         }
     }
     
-    $self->{'freshwater_marked'} = 1;
+    $self->{'freshwater_marked'} = 0;
     
     return 1;
 }
 
-sub _ripple_mark {
-    my ($self, $start_tile, $already_checked) = @_;
+# is_already_checked - gets x/y, returns 1 or 0 on whether this tile has already been seen
+# mark_as_checked - gets x/y/tile, updates is_already_checked
+# process - gets a tile, decides how to bin the result. returns 1 if this tile should be added to the queue, 0 otherwise
+
+sub bfs_region_search {
+    my ($self, $start_tile, $is_already_checked, $mark_as_checked, $process) = @_;
     
     my $start_x = $start_tile->get('x');
     my $start_y = $start_tile->get('y');
-    my @queue = [$start_x, $start_y];
-    my %water_bin = ("$start_x/$start_y" => $start_tile);
-    my %land_bin;
     
-    my @directions = ('1 1', '0 1', '-1 1', '1 0', '0 1', '1 -1', '0 -1', '-1 -1'); 
+    my @queue = ([$start_x, $start_y]);
+    $mark_as_checked->($start_x, $start_y, $start_tile);
+    
+    my @directions = ('1 1', '0 1', '-1 1', '1 0', '-1 0', '1 -1', '0 -1', '-1 -1');
     
     # check all surrounding tiles to the ones we've already found
     while (1) {
@@ -806,79 +883,23 @@ sub _ripple_mark {
             my $tx = $x + $xd;
             my $ty = $y + $yd;
             
-            next if exists $already_checked->{"$tx/$ty"};
-            next if exists $land_bin{"$tx/$ty"};
+            next if $is_already_checked->($tx, $ty);
             
             my $tile = $self->get_tile($tx, $ty);
-            
-            # non-existant tiles, i.e. if the map doesn't wrap a particular direction
             if (! defined($tile)) {
-                $already_checked->{"$tx/$ty"} = 1;
+                $mark_as_checked->($tx, $ty, $tile);
                 next;
             }
             
-            next if $tile->is_fresh(); # this picks out land tiles with a river explicitly
-                                       # on them or land tiles adjacent to a river that we've marked
+            # check again, in case coordinate wrapping from get_tile makes a difference
+            $tx = $tile->get('x');
+            $ty = $tile->get('y');
+            next if $is_already_checked->($tx, $ty);
             
-            # collect all water in this particular ocean/lake
-            if ($tile->is_water()) { 
-                $already_checked->{"$tx/$ty"} = 1; # mark here so we don't keep adding this to the queue
-                $water_bin{"$tx/$ty"} = 1;
-                push @queue, [$x, $y];
-            }
-            
-            # collect all land adjacent to a coast
-            elsif ($tile->is_land()) {
-                # we don't add land to %already_checked because a land 
-                # could be next to both coast and a lake, for example,
-                # so we need to keep checking it over and over
-                
-                $land_bin{"$x/$y"} = $tile;
-                
-                # check if a tile is east or south of a river
-                my $right_tile = $self->get_tile($tx-1, $ty);
-                if (defined($right_tile) and $right_tile->is_WOfRiver()) {
-                    $tile->mark_freshwater();
-                    next;
-                }
-                
-                my $bottom_tile = $self->get_tile($tx, $ty-1);
-                if (defined($bottom_tile) and $bottom_tile->is_NOfRiver()) {
-                    $tile->mark_freshwater();
-                    next;
-                }
-            }
+            my $to_add = $process->($mark_as_checked, $tile);
+            push @queue, [$tx, $ty] if $to_add;
         }
     }
-    
-    my @water = keys %water_bin;
-    if (@water <= 8) {
-        $_->mark_freshwater() foreach (values %water_bin);
-        $_->mark_freshwater() foreach (values %land_bin);
-    }
-    
-    return (\%land_bin, \%water_bin);
 }
 
-sub set_player_from_civdata {
-    my ($self, $owner, $civ_data) = @_;
-    $self->{'Players'}[$owner]->set_from_data($civ_data);
-    $self->{'Teams'}{$owner}->set('Techs', deepcopy($civ_data->{'_Tech'}));
-}
-
-sub set_player_leader {
-    my ($self, $owner, $leader_data) = @_;
-    $self->{'Players'}[$owner]->set('LeaderType', $leader_data->{'Name'});
-}
-
-sub set_player_color {
-    my ($self, $owner, $color) = @_;
-    $self->{'Players'}[$owner]->set('Color', $color);
-}
-
-sub set_player_name {
-    my ($self, $owner, $name) = @_;
-    $self->{'Players'}[$owner]->set('LeaderName', $name);
-}
-  
 1;
