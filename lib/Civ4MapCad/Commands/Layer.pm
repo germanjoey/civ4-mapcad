@@ -5,9 +5,9 @@ use warnings;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(move_layer_to move_layer_by set_layer_priority crop_layer  
+our @EXPORT_OK = qw(move_layer_to_location move_layer_by set_layer_priority crop_layer  
                     flip_layer_tb flip_layer_lr copy_layer_from_group merge_two_layers expand_layer_canvas
-                    increase_layer_priority decrease_layer_priority set_tile rename_layer delete_layer
+                    increase_layer_priority decrease_layer_priority set_tile rename_layer delete_layer rotate_layer
                    );
 
 use Civ4MapCad::ParamParser;
@@ -80,16 +80,16 @@ sub recenter {
     return 1;
 }
 
-my $move_layer_to_help_text = qq[
+my $move_layer_to_location_help_text = qq[
     The specified layer is moved to location x,y within its group.
 ];
-sub move_layer_to {
+sub move_layer_to_location {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['layer', 'int', 'int'],
         'required_descriptions' => ['layer to move', 'layer\'s 0,0 will be moved to this x coordinate within its group', 'layer\'s 0,0 will be moved to this y coordinate within its group'],
-        'help_text' => $move_layer_to_help_text
+        'help_text' => $move_layer_to_location_help_text
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
@@ -193,11 +193,11 @@ sub crop_layer {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'has_result' => 'layer',
+        'allow_implied_result' => 1,
         'required' => ['layer', 'int', 'int', 'int', 'int'],
         'required_descriptions' => ['layer to crop', 'left', 'bottom', 'right', 'top'],
-        'help_text' => $crop_layer_help_text,
-        'has_result' => 'layer',
-        'allow_implied_result' => 1
+        'help_text' => $crop_layer_help_text
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
@@ -231,11 +231,11 @@ sub flip_layer_lr {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'has_result' => 'layer',
+        'allow_implied_result' => 1,
         'required' => ['layer'],
         'required_descriptions' => ['layer to flip'],
-        'help_text' => $flip_layer_lr_help_text,
-        'has_result' => 'layer',
-        'allow_implied_result' => 1
+        'help_text' => $flip_layer_lr_help_text
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
@@ -257,11 +257,11 @@ sub flip_layer_tb {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'has_result' => 'layer',
+        'allow_implied_result' => 1,
         'required' => ['layer'],
         'required_descriptions' => ['layer to flip'],
-        'help_text' => $flip_layer_tb_help_text,
-        'has_result' => 'layer',
-        'allow_implied_result' => 1
+        'help_text' => $flip_layer_tb_help_text
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
@@ -294,6 +294,7 @@ sub copy_layer_from_group {
     my $result_name = $pparams->get_result_name();
     my ($layer) = $pparams->get_required();
     my $copy = deepcopy($layer);
+    
     $copy->move_to(0,0);
     $state->set_variable($result_name, 'layer', $copy);
     
@@ -317,7 +318,7 @@ sub set_tile {
     return 1 if $pparams->done;
     
     my ($layer, $x, $y, $terrain) = $pparams->get_required();
-    my @names = $pparams->get_required_names();
+    my $result_name = $pparams->get_result_name();
     
     if (($x >= $layer->get_width()) or ($y >= $layer->get_height())) {
         my $size = $layer->get_width() . ' x ' . $layer->get_height();
@@ -328,7 +329,7 @@ sub set_tile {
     
     my $copy = deepcopy($layer);
     $copy->set_tile($x, $y, $terrain);
-    $state->set_variable($names[0], 'layer', $copy);
+    $state->set_variable($result_name, 'layer', $copy);
     
     return 1;
 }
@@ -382,6 +383,63 @@ sub rename_layer {
     $layer->rename($new_name);
     $state->set_variable($layer->get_full_name(), 'layer', $layer);
     $group->set_layer_priority($new_name, $p);
+    
+    return 1;
+}
+
+my $rotate_layer_help_text = qq[
+    This function rotate a layer around the origin point.
+    Rotations of exacty 90/180/270 degrees will be exact, but rotations of
+    arbitrary degrees will not be. There's two reasons for this. The first is
+    because we'll have quantization error due to having a grid of tiles and
+    only being able to move tiles by whole units. The second is because it is
+    impossible to change the orientation of the tiles themselves. For example,
+    lets say you have a wooden chess board in front of you, and you rotated it
+    30 degrees. Look at the checkboard: each individual square is also rotated
+    by 30 degrees. However, we can't do that here; all tiles are always perfect
+    squares, perpendicular to the X and Y axis. This command tries its very
+    best to rotate a layer according to any angle and will report the actual
+    rotation angle if it fails to get an exact match.
+    <BREAK>
+    If the rotation result is poor, you can try specifying '--iteration' to be a 
+    value greater than 1. In this case, the algorithm will attempt to rotate a
+    pattern in small steps; e.g. if the rotation angle=39 and iterations=3, we'll
+    do 3 rotations of 13 degrees. Rotating in small steps will give more accurate
+    output angle but maybe jumble the result a bit more; again, some error is
+    unavoidable due to the discrete nature of the problem.
+];
+
+# TODO: allow arbitrary rotation origins by shifting the tiles before/after the rotation
+sub rotate_layer {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'has_result' => 'layer',
+        'allow_implied_result' => 1,
+        'required' => ['layer', 'float'],
+        'required_descriptions' => ['the layer to rotate', 'the angle of rotation, in degrees'],
+        'help_text' => $rotate_layer_help_text,
+        'optional' => {
+            'iterations' => 1
+        }
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my $result_name = $pparams->get_result_name();
+    my $it = $pparams->get_named('iterations');
+    my ($layer, $angle) = $pparams->get_required();
+    my $copy = deepcopy($layer);
+    
+    my ($result_angle1, $result_angle2) = $copy->rotate($angle, $it);
+    
+    if ($result_angle1 !~ /^(?:90|180|270|360)$/) {
+        my $res = sprintf "%6.2f / %6.2f", $result_angle1, $result_angle2;
+        $res =~ s/\s+/ /g;
+        $state->list( "Actual angle of rotation, as measured in two different ways: $res." );
+    }
+    
+    $state->set_variable($result_name, 'layer', $copy);
     
     return 1;
 }

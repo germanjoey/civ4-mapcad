@@ -9,21 +9,13 @@ use Symbol;
 
 use Config::General;
 use Civ4MapCad::State;
-use Civ4MapCad::Util qw(find_max_players);
 
 # THIS SHOULD BE CALLED FROM MAIN "civ4 mapcad" directory"
 
 our %config = Config::General->new('def/config.cfg')->getall();
 
 our $state = Civ4MapCad::State->new();
-my $max = find_max_players($config{'mod'});
-
-if ($max < 0) {
-    print "ERROR: unknown mod set in def/config.cfg!\n";
-    exit(1);
-}
-
-$config{'max_players'} = $max;
+$config{'max_players'} = 0;
 $config{'state'} = $state;
 
 $state->process_command('run_script "def/init.civ4mc"');
@@ -116,7 +108,10 @@ foreach my $i (0..$#commands) {
     }
     
     # join the rest of the description
-    @lines = grep { $_ =~ /\w/ } @lines;
-    print $doc join (" ", @lines);
+    #@lines = grep { $_ =~ /\w/ } @lines;
+    @lines = map { ($_ eq '') ? "\n\n" : $_ } @lines;
+    my $rest = join (" ", @lines);
+    $rest =~ s/\n +/\n/g;
+    print $doc $rest;
     print $doc "\n\n" unless $i == $#commands;
 }

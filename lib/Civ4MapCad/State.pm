@@ -63,6 +63,8 @@ sub _process_command {
     return 0 if $command =~ /^#/;
     
     $command =~ s/\=\>/ => /g;
+    $command =~ s/\s+\=\>\s+/ => /g;
+    
     $self->{'current_line'} = $command;
     
     my ($command_name, @params) = split ' ', $command;    
@@ -80,7 +82,7 @@ sub _process_command {
             print "  Command format:\n\n";
             print "  return <result>\n\n";
             print "  Description:\n";
-            print "  Returns a result from a script to be assigned to some other objec. The \n";
+            print "  Returns a result from a script to be assigned to some other object. The \n";
             print "  return type may be any type of group/layer/mask/weight, but not shape. If\n";
             print "  this result is ignored, a warning will be produced.\n\n";
             
@@ -119,7 +121,7 @@ sub _process_command {
         }
         
         if ($self->return_stack_empty()) {
-            $self->report_warning("return used but no result from script was specified.");
+            $self->report_warning("return used in script but no result from script was specified.");
             return 1;
         }
         
@@ -220,7 +222,7 @@ sub _process_command {
 }
 
 sub process_script {
-    my ($self, $script_path) = @_;
+    my ($self, $script_path, $expects_return) = @_;
     
     # TODO: put in a call stack to prevent recursive script loads
     
@@ -236,6 +238,7 @@ sub process_script {
     
     my @filtered_lines;
     my $current_line = '';
+    
     foreach my $i (0 .. $#lines) {
         my $line = $lines[$i];
         chomp $line;
@@ -258,13 +261,31 @@ sub process_script {
     
     push @filtered_lines, [$#lines, $current_line] if $current_line ne '';
     
+    my $ret_count = 0;
+    foreach my $l (@filtered_lines) {
+        my ($i, $line) = @$l;
+        $ret_count ++ if $line =~ /^\s*return/;
+    }
+    
+    if ($ret_count > 1) {
+        $self->report_error("multiple return statements used in '$script_path'.");
+        return -1;
+    }
+    
+    if (($expects_return == 1) and ($ret_count == 0)) {
+        $self->report_error("A result is expected from '$script_path' but no return command was found in the script.");
+        return -1;
+    }
+    
     foreach my $l (@filtered_lines) {
         my ($i, $line) = @$l;
         
         my $ret = $self->process_command($line);
         if ($ret == -1) {
+            $self->buffer_bar();
             $self->report_message(" ** inducing early script exit for script '$script_path' due to error on line '$i'...");
             print "\n\n";
+            $self->register_print();
             return -1;
         }
     }
@@ -306,6 +327,8 @@ sub is_off_script {
 
 sub add_log {
     my ($self, $command) = @_;
+    
+    $command =~ s/\s+/ /g;
     
     if ((@{$self->{'log'}} > 0) and ($self->{'log'}[-1] eq $command)) {
         return;
@@ -405,7 +428,7 @@ sub _assign_layer_result {
     my ($result_group_name, $result_layer_name) = $result_name =~ /\$(\w+)\.(\w+)/;
     my $group = $self->get_variable('$' . $result_group_name, 'group');
     $result_layer->rename($result_layer_name);
-        
+         
     if ($group->layer_exists($result_layer_name)) {
         $group->set_layer($result_layer_name, $result_layer);
     }
@@ -475,43 +498,50 @@ sub check_vartype {
         return $type;
     }
     
+    if ($type->{'type'} ne $expected_type) {
+        return {
+            'error' => 1,
+            'error_msg' => "parameter given at '$raw_name' was expected to be of type '$expected_type' but is actually parsed as type '$type->{'type'}'."
+        };
+    }
+    
     my $actual = $type->{'type'};
     if ($sigil eq '$') {
         if (($expected_type eq 'layer') and ($raw_name !~ /\./)) {
             return {
                 'error' => 1,
-                'error_msg' => "parameter $raw_name is expected to be of type 'layer' but was actually parsed as type 'group'."
+                'error_msg' => "parameter given as '$raw_name' is expected to be of type 'layer' but was actually parsed as type 'group'."
             };
         }
         elsif (($expected_type eq 'group') and ($raw_name =~ /\./)) {
             return {
                 'error' => 1,
-                'error_msg' => "variable $raw_name is expected to be of type 'group' but was actually parsed as type 'layer'."
+                'error_msg' => "parameter given as '$raw_name' is expected to be of type 'group' but was actually parsed as type 'layer'."
             };
         }
     }
     elsif (($sigil eq '@') and ($expected_type ne 'mask')) {
         return {
             'error' => 1,
-            'error_msg' => "variable $raw_name is expected to be of type 'mask' but was actually parsed as type '$actual'."
+            'error_msg' => "parameter given as '$raw_name' is expected to be of type 'mask' but was actually parsed as type '$actual'."
         };
     }
     elsif (($sigil eq '%') and ($expected_type ne 'weight')) {
         return {
             'error' => 1,
-            'error_msg' => "variable $raw_name is expected to be of type 'weight' but was actually parsed as type '$actual'."
+            'error_msg' => "parameter given as '$raw_name' is expected to be of type 'weight' but was actually parsed as type '$actual'."
         };
     }
     elsif (($sigil eq '*') and ($expected_type ne 'shape')) {
         return {
             'error' => 1,
-            'error_msg' => "variable $raw_name is expected to be of type 'shape' but was actually parsed as type '$actual'."
+            'error_msg' => "parameter given as '$raw_name' is expected to be of type 'shape' but was actually parsed as type '$actual'."
         };
     }
     elsif (($sigil eq '') and ($expected_type ne 'terrain')) {
         return {
             'error' => 1,
-            'error_msg' => "variable $raw_name is expected to be of type 'terrain' but was actually parsed as type '$actual'."
+            'error_msg' => "parameter given as '$raw_name' is expected to be of type 'terrain' but was actually parsed as type '$actual'."
         };
     }
     
@@ -607,14 +637,18 @@ sub report_message {
     
     $Text::Wrap::columns = 76;
     $Text::Wrap::separator="\n  ";
-    $msg =~ s/\r|\n/ /g;
-    $msg =~ s/\s+/ /g;
-    $msg =~ s/^\s+//;
-    $msg =~ s/\s+$//;
     
-    print wrap("  " . (" " x $ei), "" . (" " x $ei) , $msg);
+    my @parts = split "<BREAK>", $msg;
     
-    $self->register_print();
+    foreach my $i (0..$#parts) {
+        my $part = $parts[$i];
+        $part =~ s/\r|\n/ /g;
+        $part =~ s/\s+/ /g;
+        $part =~ s/^\s+//;
+        $part =~ s/\s+$//;
+        print wrap("  " . (" " x $ei), "" . (" " x $ei) , $part);
+        print "\n\n" if $i < $#parts;
+    }
 }
 
 sub list {

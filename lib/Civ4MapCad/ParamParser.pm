@@ -3,6 +3,9 @@ package Civ4MapCad::ParamParser;
 use strict;
 use warnings;
 
+use Getopt::Long qw(GetOptionsFromArray :config pass_through);
+use List::Util qw(min);
+
 # processes parameters to a command into something the commands can actually work with
 # $raw_params is basically whatever came in on the command line after the command name
 # $param_spec is a hash supplied by the command with this format:
@@ -32,7 +35,6 @@ use warnings;
 # the output of parse is a hash containing a value for each input to the command. a special value, _result, specifies where the output of the command should go, if there is one.
 # if an error occurred in parsing params, the error field of the result hash will be set, and the command should bail immediately.
 
-use Getopt::Long qw(GetOptionsFromArray :config pass_through);
 
 sub new {
     my $proto = shift;
@@ -44,6 +46,7 @@ sub new {
     my @calling_format = _report_calling_format($state, $param_spec);
     
     if ((@$raw_params == 1) and ($raw_params->[0] eq '--help')) {
+        $state->buffer_bar();
         print "\n";
         print "  Command format:\n\n";
         $state->report_message($calling_format[0]);
@@ -54,10 +57,12 @@ sub new {
         print "\n\n";
         
         if (exists $param_spec->{'help_text'}) {
-            print "  Description:\n\n";
+            print "  Description:\n";
             $state->report_message($param_spec->{'help_text'});
             print "\n\n";
         }
+        
+        $state->register_print();
         
         return bless {'error' => 0, 'done' => 1}, $class;
     }
@@ -84,7 +89,7 @@ sub new {
         print "\n\n";
         
         if (exists $param_spec->{'help_text'}) {
-            print "  Description:\n\n" ;
+            print "  Description:\n" ;
             $state->report_message($param_spec->{'help_text'});
             print "\n\n";
         }
@@ -112,7 +117,7 @@ sub new {
         }
         
         if ((exists $param_spec->{'help_text'}) and ($processed->{'help'})) {
-            print "  Description:\n\n";
+            print "  Description:\n";
             $state->report_message($param_spec->{'help_text'});
         }
         
@@ -139,7 +144,7 @@ sub _report_calling_format {
             if (exists $prefix{$type}) {
                 push @required_list, $prefix{$type} . $type . "name";
             }
-            elsif ($type eq 'str') {
+            elsif ($type =~ /str/) {
                 push @required_list, qq["string"];
             }
             else {
@@ -188,7 +193,12 @@ sub _report_calling_format {
     if ((@required_list > 0) and exists($param_spec->{'required_descriptions'})) {
         foreach my $i (1 .. @{ $param_spec->{'required_descriptions'} }) {
             my $desc = $param_spec->{'required_descriptions'}[$i-1];
-            push @format, "  param $i: $desc";
+            my $p = ($param_spec->{'required'}[$i-1] =~ /^\*/) ? '+' : '';
+            push @format, "  param $i$p: $desc";
+            
+            if ($p eq '+') {
+                push @format, "  NOTE: this last parameter is expected to be a list.";
+            }
         }
     }
     
@@ -307,7 +317,7 @@ sub _process {
         }
     }
     
-    if ((!$has_shape_params) && (@preproc != @$required)) {
+    if ((!$has_shape_params) and (@preproc != @$required) and ($required->[-1] !~ /^\*/)) {
         my @unknown;
         foreach my $item (@preproc) {
             if ($item =~ /^\-\-/) {
@@ -335,6 +345,7 @@ sub _process {
     my @shape_param_list;
     
     # remnants of @preproc are the required params; resolve those to variables
+    
     while (1) {
         last if $i > $#preproc;
     
@@ -345,9 +356,9 @@ sub _process {
             next;
         }
     
-        my $expected_type = $required->[$i];
+        my $expected_type = ($required->[-1] =~ /^\*/) ? $required->[min($i, $#$required)] : $required->[$i];
         
-        if ($expected_type eq 'int') {
+        if ($expected_type =~ /int/) {
             unless ($preproc[$i] =~ /^[-+]?\d+$/) {
                 $processed_params{'error_msg'} = "parameter '$preproc[$i]' was expected to be an integer value but yet is not.";
                 $processed_params{'error'} = 1;
@@ -360,7 +371,7 @@ sub _process {
             $i++;
             next;
         }
-        elsif ($expected_type eq 'float') {
+        elsif ($expected_type =~ /float/) {
             unless ($preproc[$i] =~ /^[-+]?\d+(?:\.\d+(?:[eE][-+]?\d+)?)?$/) {
                 $processed_params{'error_msg'} = "parameter '$preproc[$i]' was expected to be a floating point value but yet is not.";
                 $processed_params{'error'} = 1;
@@ -374,7 +385,7 @@ sub _process {
             next;
         }
         
-        elsif ($expected_type eq 'str') {
+        elsif ($expected_type =~ /str/) {
             if (($preproc[$i] !~ /^"/) or ($preproc[$i] !~ /"$/)) {
                 $processed_params{'error_msg'} = "a string was expected for '$preproc[0]'; all strings must be enclosed in double-quotes.";
                 $processed_params{'error'} = 1;
@@ -390,7 +401,7 @@ sub _process {
             next;
         }
         
-        elsif ($expected_type eq 'terrain') {
+        elsif ($expected_type =~ /terrain/) {
             if (! $state->variable_exists($preproc[$i], 'terrain')) {
                 $processed_params{'error'} = 1;
                 $processed_params{'error_msg'} = "a variable of type terrain named '$preproc[$i]' does not exist.";

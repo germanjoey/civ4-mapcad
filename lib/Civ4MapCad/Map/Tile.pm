@@ -205,6 +205,24 @@ sub is_land {
     return (($self->{'TerrainType'} eq 'TERRAIN_OCEAN') or ($self->{'TerrainType'} eq 'TERRAIN_COAST')) ? 0 : 1;
 }
 
+sub is_coast {
+    my ($self) = @_;
+    
+    return ($self->{'TerrainType'} eq 'TERRAIN_COAST') ? 1 : 0;
+}
+
+sub has_bonus {
+    my ($self) = @_;
+    
+    return (exists $self->{'BonusType'}) ? 1 : 0;
+}
+
+sub has_feature {
+    my ($self) = @_;
+    
+    return (exists $self->{'FeatureType'}) ? 1 : 0;
+}
+
 sub is_water {
     my ($self) = @_;
     
@@ -212,8 +230,8 @@ sub is_water {
 }
 
 sub is_blank {
-    my ($self) = @_;
-    return (($self->{'freshwater'} == 0) and ($self->is_water())) ? 1 : 0;
+    my ($self) = @_;  
+    return (($self->{'freshwater'} == 0) and ($self->is_water()) and (!$self->has_bonus()) and (! $self->has_feature())  ) ? 1 : 0;
 }
 
 sub update_tile {

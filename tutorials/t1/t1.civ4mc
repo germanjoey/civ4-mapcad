@@ -1,8 +1,8 @@
 import_group "tutorials/t1/tutorial1.CivBeyondSwordWBSave" => $tutorial1
 help
 help mod
-# set_mod --help
-set_mod "RtR"
+set_mod --help
+set_mod "rtr 2.0.7.4"
 dump_group $tutorial1
 extract_starts $tutorial1
 dump_group $tutorial1

@@ -8,12 +8,16 @@ our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(import_mask_from_ascii new_mask_from_shape mask_difference mask_union mask_intersect 
                     mask_invert mask_threshold modify_layer_with_mask cutout_layer_with_mask apply_shape_to_mask  
                     generate_layer_from_mask new_mask_from_magic_wand export_mask_to_ascii set_mask_coord
-                    export_mask_to_table import_mask_from_table mask_from_water mask_from_landmass);
+                    export_mask_to_table import_mask_from_table mask_from_water mask_from_landmass
+                    new_mask_from_polygon grow_mask shrink_mask count_mask_value);
+
+use Math::Geometry::Planar qw(IsInsidePolygon IsSimplePolygon);
 
 use Civ4MapCad::Util qw(deepcopy);
 use Civ4MapCad::ParamParser;
 use Civ4MapCad::Object::Mask;
 use Civ4MapCad::Ascii qw(clean_ascii import_ascii_mapping_file);
+
 
 my $new_mask_from_shape_help_text = qq[
     The 'new_mask_from_shape' command generates a mask by applying a shape function to a blank canvas of size width/height.
@@ -46,6 +50,76 @@ sub new_mask_from_shape {
     my $result_name = $pparams->get_result_name();
     $state->set_variable($result_name, 'mask', Civ4MapCad::Object::Mask->new_from_shape($width, $height, $shape, $shape_params));
     
+    return 1;
+}
+
+my $new_mask_from_polygon_help_text = qq[
+    The 'new_mask_from_shape' command generates a mask by applying a shape function to a blank canvas of size width/height.
+    (the two required integer paramaters). See the 'Shapes and Masks' section of the html documentation for more details.
+];
+sub new_mask_from_polygon {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'has_result' => 'mask',
+        'required' => ['int', 'int', '*str'],
+        'required_descriptions' => ['width', 'height', 'coordinate, in the form "x,y"'],
+        'help_text' => $new_mask_from_polygon_help_text
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my $result_name = $pparams->get_result_name();
+    my ($width, $height, @coords) = $pparams->get_required();
+    
+    my @points;
+    foreach my $coord (@coords) {
+        if ($coord !~ /^\s*\d+\s*,\s*\d+\s*$/) {
+            $state->report_error(qq[coordinate "$coord" is not in proper form; must be "x,y".]);
+            return -1;
+        }
+        
+        $coord =~ s/\s//g;
+        my ($x, $y) = split ',', $coord;
+        push @points, [$x, $y];
+    }
+    
+    if (3 > @points) {
+        $state->report_error("A polygon must have at least three points! And don't forget to wrap back to start!");
+        return -1;
+    }
+    
+    my $simple = 0;
+    eval {
+        if (IsSimplePolygon(\@points)) {
+            $simple = 1;
+        }
+    };
+    if ($@) {
+        $state->report_error("Unknown error in checking polygon validity: $@.");
+        return -1;
+    }
+    if ($simple == 0) {
+        $state->report_error("Polygon is not simple, meaning that it either is not closed or contains intersections.");
+        return -1;
+    }
+    
+    my $mask = Civ4MapCad::Object::Mask->new_blank($width, $height);
+    eval {
+        foreach my $x (0..($width-1)) {
+            $mask->{'canvas'}[$x] = [];
+            foreach my $y (0..($height-1)) {
+                $mask->{'canvas'}[$x][$y] = (IsInsidePolygon(\@points, [$x, $y])) ? 1 : 0;
+            }
+        }
+    };
+    
+    if ($@) {
+        $state->report_error("Unknown error in constructing mask from polygon: $@.");
+        return -1;
+    }
+    
+    $state->set_variable($result_name, 'mask', $mask);
     return 1;
 }
 
@@ -299,6 +373,40 @@ sub _two_op {
     return 1;
 }
 
+my $count_mask_value_help_text = qq[
+    Counts the number of values in the mask that match the target value. If '--threshold' is set, the mask will be thresholded first, and then counted.
+];
+sub count_mask_value {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'required' => ['mask', 'float'],
+        'required_descriptions' => ['mask to generate from', 'weight table used to translate values into terrain'],
+        'help_text' => $count_mask_value_help_text,
+        'optional' => {
+            'threshold' => 'false',
+            'threshold_value' => '0.5'
+        }
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+
+    my ($mask, $value) = $pparams->get_required();
+    my $threshold_first = $pparams->get_named('threshold');
+    my $threshold_value = $pparams->get_named('threshold_value');
+    
+    if ($threshold_first) {
+        $mask = $mask->threshold($threshold_value);
+    }
+    
+    my $count = $mask->count_matches($value);
+    
+    my $inv_count = $mask->get_width() * $mask->get_height() - $count;
+    $state->list( "Matches: $count", "Non-Matches: $inv_count" );
+    
+    return 1;
+}
+    
 my $generate_layer_from_mask_help_text = qq[
     Create a layer by applying a weight table to a mask. The value at each mask coordinate is evaluated according to the weight table, which is used to generate a new tile. For example, if the mask's value at coordinate 3,2 is equal to 0.45, and the weight table specifies that values
     between 0.4 and 1 map to an ordinary grassland tile, then the output layer will have a grassland tile at 3,2.
@@ -416,14 +524,10 @@ sub cutout_layer_with_mask {
     my $clear = ($copy) ? 0 : 1;
     my $offsetX = $pparams->get_named('offsetX');
     my $offsetY = $pparams->get_named('offsetY');
-    my $selected = $layer->select_with_mask($mask, $offsetX, $offsetY, $clear) = @_;
+    my $selected = $layer->select_with_mask($mask, $offsetX, $offsetY, $clear);
     
-    my $result = $group->add_layer($selected);
-    if (exists $result->{'error'}) {
-        $state->report_warning($result->{'error_msg'});
-    }
-    
-    $state->set_variable("\$$group_name.$layer_name", 'layer', $selected);
+    $state->set_variable($result_name, 'layer', $selected);
+    return 1;
 }
 
 my $apply_shape_to_mask_help_text = qq[
@@ -434,13 +538,12 @@ sub apply_shape_to_mask {
 
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'has_result' => 'layer',
+        'allow_implied_result' => 1,
+        'required' => ['mask', 'shape'],
+        'required_descriptions' => ['mask to change', 'shape to apply'],
         'has_shape_params' => 1,
         'help_text' => $apply_shape_to_mask_help_text,
-        'allow_implied_result' => 1,
-        'required' => ['mask', 'layer'],
-        'required_descriptions' => [],
         'optional' => {
-            'copy' => 'false',
             'offsetX' => '0',
             'offsetY' => '0'
         }
@@ -449,6 +552,72 @@ sub apply_shape_to_mask {
     return 1 if $pparams->done;
     
     die;
+}
+
+my $grow_mask_help_text = qq[ 
+    Expands the mask a certain number of tiles. Only values of '1' are considered; thus, before the actual grow operation occurs, the mask is first thresholded. Use '--threshold' to set a custom threshold.
+    The mask produced by this command will be larger in the input mask; all four directions will be stretched by the number of tiles that the mask is grown. If '--rescale' is set, the command attempts to
+    keep the same size mask as long as there is empty space to chop away.
+];
+sub grow_mask {
+    my ($state, @params) = @_;
+
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'has_result' => 'mask',
+        'allow_implied_result' => 1,
+        'help_text' => $grow_mask_help_text,
+        'required' => ['mask', 'int'],
+        'required_descriptions' => ['mask to grow', 'number of tiles to grow by'],
+        'optional' => {
+            'threshold' => 0.5,
+            'rescale' => 'false'
+        }
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my $result_name = $pparams->get_result_name();
+    my $threshold = $pparams->get_named('threshold');
+    my $rescale = $pparams->get_named('rescale');
+    my ($mask, $amount) = $pparams->get_required();
+    
+    my $grown = $mask->grow($amount, $threshold, $rescale);
+    
+    if (exists $grown->{'overfold_warning'}) {
+        $state->report_warning("Mask size cannot be maintained constant without losing information. Allowing mask to grow instead and cropping at end.");
+    }
+    
+    $state->set_variable($result_name, 'mask', $grown);
+    return 1;
+}
+
+my $shrink_mask_help_text = qq[ 
+    Contracts the mask a certain number of tiles. Only values of '0' are considered by the shrink; thus, before the actual shrink operation occurs, the mask is first thresholded. Use '--threshold' to set a custom threshold.
+];
+sub shrink_mask {
+    my ($state, @params) = @_;
+
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'has_result' => 'mask',
+        'allow_implied_result' => 1,
+        'help_text' => $shrink_mask_help_text,
+        'required' => ['mask', 'int'],
+        'required_descriptions' => ['mask to shrink', 'number of tiles to shrink by'],
+        'optional' => {
+            'threshold' => 0.5,
+        }
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my $result_name = $pparams->get_result_name();
+    my $realign = $pparams->get_named('realign');
+    my $threshold = $pparams->get_named('threshold');
+    my ($mask, $amount) = $pparams->get_required();
+    
+    my $shrunk = $mask->shrink($amount, $threshold);
+    $state->set_variable($result_name, 'mask', $shrunk);
+    return 1;
 }
 
 my $set_mask_coord_help_text = qq[
@@ -484,7 +653,7 @@ sub set_mask_coord {
 }
 
 my $mask_from_landmass_help_text = qq[
-    Generate a mask based on a landmass. The starting tile must be a land tile; otherwise an error will be thrown. If '--choose_coast' is set, the mask will instead be all water tiles adjacent to the landmass (i.e. its coast).
+    Generate a mask based on a landmass. The starting tile must be a land tile; otherwise an error will be thrown. If '--choose_coast' is set, the mask will select be all water tiles adjacent to the landmass (i.e. its coast). If '--include_coast' is set, instead both the landmass and its coast will be selected. Finally, if '--include_ocean_resources' is set in addition to '--include_coast' or '--choose_coast', then all tiles containing ocean resources that are *adjacent* to a coast tile will be included.
 ];
 sub mask_from_landmass {
     my ($state, @params) = @_;
@@ -496,6 +665,8 @@ sub mask_from_landmass {
         'required_descriptions' => ['the layer to generate a mask from', 'x coordinate of starting tile', 'y coordinate of starting tile'],
         'optional' => {
             'choose_coast' => 'false',
+            'include_coast' => 'false',
+            'include_ocean_resources' => 'false'
         }
     });
     return -1 if $pparams->has_error;
@@ -503,6 +674,8 @@ sub mask_from_landmass {
     
     my $result_name = $pparams->get_result_name();
     my $choose_coast = $pparams->get_named('choose_coast');
+    my $include_coast = $pparams->get_named('include_coast');
+    my $include_ocean_res = $pparams->get_named('include_ocean_resources');
     my ($layer, $start_x, $start_y) = $pparams->get_required();
     my $copy = deepcopy($layer);
     
@@ -519,7 +692,12 @@ sub mask_from_landmass {
         return -1;
     }
     
-    my ($land, $water) = $copy->follow_land_tiles($start_tile);
+    if ($include_ocean_res and (!($include_coast or $choose_coast))) {
+        $state->report_error("'--include_ocean_resources' can't be set without '--include_coast' or '--choose_coast'.");
+        return -1;
+    }
+    
+    my ($land, $water) = $copy->follow_land_tiles($start_tile, $include_ocean_res);
     ($land, $water) = ($water, $land) if $choose_coast == 1;
     
     my $mask = Civ4MapCad::Object::Mask->new_blank($copy->get_width(), $copy->get_height());
@@ -527,6 +705,13 @@ sub mask_from_landmass {
     while ( my($k,$v) = each %$land) {
         my ($x,$y) = split '/', $k;
         $mask->{'canvas'}[$x][$y] = 1;
+    }
+    
+    if ($include_coast) {
+        while ( my($k,$v) = each %$water) {
+            my ($x,$y) = split '/', $k;
+            $mask->{'canvas'}[$x][$y] = 1;
+        }
     }
     
     $state->set_variable($result_name, 'mask', $mask);

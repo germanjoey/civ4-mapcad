@@ -65,7 +65,10 @@ sub evaluate_weight_inverse {
     return 1 if $pparams->done;
     
     my ($weight, $terrain) = $pparams->get_required();
-    my ($value) = $weight->evaluate_inverse($terrain);
+    
+    my $tile = Civ4MapCad::Map::Tile->new_default(0, 0);
+    $tile->set_tile($terrain);
+    my ($value) = $weight->evaluate_inverse($tile);
     $weight->deflate();
     
     my @full;

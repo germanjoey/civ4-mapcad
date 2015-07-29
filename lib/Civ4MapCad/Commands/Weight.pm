@@ -64,7 +64,6 @@ my $new_weight_table_help_text = qq[
     new_weight_table >= float => result, [>= float => result,] => %weightname
 
   Description:
-    
   The 'new_weight_table' command creates a new Weight Table on the command
   line. It's really only suited for short and simple tables with just a couple
   choices.  For anything more complex than that, please see the

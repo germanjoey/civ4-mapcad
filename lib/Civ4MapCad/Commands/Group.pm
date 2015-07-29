@@ -38,7 +38,7 @@ sub set_wrap {
     my $nowrapY = $pparams->get_named('nowrapY');
     
     $group->set_wrapX(($nowrapX) ? 0 : 1);
-    $group->set_wrapX(($nowrapY) ? 0 : 1);
+    $group->set_wrapY(($nowrapY) ? 0 : 1);
     
     return 1;
 }

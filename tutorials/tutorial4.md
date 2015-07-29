@@ -72,7 +72,7 @@ And we can build our script like this, which I've saved at [tutorials/t4/banana.
     import_group "tutorials/t4/bfc.CivBeyondSwordWBSave" => $bfc
     extract_starts $bfc
     copy_layer_from_group $bfc.start0 => $the_real_banana.bfc
-    move_layer_to $the_real_banana.bfc 2 4
+    move_layer_to_location $the_real_banana.bfc 2 4
     increase_layer_priority $the_real_banana.bfc
 
     # and we're done!
@@ -125,16 +125,19 @@ We ran the script 5 times, and generated 5 bananas! That means we're in the home
     copy_layer_from_group $player5.bfc => $banana_bunch.banana5
 
     # stack banana till the morning come!
-    move_layer_to $banana_bunch.banana2 9 4
-    move_layer_to $banana_bunch.banana3 18 8
-    move_layer_to $banana_bunch.banana4 27 12
-    move_layer_to $banana_bunch.banana5 36 16
+    move_layer_to_location $banana_bunch.banana2 9 4
+    move_layer_to_location $banana_bunch.banana3 18 8
+    move_layer_to_location $banana_bunch.banana4 27 12
+    move_layer_to_location $banana_bunch.banana5 36 16
 
-    flatten_group $banana_bunch
+    # --rename_final_layer renames the final layer to the same as the group name, e.g. $banana_bunch.banana_bunch
+    flatten_group $banana_bunch --rename_final_layer
     dump_group $banana_bunch
     export_sims $banana_bunch
     
 And that's it, we're done!!!! Here's our monster, the perfect toroidal banana nightmare. I put this script at [tutorials/t4/bunch.civ4mc](t4/bunch.civ4mc), if you want to look at it.
+
+![tutorial4-i5](t4/i5.png)
 
 I started by sizing the main group to 60 by 60, and spaced out the bananas 11 by 11, but then quickly realized that was way too spacey. (and way too big to post a screenshot of in this tutorial page) Because of the toroidal wrap, we could bring in everything a lot closer. Now it's the perfect size, I think - way, way too small to be acutally playable by normal people, but perfect for these goofballs, considering that they'll probably abandon the game after 40-50 turns anyways. At least this way they'll get some action! ![img-lol](t4/lol.gif)
 

@@ -5,15 +5,40 @@ use warnings;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(set_output_dir list_mods set_mod write_log history set_player_data load_xml_data set_difficulty);
+our @EXPORT_OK = qw(set_output_dir list_mods set_mod write_log history set_player_data load_xml_data set_difficulty ls);
 
 use Config::General;
 use XML::Simple qw(:strict);
 
 use Civ4MapCad::ParamParser;
 
+my $ls_help_text = qq[
+    List directory.
+];
+sub ls {
+    my ($state, @params) = @_;
+
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'required' => ['str'],
+        'required_descriptions' => ['directory path'],
+        'help_text' => $ls_help_text
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my ($directory_path) = $pparams->get_required();
+    $directory_path =~ s/\*+$//;
+    $directory_path =~ s/\/+$//;
+    $directory_path =~ s/^\s+//;
+    $directory_path =~ s/\s+$//;
+    
+    my @dir = map { "  $_" } glob("$directory_path/*");
+    $state->list( "Contents of '$directory_path':\n", @dir );
+    return 1;
+}
+
 my $set_output_dir_help_text = qq[
-    'set_output_dir' sets the default output directory for other commands, e.g. export_sims.
+    Sets the default output directory for other commands, e.g. export_sims.
 ];
 sub set_output_dir {
     my ($state, @params) = @_;
@@ -164,6 +189,11 @@ sub load_xml_data {
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
 
+    $state->buffer_bar();
+    $| = 1;
+    print "\n  Loading XML data...";
+    $| = 0;
+    
     my $civdata = XMLin($main::config{'civ4_info_path'}, KeyAttr => {  }, ForceArray => [ 'CivilizationInfo', 'Cities', 'Building', 'Unit', 'FreeTech', 'FreeBuildingClass', 'FreeUnitClass', 'CivicType', 'Leader' ]);
 
     my $flagdata = XMLin($main::config{'civ4_artdefines_path'}, KeyAttr => {  }, ForceArray => [ 'CivilizationArtInfo' ]);
@@ -272,6 +302,9 @@ sub load_xml_data {
         'traits' => \%traits,
         'civics' => \%civics
     };
+    
+    print "...done\n\n";
+    $state->register_print();
     
     return 1;
 }

@@ -24,7 +24,7 @@ generate_layer_from_mask @random_banana %bananaland => $the_real_banana.backgrou
 import_group "tutorials/t4/bfc.CivBeyondSwordWBSave" => $bfc
 extract_starts $bfc
 copy_layer_from_group $bfc.start0 => $the_real_banana.bfc
-move_layer_to $the_real_banana.bfc 2 4
+move_layer_to_location $the_real_banana.bfc 2 4
 increase_layer_priority $the_real_banana.bfc
 
 # and we're done!

@@ -1,4 +1,5 @@
 import_shape "shapes/square.pm" => *square
+import_shape "shapes/rect.pm" => *rect
 import_shape "shapes/bfc.pm" => *bfc
 import_shape "shapes/singletile.pm" => *singletile
 import_shape "shapes/circle.pm" => *circle

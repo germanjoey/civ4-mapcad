@@ -4,6 +4,8 @@ use strict;
 use warnings;
 
 use List::Util qw(min max);
+
+use Civ4MapCad::Rotator qw(rotate_grid);
 use Civ4MapCad::Util qw(write_block_data deepcopy);
 
 our @fields = qw(TeamID RevealMap);
@@ -138,19 +140,20 @@ sub expand_dim {
     foreach my $x (0..$width-1) {
         $self->{'Tiles'}[$x] = [] unless defined $self->{'Tiles'}[$x];
         foreach my $y (0..$height-1) {
-            $self->{'Tiles'}[$x][$y] = Civ4MapCad::Map::Tile->new_default() unless defined $self->{'Tiles'}[$x][$y];
+            $self->{'Tiles'}[$x][$y] = Civ4MapCad::Map::Tile->new_default($x, $y)
+                unless defined $self->{'Tiles'}[$x][$y];
         }
     }
 }
 
 sub wrapsX {
     my ($self) = @_;
-    return defined($self->info('wrap X')) and ($self->info('wrap X') eq '1');
+    return ((defined($self->info('wrap X')) and ($self->info('wrap X') eq '1')) ? 1 : 0);
 }
 
 sub wrapsY {
     my ($self) = @_;
-    return defined($self->info('wrap Y')) and ($self->info('wrap Y') eq '1');
+    return ((defined($self->info('wrap Y')) and ($self->info('wrap Y') eq '1')) ? 1 : 0);
 }
 
 sub set_wrapX {
@@ -886,6 +889,7 @@ sub bfs_region_search {
             next if $is_already_checked->($tx, $ty);
             
             my $tile = $self->get_tile($tx, $ty);
+            
             if (! defined($tile)) {
                 $mark_as_checked->($tx, $ty, $tile);
                 next;
@@ -902,4 +906,28 @@ sub bfs_region_search {
     }
 }
 
+sub rotate {
+    my ($self, $angle, $it) = @_;
+    
+    my $width = $self->{'MapInfo'}->get('grid width');
+    my $height = $self->{'MapInfo'}->get('grid height');
+    my ($grid, $new_width, $new_height, $move_x, $move_y, $result_angle1, $result_angle2) = rotate_grid($self->{'Tiles'}, $width, $height, $angle, $it);
+    
+    $self->{'MapInfo'}->set('grid width', $new_width);
+    $self->{'MapInfo'}->set('grid height', $new_height);
+    $self->{'MapInfo'}->set('num plots written', $new_width*$new_height);
+    
+    foreach my $x (0..$new_width-1) {
+        $self->{'Tiles'}[$x] = [];
+        foreach my $y (0..$new_height-1) {
+            $self->{'Tiles'}[$x][$y] = $grid->[$x][$y];
+            $self->{'Tiles'}[$x][$y] = Civ4MapCad::Map::Tile->new_default($x, $y) unless defined $grid->[$x][$y];
+            $self->{'Tiles'}[$x][$y]->set('x', $x);
+            $self->{'Tiles'}[$x][$y]->set('y', $y);
+        }
+    }
+    
+    return ($new_width, $new_height, $move_x, $move_y, $result_angle1, $result_angle2);
+}
+ 
 1;

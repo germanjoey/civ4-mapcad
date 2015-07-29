@@ -1,5 +1,5 @@
 # import the group
-set_mod "rtr 2.7.4.1"
+set_mod "rtr 2.0.7.4"
 import_group "tutorials/t1/tutorial1.CivBeyondSwordWBSave" => $tutorial2
 dump_group $tutorial2
 

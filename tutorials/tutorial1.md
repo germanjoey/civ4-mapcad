@@ -34,7 +34,7 @@ Cripes, that's a lot of commands! Lets filter this list; both the "help" command
 
 ![tutorial1-img4](t1/i4.png)
 
-Two commands were found that have "mod" in their name, one of which, "set mod," sounds like it'll do what we want. But how do we use it? We could check the command documentation, but all commands also allow you to specify --help to bring up usage info.
+Three commands were found that have "mod" in their name, one of which, "set mod," sounds like it'll do what we want, and another of which, "list_mods", might help too. But how do we use it? We could check the command documentation, but all commands also allow you to specify --help to bring up usage info.
 
     > set_mod --help
 
@@ -42,7 +42,7 @@ Two commands were found that have "mod" in their name, one of which, "set mod," 
 
 This sounds good. We can set our mod to RtR very easily; as soon as we switch mod, all map-type objects are automatically converted. (Windows users can press up or down on their keyboards to cycle through commands, by the way).
 
-    > set_mod "rtr 2.7.4.1"
+    > set_mod "rtr 2.0.7.4"
     
 ![tutorial1-img6](t1/i6.png)
 

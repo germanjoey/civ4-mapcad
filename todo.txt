@@ -24,9 +24,15 @@ Medium Ticket TODO:
     - A: mask_from_coastal_region
 
 Small Ticket TODO:
-    - add <SPACER> directive in help_text
     - add a see_also field to params
-    
+    - redo images i4 and i5 in tutorial 1
+    - count commands
+        - mask done, need to do layer w/ weight
+    - fix freshwater
+    - --dump_result option for run_script
+    - add exponential multiplication factor for rotate_grid on <45 degree angles
+    - allow rotations from arbitrary origin points
+        - just move the layer before/after
     
 six tutorials (4/6 done)
     - enhancing your banana

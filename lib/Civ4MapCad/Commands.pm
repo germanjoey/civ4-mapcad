@@ -7,7 +7,7 @@ use Exporter::Dispatch;
 use Civ4MapCad::ParamParser;
 
 use Civ4MapCad::Commands::Config qw(
-   set_output_dir list_mods set_mod write_log history load_xml_data set_player_data set_difficulty
+   set_output_dir list_mods set_mod write_log history load_xml_data set_player_data set_difficulty ls
 );
 
 use Civ4MapCad::Commands::Weight qw(
@@ -28,12 +28,13 @@ use Civ4MapCad::Commands::Mask qw(
     mask_invert mask_threshold modify_layer_with_mask cutout_layer_with_mask apply_shape_to_mask
     generate_layer_from_mask import_mask_from_ascii export_mask_to_ascii set_mask_coord
     export_mask_to_table import_mask_from_table mask_from_water mask_from_landmass
+    new_mask_from_polygon grow_mask shrink_mask count_mask_value
 );
 
 use Civ4MapCad::Commands::Layer qw(
-    move_layer_to move_layer_by set_layer_priority crop_layer rename_layer delete_layer
+    move_layer_to_location move_layer_by set_layer_priority crop_layer rename_layer delete_layer
     flip_layer_tb flip_layer_lr copy_layer_from_group merge_two_layers expand_layer_canvas
-    increase_layer_priority decrease_layer_priority set_tile 
+    increase_layer_priority decrease_layer_priority set_tile rotate_layer
 );
 
 use Civ4MapCad::Commands::Group qw(
@@ -162,6 +163,7 @@ sub run_script {
   
     my $error = 0;
     my $result_name = '';
+    my $expects_return = 0;
     if (@proc_params == 3) {
         if ($proc_params[1] eq '=>' and ($proc_params[2] =~ /[\*\$\@\%]?\w+(?:\.\w+)?/)) {
             my $result_name = pop @proc_params;
@@ -173,7 +175,17 @@ sub run_script {
                 return -1;
             }
             
+            # if we have a layer result, make sure the group exists first!
+            if ($result_name =~ /^\$(\w+)\.(\w+)/) {
+                my ($group_name) = $result_name =~ /^(\$\w+)/;
+                if (! $state->variable_exists($group_name, 'group')) {
+                    $state->report_error("a variable of type group named '$group_name' used in the result does not exist.");
+                    return -1;
+                }
+            }
+            
             my $result_type = $type->{'type'};
+            $expects_return = 1;
             $state->push_script_return($result_name, $result_type);
         }
         else {
@@ -197,7 +209,7 @@ sub run_script {
     $filename =~ s/\"//g;
     
     $state->in_script();
-    my $ret = $state->process_script($filename);
+    my $ret = $state->process_script($filename, $expects_return);
     $state->off_script();
     
     return $ret;

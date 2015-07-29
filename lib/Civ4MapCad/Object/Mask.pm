@@ -6,6 +6,8 @@ use warnings;
 use List::Util qw(min max);
 use Civ4MapCad::Ascii qw(import_ascii_mask export_ascii_mask);
 
+our $epsilon = 0.00001;
+
 sub new_blank {
     my ($class, $width, $height) = @_;
     
@@ -213,6 +215,158 @@ sub invert {
 sub threshold {
     my ($self, $level) = @_;
     return $self->_self_opt(sub { return (($_[0] > $level) ? 1 : 0) })
+}
+
+sub count_matches {
+    my ($self, $value) = @_;
+    
+    my $count = 0;
+    foreach my $x (0..($self->get_width()-1)) {
+        foreach my $y (0..($self->get_height()-1)) {
+            $count += $self->compare_value($x, $y, $value);
+        }
+    }
+        
+    return $count;
+}
+
+sub grow {
+    my ($self, $amount, $threshold, $rescale) = @_;
+    
+    my $old_mask = $self->threshold($threshold);
+    my $overfold_warning = 0;
+    foreach my $i (1..$amount) {
+        my $growing_mask = Civ4MapCad::Object::Mask->new_blank($old_mask->get_width()+2, $old_mask->get_height()+2);
+        
+        my $min_x = $old_mask->get_width(); my $max_x = 0;
+        my $min_y = $old_mask->get_height(); my $max_y = 0;
+        foreach my $x (0 .. ($growing_mask->get_width() - 1)) {
+            foreach my $y (0 .. ($growing_mask->get_height() - 1)) {
+                $growing_mask->{'canvas'}[$x][$y] = $old_mask->check_mask_edges_for_value($x-1, $y-1, 1);
+                
+                $max_x = $x if $x > $max_x;
+                $min_x = $x if $x < $min_x;
+                $max_y = $y if $y > $max_y;
+                $min_y = $y if $y < $min_y;
+            }
+        }
+        
+        if ($rescale and ($overfold_warning == 0)) {
+            my $xwidth = $max_x - $min_x;
+            my $ywidth = $max_y - $min_y;
+            
+            # first make sure we can chop off some empty space.
+            if ( ($xwidth >= $old_mask->get_width()) or ($ywidth >= $old_mask->get_height()) ) {
+                $old_mask = $growing_mask;
+                $overfold_warning = 1;
+                next;
+            }
+            
+            ## e.g.
+            # 40/40 -> move back 2
+            # 39/40 -> move back 1
+            # 38/40 -> move back none
+            my $max_x_diff = $growing_mask->get_width() - 1 - $max_x;
+            my $max_y_diff = $growing_mask->get_height() - 1 - $max_y;
+            my $cut_x = max(0, 2 - $max_x_diff);
+            my $cut_y = max(0, 2 - $max_y_diff);
+            
+            my $downsized_mask = Civ4MapCad::Object::Mask->new_blank($self->get_width(), $self->get_height());
+            foreach my $x ($min_x .. $max_x) {
+                foreach my $y ($min_y .. $max_y) {
+                    $downsized_mask->{'canvas'}[$x-$cut_x][$y-$cut_y] = $growing_mask->{'canvas'}[$x][$y];
+                }
+            }
+            
+            $old_mask = $downsized_mask;
+        }
+        else {
+            $old_mask = $growing_mask;
+        }
+    }
+    
+    if ($overfold_warning) {
+        my $downsized_mask = Civ4MapCad::Object::Mask->new_blank($self->get_width(), $self->get_height());
+        
+        foreach my $x ($amount .. ($old_mask->get_width()-$amount-1)) {
+            foreach my $y ($amount .. ($old_mask->get_height()-$amount-1)) {
+                die "$x $y $amount " . $old_mask->get_width() . " " . $old_mask->get_height() unless defined $old_mask->{'canvas'}[$x][$y];
+                $downsized_mask->{'canvas'}[$x-$amount][$y-$amount] = $old_mask->{'canvas'}[$x][$y];
+            }
+        }
+        
+        $downsized_mask->{'overfold_warning'} = 1;
+        return $downsized_mask;
+    }
+    else {
+        return $old_mask;
+    }
+}
+
+sub shrink {
+    my ($self, $threshold, $amount) = @_;
+    
+    my $old_mask = $self->threshold($threshold);
+    foreach my $i (1..$amount) {
+        my $shrinking_mask = Civ4MapCad::Object::Mask->new_blank($old_mask->get_width(), $old_mask->get_height());
+        
+        foreach my $x (0 .. ($shrinking_mask->get_width()-1)) {
+            $shrinking_mask->{'canvas'}[$x] = [];
+            foreach my $y (0 .. ($shrinking_mask->get_height()-1)) {
+                $shrinking_mask->{'canvas'}[$x][$y] = $old_mask->check_mask_edges_for_value($x, $y, 0);
+            }
+        }
+        
+        $old_mask = $shrinking_mask;
+    }
+    
+    return $old_mask;
+}
+
+sub translate_xy {
+    my ($self, $x, $y) = @_;
+    
+    my $tx = $x;
+    my $ty = $y;
+
+    if ($tx < 0) {
+        return;
+    }
+    elsif ($tx >= $self->get_width()) {
+        return;
+    }
+    
+    if ($ty < 0) {
+        return;
+    }
+    elsif ($ty >= $self->get_height()) {
+        return;
+    }
+    
+    return ($tx, $ty);
+}
+
+sub compare_value {
+    my ($self, $x, $y, $value) = @_;
+    return ((abs($value - $self->{'canvas'}[$x][$y]) <= $epsilon) ? 1 : 0);
+}
+
+sub check_mask_edges_for_value {
+    my ($self, $x, $y, $value) = @_;
+    
+    my ($tx, $ty) = $self->translate_xy($x, $y);
+    return $value if defined($tx) and defined($ty) and (abs($value - $self->{'canvas'}[$tx][$ty]) <= $epsilon);
+
+    my @directions = ('1 1', '0 1', '-1 1', '1 0', '-1 0', '1 -1', '0 -1', '-1 -1');
+    foreach my $direction (@directions) {
+        my ($xd, $yd) = split ' ', $direction;
+        my ($tx, $ty) = $self->translate_xy($x+$xd, $y+$yd);
+        next unless (defined($tx) and defined($ty));
+        
+        return $value if $self->compare_value($tx, $ty, $value);
+    }
+    
+    return (($value) ? 0 : 1);
 }
 
 1;

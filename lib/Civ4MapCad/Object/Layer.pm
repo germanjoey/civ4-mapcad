@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use List::Util qw(min max);
+
 use Civ4MapCad::Map;
 use Civ4MapCad::Util qw(deepcopy);
 
@@ -290,8 +291,9 @@ sub select_with_mask {
     
     my $selection = Civ4MapCad::Object::Layer->new_default($sel_name, $mask->get_width(), $mask->get_height());
     
-    for my $x (0 .. $mask->get_height()-1) {
-        for my $y (0 .. $mask->get_width()-1) {
+    for my $x (0 .. $mask->get_width()-1) {
+        for my $y (0 .. $mask->get_height()-1) {
+            die "$x $y" unless defined $mask->{'canvas'}[$x][$y];
             if ($mask->{'canvas'}[$x][$y] > 0) { # TODO: add variable threshold
                 my ($tx, $ty) = $self->translate_mask_coords($x, $y, $mask_offsetX, $mask_offsetY);
                 
@@ -579,7 +581,7 @@ sub get_tile {
 }
 
 sub follow_land_tiles {
-    my ($self, $start_tile) = @_;
+    my ($self, $start_tile, $inc_ocean_res) = @_;
     
     my $process = sub {
         my ($mark_as_checked, $tile) = @_;
@@ -588,7 +590,36 @@ sub follow_land_tiles {
         return 0;
     };
     
-    return $self->follow_tiles($start_tile, $process);
+    my ($land, $water) = $self->follow_tiles($start_tile, $process);
+    
+    if ($inc_ocean_res) {
+    
+        my %ocean_res;
+        my @directions = ('1 1', '0 1', '-1 1', '1 0', '-1 0', '1 -1', '0 -1', '-1 -1');
+        
+        # now we look at every damn coast tile we found, and check to see if any of its surrounding tiles are ocean+resource
+        foreach my $coast_tile_coord (keys %$water) {
+            my ($x, $y) = split '/', $coast_tile_coord;
+        
+            foreach my $direction (@directions) {
+                my ($xd, $yd) = split ' ', $direction;
+                my $tx = $x + $xd;
+                my $ty = $y + $yd;
+                
+                my $tile = $self->get_tile($tx, $ty);
+                next unless defined $tile;
+                
+                $ocean_res{"$tx/$ty"} = $tile if ($tile->has_bonus() or $tile->has_feature()) and ($tile->get('TerrainType') eq 'TERRAIN_OCEAN');
+            };
+        }
+        
+        # now that nonsense is over, add the found resources to the original water collection
+        while ( my($k,$v) = each %ocean_res) {
+            $water->{$k} = $v;
+        }
+    }
+    
+    return ($land, $water);
 }
 
 sub follow_water_tiles {
@@ -640,6 +671,24 @@ sub follow_tiles {
     
     $self->{'map'}->bfs_region_search($start_tile, $is_already_checked, $mark_as_checked, $process);
     return (\%land, \%water);
+}
+
+
+sub rotate {
+    my ($self, $angle, $it) = @_;
+    
+    my ($new_width, $new_height, $move_x, $move_y, $result_angle1, $result_angle2) = $self->{'map'}->rotate($angle, $it);
+    
+    $self->move_by(-$move_x, -$move_y);
+    
+    my $group_width = $self->get_group()->get_width();
+    my $group_height = $self->get_group()->get_height();
+    
+    if (($group_width < $new_width) or ($group_height < $new_height)) {
+        $self->get_group()->expand_dim(max($new_width, $group_width), max($new_height, $group_height));
+    }
+    
+    return ($result_angle1, $result_angle2);
 }
 
 1;

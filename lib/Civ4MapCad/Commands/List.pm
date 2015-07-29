@@ -18,7 +18,6 @@ my $list_shapes_help_text = qq[
     list_shapes search_term
 
   Description:
-  
   The search_term is optional; if not supplied, all shapes will be listed.
 ];
 sub list_shapes {
@@ -73,7 +72,6 @@ my $list_groups_help_text = qq[
     list_groups search_term
 
   Description:
-  
   The search_term is optional; if not supplied, all groups will be listed.
 ];
 sub list_groups {
@@ -167,7 +165,6 @@ my $list_masks_help_text = qq[
     list_masks search_term
 
   Description:
-  
   The search_term is optional; if not supplied, all masks will be listed.
 ];
 sub list_masks {
@@ -213,7 +210,6 @@ my $list_terrain_help_text = qq[
     list_terrain search_term
 
   Description:
-  
   The search_term is optional; if not supplied, all terrain will be listed.
 ];
 sub list_terrain {
@@ -279,7 +275,6 @@ my $list_weights_help_text = qq[
     list_weights search_term
 
   Description:
-  
   The search_term is optional; if not supplied, all weights will be listed.
 ];
 sub list_weights {

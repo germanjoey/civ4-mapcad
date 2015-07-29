@@ -86,7 +86,7 @@ sub evaluate_inverse {
     );
     
     foreach my $pair (@{ $self->{'flat_pairs'} }) {
-        my ($op, $result, $to_match) = @_;
+        my ($op, $result, $to_match) = @$pair;
         
         if (! exists $optable{$op}) {
             $state->report_error("Unknown op '$op' when inverse-evaluating weight");
