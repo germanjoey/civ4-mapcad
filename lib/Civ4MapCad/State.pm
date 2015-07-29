@@ -44,6 +44,9 @@ sub process_command {
         print "*** FATAL ERROR: ";
         print $@;
         print "\n";
+        
+        # if we get an error, that means we need to clear out the expected returns of all script calls
+        $self->{'return_stack'} = [];
         return -1;
     }
     
@@ -600,6 +603,9 @@ sub report_error {
     print "\n\n";
     
     $self->register_print();
+    
+    # if we get an error, that means we need to clear out the expected returns of all script calls
+    $self->{'return_stack'} = [];
 }
 
 sub report_warning {

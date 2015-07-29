@@ -2,7 +2,7 @@
 
 In this tutorial, I'll show you how to get the program running, how to run some basic commands, use the help and debugging interfaces, and finally how to generate starting sims for players in a new pitboss game.
 
-The first thing you'll need to do is install Perl. You can get it here, free:
+The first thing you'll need to do is install Perl. You can get it here, free: (note: users on old, 32 bit Windows should use the "x86" version)
 
 [http://www.activestate.com/activeperl](http://www.activestate.com/activeperl)
 
@@ -20,7 +20,7 @@ And you'll see:
 
 ![tutorial1-img2](t1/i2.png)
 
-Oh no! Not off to a great start! I haven't even explained what this freaking command does and yet it's already giving some kind of error! (A little secret: I set up the save file to give an error on purpose ![emot-ssh](emot-ssh.gif))
+Oh no! Not off to a great start! I haven't even explained what this freaking command does and yet it's already giving some kind of error! (A little tutorial secret: I set up the save file to give an error on purpose just to show you what would happen![emot-ssh](emot-ssh.gif))
 
 It looks like we got an error because this was an RtR mod save, which allows up to 40 players per game. Unfortunately, by default, Civ4MC is set to read standard BTS, which allows only 18 players per game. While the tool will continue to work just fine for now, we'll want our game to run RtR mod, and thus our output files should be RtR format. So, let's try to fix that. But how? First, let's see if there's any commands related to mods:
 
