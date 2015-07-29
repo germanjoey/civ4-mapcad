@@ -44,7 +44,7 @@ Copy one group into another.
 Copy a layer from one group to another (or the same) group. If a new name is not specified, the same name is used.
 
 ##count_mask_value
-    count_mask_value @maskname float [ --threshold_value 0.5 --threshold ] 
+    count_mask_value @maskname float [ --threshold --threshold_value 0.5 ] 
       param 1: mask to generate from
       param 2: weight table used to translate values into terrain
 
@@ -81,7 +81,7 @@ The group's dimensions are trimmed to left/bottom/right/top, from the nominal di
 This layer's dimensions are trimmed to left/bottom/right/top, from the nominal dimensions of 0 / 0 / width-1 / height-1.
 
 ##cutout_layer_with_mask
-    cutout_layer_with_mask $groupname.layername @maskname [ --copy --offsetX 0 --offsetY 0 ] => $groupname.$layername 
+    cutout_layer_with_mask $groupname.layername @maskname [ --copy --offsetY 0 --offsetX 0 ] => $groupname.$layername 
       param 1: layer to cutout from
       param 2: mask to define selection
 
@@ -460,7 +460,7 @@ List directory.
 Finds the difference between two masks; if mask A has value '1' at coordinate X,Y while mask B has value '0' at the same coordinate (after applying the offset), then the result will have value '1', and otherwise '0'. For masks with decimal values, then the result is max(0, A-B). '--offsetX' and '--offsetY' specify how much to move B before the difference is taken; at any rate, the resulting mask will be stretched to encompass both A and B, including the offset.
 
 ##mask_from_landmass
-    mask_from_landmass $groupname.layername int int [ --choose_coast --include_ocean_resources --include_coast ] => @maskname 
+    mask_from_landmass $groupname.layername int int [ --choose_coast --include_coast --include_ocean_resources ] => @maskname 
       param 1: the layer to generate a mask from
       param 2: x coordinate of starting tile
       param 3: y coordinate of starting tile
@@ -507,7 +507,7 @@ Inverts a mask; that is, '1's become '0's and vice versa. For masks with decimal
 Swings values to either a '1' or a '0' depending on the threshold value, which is the second parameter to this command. Mask values below this value become a '0', and values above or equal become a '1'.
 
 ##mask_union
-    mask_union @maskname @maskname [ --offsetY 0 --offsetX 0 ] => @maskname 
+    mask_union @maskname @maskname [ --offsetX 0 --offsetY 0 ] => @maskname 
       param 1: mask A
       param 2: mask B
 
@@ -676,7 +676,7 @@ Sets a mask's value at a specific coordinate to a specific value.
 Sets the default output directory for other commands, e.g. export_sims.
 
 ##set_player_data
-    set_player_data $groupname int [ --player_name "" --color "" --leader "" --civ "" ] 
+    set_player_data $groupname int [ --civ "" --leader "" --color "" --player_name "" ] 
       param 1: group with player to set
       param 2: the player number whose data to set
 
@@ -699,7 +699,7 @@ Sets a particular player's data. You can pick and choose from any or all four op
 Sets a specific coordinate in a layer to a specific terrain value.
 
 ##set_wrap
-    set_wrap $groupname [ --nowrapY --nowrapX ] 
+    set_wrap $groupname [ --nowrapX --nowrapY ] 
       param 1: group to set
 
     Flag arguments (e.g. --thesethings) are always optional. The
@@ -737,8 +737,20 @@ Shows the definition for a weight. The optional 'flatten' arguments determines w
 
 Contracts the mask a certain number of tiles. Only values of '0' are considered by the shrink; thus, before the actual shrink operation occurs, the mask is first thresholded. Use '--threshold' to set a custom threshold.
 
+##strip_all_units
+    strip_all_units $groupname 
+      param 1: group to strip from
+
+All units are removed from all layers. This command modifies the group.
+
+##strip_all_units_from_layer
+    strip_all_units_from_layer $groupname.layername 
+      param 1: layer to strip from
+
+All units are removed from the map. This command modifies the layer.
+
 ##strip_nonsettlers
     strip_nonsettlers $groupname 
       param 1: group to strip from
 
-All non-settler units are removed from all layers. If a result is not specified, this command modifies the group.
+All non-settler units are removed from all layers. This command modifies the group.

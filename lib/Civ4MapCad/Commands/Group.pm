@@ -7,7 +7,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(
     export_sims export_group combine_groups flatten_group import_group new_group find_difference set_wrap
-    extract_starts_as_mask normalize_starts strip_nonsettlers add_scouts_to_settlers extract_starts export_sims
+    extract_starts_as_mask normalize_starts strip_nonsettlers strip_all_units add_scouts_to_settlers extract_starts export_sims
     copy_group crop_group expand_group_canvas 
 );
 
@@ -347,7 +347,6 @@ sub add_scouts_to_settlers {
     
     my $result_name = $pparams->get_result_name();
     my ($group) = $pparams->get_required();
-    
     $group->add_scouts_to_settlers();
     
     return 1;
@@ -374,7 +373,7 @@ sub strip_all_units {
 }
 
 my $strip_nonsettlers_help_text = qq[
-    All non-settler units are removed from all layers. If a result is not specified, this command modifies the group.
+    All non-settler units are removed from all layers. This command modifies the group.
 ];
 sub strip_nonsettlers {
     my ($state, @params) = @_;

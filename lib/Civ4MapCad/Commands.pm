@@ -34,13 +34,14 @@ use Civ4MapCad::Commands::Mask qw(
 use Civ4MapCad::Commands::Layer qw(
     move_layer_to_location move_layer_by set_layer_priority crop_layer rename_layer delete_layer
     flip_layer_tb flip_layer_lr copy_layer_from_group merge_two_layers expand_layer_canvas
-    increase_layer_priority decrease_layer_priority set_tile rotate_layer
+    increase_layer_priority decrease_layer_priority set_tile rotate_layer strip_all_units_from_layer
 );
 
 use Civ4MapCad::Commands::Group qw(
     export_sims  export_group combine_groups flatten_group import_group crop_group
     new_group find_difference extract_starts_as_mask normalize_starts expand_group_canvas
     strip_nonsettlers add_scouts_to_settlers extract_starts export_sims copy_group set_wrap
+    strip_all_units
 );
 
 # use Civ4MapCad::Commands::Balance qw();

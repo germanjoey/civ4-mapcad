@@ -265,12 +265,12 @@ sub _process {
     my $open_string = 0;
     
     foreach my $raw (@$raw_params) {
-        if (($open_string == 1) or ($raw =~ /^\"/)) {
+        if (($open_string == 1) or ($raw =~ /^(?:,)?\"/)) {
             $open_string = 1;
             
             $current_string .= $raw;
             
-            if ($raw =~ /\"$/) {
+            if ($raw =~ /\"(?:,)?$/) {
                 push @preproc, $current_string;
                 
                 $open_string = 0;
@@ -294,6 +294,11 @@ sub _process {
         }
         
         push @preproc, $raw;
+    }
+    
+    foreach my $p (@preproc) {
+        $p =~ s/^,+//;
+        $p =~ s/,+$//;
     }
     
     if ($open_string) {
@@ -360,6 +365,7 @@ sub _process {
         
         if ($expected_type =~ /int/) {
             unless ($preproc[$i] =~ /^[-+]?\d+$/) {
+            
                 $processed_params{'error_msg'} = "parameter '$preproc[$i]' was expected to be an integer value but yet is not.";
                 $processed_params{'error'} = 1;
                 $processed_params{'help_anyways'} = 1;

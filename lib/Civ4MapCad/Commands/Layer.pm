@@ -8,6 +8,7 @@ our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(move_layer_to_location move_layer_by set_layer_priority crop_layer  
                     flip_layer_tb flip_layer_lr copy_layer_from_group merge_two_layers expand_layer_canvas
                     increase_layer_priority decrease_layer_priority set_tile rename_layer delete_layer rotate_layer
+                    strip_all_units_from_layer
                    );
 
 use Civ4MapCad::ParamParser;
@@ -440,6 +441,26 @@ sub rotate_layer {
     }
     
     $state->set_variable($result_name, 'layer', $copy);
+    
+    return 1;
+}
+
+my $strip_all_units_from_layer_help_text = qq[
+    All units are removed from the map. This command modifies the layer.
+];
+sub strip_all_units_from_layer {
+    my ($state, @params) = @_;
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'required' => ['layer'],
+        'required_descriptions' => ['layer to strip from'],
+        'help_text' => $strip_all_units_from_layer_help_text
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my $result_name = $pparams->get_result_name();
+    my ($layer) = $pparams->get_required();
+    $layer->strip_all_units();
     
     return 1;
 }
