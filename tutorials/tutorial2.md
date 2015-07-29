@@ -19,7 +19,7 @@ Here's a full list of how Groups and Layers depend on each other:
 
 Not too complicated, right? Let's see an example, using the same map as the last tutorial. Run these commands:
 
-    set_mod "RtR"
+    set_mod "2.0.7.4"
     import_group "tutorials/t1/tutorial1.CivBeyondSwordWBSave" => $tutorial2
     dump_group $t2_cropped --add_to_existing
     
