@@ -8,6 +8,12 @@ The first thing you'll need to do is install Perl. You can get it here, free: (n
 
 Next, download Civ4 Map Cad from Github by clicking the "Download ZIP" button on the right side of the page. Extract this to a folder somewhere; I put mine in my Documents folder(C:\Users\GermanJoey\Documents\civ4 mapcad) so that it's conveniently nearby my Civ4 saves directory.
 
+One last task before we get started. We need to configure Civ4MC (that's what I call Civ4 Map Cad for sort) to correctly find your Civ4.exe so that it can correctly import all leader/civ/art data from its XML files. To do that, just open the config file at [def/config.cfg](../def/config.cfg) and edit the line that says "civ4_exe = " to the right path.
+
+![tutorial1-img1](t1/i1b.png)
+
+Lines preceded by hash marks (#) are comments and won't be read. If you have a steam version of Civ4, you probably won't need to do anything at all, because I use that too and already have the path set that way.
+
 Anyways, now we're ready to go! Double click mapcad.pl (or run it as "perl mapcad.pl" from the command line) and you should see a command prompt like this:
 
 ![tutorial1-img1](t1/i1.png)

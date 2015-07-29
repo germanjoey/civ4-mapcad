@@ -100,8 +100,30 @@ sub set_mod {
         return -1;
     }
     
+    if ((! exists $main::config{'civ4_exe'}) or (! -e $main::config{'civ4_exe'})) {
+        $state->report_error("The civ4 .exe path was not found or does not exist! Please set it correctly in 'def/config.cfg'.");
+        exit(-1);
+    }
+    
+    if (! exists $main::config{'civ4_path'}) {
+        $main::config{'civ4_path'} = "$main::config{'civ4_exe'}";
+        $main::config{'civ4_path'} =~ s/Civ4BeyondSword.exe$//;
+        $main::config{'civ4_path'} =~ s/\/+$//;
+        $main::config{'civ4_path'} =~ s/\\+$//;
+        $main::config{'civ4_path'} =~ s/\\+/\//g;
+    }
+    
     our %config = Config::General->new("mods/$mod/$mod.cfg")->getall();
     foreach my $item (keys %config) {
+        if ($config{$item} =~ /\$CIV4PATH/) {
+            $config{$item} =~ s/\\+/\//g;
+            $config{$item} =~ s/\$CIV4PATH/$main::config{'civ4_path'}/;
+            if (! -e $config{$item}) {
+                $state->report_error("Can't find XML file: \"$config{$item}\".");
+                exit(-1);
+            }
+        }
+    
         $main::config{$item} = $config{$item};
     }
     
