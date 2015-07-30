@@ -3,9 +3,11 @@ package Civ4MapCad::Object::Group;
 use strict;
 use warnings;
  
+use List::Util qw(min max);
+
 use Civ4MapCad::Object::Layer;
 use Civ4MapCad::Util qw(deepcopy);
- 
+
 sub new_blank {
     my $proto = shift;
     my $class = ref $proto || $proto;
@@ -121,6 +123,7 @@ sub crop {
 sub set_layer {
     my ($self, $name, $new_layer) = @_;
     $self->{'layers'}{$name} = $new_layer;
+    $new_layer->set_membership($self);
 }
 
 sub layer_exists {

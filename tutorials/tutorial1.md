@@ -18,7 +18,7 @@ Anyways, now we're ready to go! Double click mapcad.pl (or run it as "perl mapca
 
 ![tutorial1-img1](t1/i1.png)
 
-and enter the following line to load the tutorial map. "import_group" is the name of the command, "tutorials/t1/tutorial1.CivBeyondSwordWBSave" is a string containing the path, and the "=> $tutorial1" part says that the result of the command will be stored as the object named "$tutorial1". (it'd be kinda like assigning the result of a function to a variable, if this were a programming language)
+If any errors occurred, check "output.txt" and "error.txt" in the base civ4mapcad directory; those might give you a hint as to the problem. (most likely (hopefully) your Civ4 executable path is not correct). Anyways, if all is good, enter the following line to load the tutorial map. "import_group" is the name of the command, "tutorials/t1/tutorial1.CivBeyondSwordWBSave" is a string containing the path, and the "=> $tutorial1" part says that the result of the command will be stored as the object named "$tutorial1". (it'd be kinda like assigning the result of a function to a variable, if this were a programming language)
 
     > import_group "tutorials/t1/tutorial1.CivBeyondSwordWBSave" => $tutorial1
 

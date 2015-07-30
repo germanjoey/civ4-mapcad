@@ -100,7 +100,7 @@ sub crop_group {
     
     my ($result_name) = $pparams->get_result_name();
     $state->set_variable($result_name, 'group', $copy);
-        
+    return 1;
 }
 
 my $new_group_help_text = qq[
@@ -205,6 +205,12 @@ sub flatten_group {
     my ($group) = $pparams->get_required();
     my ($rename_final) = $pparams->get_named('rename_final_layer');
     
+    my @layers = $group->get_layers();
+    if (@layers == 0) {
+        $state->report_error("Can't flatten group: it has no layers!");
+        return -1;
+    }
+    
     my $copy = deepcopy($group);
     
     if ($rename_final) {
@@ -263,6 +269,11 @@ sub export_group {
     my ($group) = $pparams->get_required();
     my $output_dir = $main::config{'output_dir'};
     my @layers = $group->get_layer_names();
+    
+    if (@layers == 0) {
+        $state->report_error("Can't export group: it has no layers!");
+        return -1;
+    }
     
     $state->buffer_bar();
     
@@ -446,6 +457,12 @@ sub export_sims {
     my ($group) = $pparams->get_required();
     my $copy = deepcopy($group);
     my $bfc = $state->get_variable('@bfc_for_sim', 'mask');
+    
+    my @layers = $group->get_layer_names();
+    if (@layers == 0) {
+        $state->report_error("Can't export group: it has no layers!");
+        return -1;
+    }
     
     my $has_duplicate_owners = $copy->has_duplicate_owners();
     $state->buffer_bar() if $has_duplicate_owners;

@@ -457,9 +457,9 @@ sub check_croppable {
     my ($self, $left, $bottom, $right, $top) = @_;
     
     my $layer_left = $self->{'offsetX'};
-    my $layer_right = $self->{'offsetX'} + $self->get_width();
+    my $layer_right = $self->{'offsetX'} + $self->get_width() - 1;
     my $layer_bottom = $self->{'offsetY'};
-    my $layer_top = $self->{'offsetY'} + $self->get_height();
+    my $layer_top = $self->{'offsetY'} + $self->get_height() - 1;
     
     return 1 if ($layer_left < $left) and ($layer_right > $left);
     return 1 if ($layer_right > $left) and ($layer_right > $right);
@@ -472,7 +472,12 @@ sub check_croppable {
 sub crop {
     my ($self, $left, $bottom, $right, $top) = @_;
     
-    $self->{'map'}->crop($left - $self->{'offsetX'}, $bottom - $self->{'offsetY'}, $right - $self->{'offsetX'}, $top - $self->{'offsetY'});
+    my $actual_left = max(0, $left - $self->{'offsetX'});
+    my $actual_bottom = max(0, $bottom - $self->{'offsetY'});
+    my $actual_right = min($self->get_width() - 1, $right - $self->{'offsetX'});
+    my $actual_top = min($self->get_height() - 1, $top - $self->{'offsetY'});
+
+    $self->{'map'}->crop($actual_left, $actual_bottom, $actual_right, $actual_top);
 }
 
 sub get_player_data {
@@ -677,16 +682,48 @@ sub follow_tiles {
 sub rotate {
     my ($self, $angle, $it) = @_;
     
-    my ($new_width, $new_height, $move_x, $move_y, $result_angle1, $result_angle2) = $self->{'map'}->rotate($angle, $it);
-    
-    $self->move_by(-$move_x, -$move_y);
+    return (0,0) if ($angle % 360) == 0;
     
     my $group_width = $self->get_group()->get_width();
     my $group_height = $self->get_group()->get_height();
     
+    my ($new_width, $new_height, $move_x, $move_y, $result_angle1, $result_angle2) = $self->{'map'}->rotate($angle, $it);
+    
+    # expand the group if the result layer is bigger than the group was originally
     if (($group_width < $new_width) or ($group_height < $new_height)) {
         $self->get_group()->expand_dim(max($new_width, $group_width), max($new_height, $group_height));
     }
+    
+    # now correctly position the rotated layer
+    $move_x = -$move_x;
+    $move_y = -$move_y;
+    
+    $group_width = $self->get_group()->get_width();
+    $group_height = $self->get_group()->get_height();
+    
+    if ($move_x >= $group_width) {
+        while ($move_x >= $group_width) {
+            $move_x -= $group_width;
+        }
+    }
+    elsif ((-$move_x) >= $group_width) {
+        while ((-$move_x) >= $group_width) {
+            $move_x += $group_width;
+        }
+    }
+    
+    if ($move_y >= $group_height) {
+        while ($move_y >= $group_height) {
+            $move_y -= $group_height;
+        }
+    }
+    elsif ((-$move_y) >= $group_height) {
+        while ((-$move_y) >= $group_height) {
+            $move_y += $group_height;
+        }
+    }
+    
+    $self->move_by($move_x, $move_y);
     
     return ($result_angle1, $result_angle2);
 }

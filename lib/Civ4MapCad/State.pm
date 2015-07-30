@@ -421,6 +421,7 @@ sub set_variable {
         foreach my $layer ($value->get_layers()) {
             my $layer_name = $layer->get_name();
             $self->{'layer'}{"\$$name.$layer_name"} = $layer;
+            $layer->set_membership($value);
         }
     }
 }

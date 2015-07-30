@@ -115,9 +115,9 @@ sub set_mod {
     
     our %config = Config::General->new("mods/$mod/$mod.cfg")->getall();
     foreach my $item (keys %config) {
-        if ($config{$item} =~ /\$CIV4PATH/) {
+        if ($config{$item} =~ /\$civ4_path/) {
             $config{$item} =~ s/\\+/\//g;
-            $config{$item} =~ s/\$CIV4PATH/$main::config{'civ4_path'}/;
+            $config{$item} =~ s/\$civ4_path/$main::config{'civ4_path'}/;
             if (! -e $config{$item}) {
                 $state->report_error("Can't find XML file: \"$config{$item}\".");
                 exit(-1);
@@ -217,7 +217,6 @@ sub load_xml_data {
     $| = 0;
     
     my $civdata = XMLin($main::config{'civ4_info_path'}, KeyAttr => {  }, ForceArray => [ 'CivilizationInfo', 'Cities', 'Building', 'Unit', 'FreeTech', 'FreeBuildingClass', 'FreeUnitClass', 'CivicType', 'Leader' ]);
-
     my $flagdata = XMLin($main::config{'civ4_artdefines_path'}, KeyAttr => {  }, ForceArray => [ 'CivilizationArtInfo' ]);
     my $leaderdata = XMLin($main::config{'civ4_leaders_path'}, KeyAttr => {  }, ForceArray => [ 'LeaderHeadInfo', 'DiploMusicPeaceEra', 'DiploMusicWarEra', 'MemoryDecay', 'ContactDelay', 'ContactRand', 'Flavor', 'Trait', 'MemoryAttitudePercent', 'NoWarAttitudeProb'  ]);
     my $civicdata = XMLin($main::config{'civ4_civics_path'}, KeyAttr => {  }, ForceArray => [ 'CivicInfo' ]);

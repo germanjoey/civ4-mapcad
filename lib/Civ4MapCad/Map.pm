@@ -355,6 +355,8 @@ sub find_starts {
     my @starts;
     foreach my $x (0..$#{$self->{'Tiles'}}) {
         foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
+            warn "$x/$y" unless defined $self->{'Tiles'}[$x][$y];
+        
             if ($self->{'Tiles'}[$x][$y]->has_settler()) {
                 push @starts, $self->{'Tiles'}[$x][$y]->get_starts();
             }
@@ -654,6 +656,9 @@ sub crop {
     
     my @new;
     
+    my $width = $self->{'MapInfo'}->get('grid width');
+    my $height = $self->{'MapInfo'}->get('grid height');
+    
     foreach my $x (0..$#{$self->{'Tiles'}}) {
         next if $x < $left;
         next if $x > $right;
@@ -669,8 +674,8 @@ sub crop {
     }
     
     $self->{'Tiles'} = \@new;
-    my $width = $right - $left + 1;
-    my $height = $top - $bottom + 1;
+    $width = $right - $left + 1;
+    $height = $top - $bottom + 1;
     
     $self->{'MapInfo'}->set('grid width', $width);
     $self->{'MapInfo'}->set('grid height', $height);
