@@ -708,8 +708,8 @@ sub fliptb {
         
         foreach my $yy (0..$#{$self->{'Tiles'}[$x]}) {
             my $y = $#{$self->{'Tiles'}[$x]} - $yy;
-            
             $new[$x][$y] = $self->{'Tiles'}[$x][$yy];
+            $new[$x][$y]->set('y', $y);
         }
     }
     
