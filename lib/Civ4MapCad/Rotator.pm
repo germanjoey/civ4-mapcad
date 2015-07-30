@@ -31,7 +31,7 @@ use Algorithm::Line::Bresenham qw(line);
 
 # input angle is in degrees
 sub rotate_grid {
-    my ($grid, $width, $height, $angle, $it) = @_;
+    my ($grid, $width, $height, $angle, $it, $autocrop) = @_;
     
     # normalize the angle
     while ($angle < 0) {
@@ -130,8 +130,10 @@ sub rotate_grid {
         }
     }
     
-    $width += $expand_width;
-    $height += $expand_height;
+    if ($autocrop == 0) {
+        $width += $expand_width;
+        $height += $expand_height;
+    }
     
     # TODO: need to correctly validate move; move_left is not enough; e.g. a move of 180 degrees needs to move down too
     

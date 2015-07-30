@@ -18,7 +18,9 @@ my @arr = setup_input($width, $height);
 
 my ($new_grid, $new_width, $new_height);
 my ($move_x, $move_y, $result_angle1, $result_angle2) = (0,0,0,0);
-($new_grid, $new_width, $new_height, $move_x, $move_y, $result_angle1, $result_angle2) = rotate_grid(\@arr, $width, $height, $angle, 1);
+my $iterations = 1;
+my $autocrop = 0;
+($new_grid, $new_width, $new_height, $move_x, $move_y, $result_angle1, $result_angle2) = rotate_grid(\@arr, $width, $height, $angle, $iterations, $autocrop);
 
 print "\n\n$new_width, $new_height, $move_x, $move_y, $result_angle1, $result_angle2\n\n";
 

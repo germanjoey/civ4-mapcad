@@ -912,11 +912,11 @@ sub bfs_region_search {
 }
 
 sub rotate {
-    my ($self, $angle, $it) = @_;
+    my ($self, $angle, $it, $autocrop) = @_;
     
     my $width = $self->{'MapInfo'}->get('grid width');
     my $height = $self->{'MapInfo'}->get('grid height');
-    my ($grid, $new_width, $new_height, $move_x, $move_y, $result_angle1, $result_angle2) = rotate_grid($self->{'Tiles'}, $width, $height, $angle, $it);
+    my ($grid, $new_width, $new_height, $move_x, $move_y, $result_angle1, $result_angle2) = rotate_grid($self->{'Tiles'}, $width, $height, $angle, $it, $autocrop);
     
     $self->{'MapInfo'}->set('grid width', $new_width);
     $self->{'MapInfo'}->set('grid height', $new_height);

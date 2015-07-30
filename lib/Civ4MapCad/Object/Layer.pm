@@ -680,52 +680,55 @@ sub follow_tiles {
 
 
 sub rotate {
-    my ($self, $angle, $it) = @_;
+    my ($self, $angle, $it, $autocrop) = @_;
     
     return (0,0) if ($angle % 360) == 0;
     
     my $group_width = $self->get_group()->get_width();
     my $group_height = $self->get_group()->get_height();
     
-    my ($new_width, $new_height, $move_x, $move_y, $result_angle1, $result_angle2) = $self->{'map'}->rotate($angle, $it);
-    
+    my ($new_width, $new_height, $move_x, $move_y, $result_angle1, $result_angle2) = $self->{'map'}->rotate($angle, $it, $autocrop);
+        
     # expand the group if the result layer is bigger than the group was originally
     if (($group_width < $new_width) or ($group_height < $new_height)) {
         $self->get_group()->expand_dim(max($new_width, $group_width), max($new_height, $group_height));
     }
-    
-    # now correctly position the rotated layer
-    $move_x = -$move_x;
-    $move_y = -$move_y;
-    
-    $group_width = $self->get_group()->get_width();
-    $group_height = $self->get_group()->get_height();
-    
-    if ($move_x >= $group_width) {
-        while ($move_x >= $group_width) {
-            $move_x -= $group_width;
+        
+    if ($autocrop == 0) {
+        
+        # now correctly position the rotated layer
+        $move_x = -$move_x;
+        $move_y = -$move_y;
+        
+        $group_width = $self->get_group()->get_width();
+        $group_height = $self->get_group()->get_height();
+        
+        if ($move_x >= $group_width) {
+            while ($move_x >= $group_width) {
+                $move_x -= $group_width;
+            }
         }
-    }
-    elsif ((-$move_x) >= $group_width) {
-        while ((-$move_x) >= $group_width) {
-            $move_x += $group_width;
+        elsif ((-$move_x) >= $group_width) {
+            while ((-$move_x) >= $group_width) {
+                $move_x += $group_width;
+            }
         }
+        
+        if ($move_y >= $group_height) {
+            while ($move_y >= $group_height) {
+                $move_y -= $group_height;
+            }
+        }
+        elsif ((-$move_y) >= $group_height) {
+            while ((-$move_y) >= $group_height) {
+                $move_y += $group_height;
+            }
+        }
+        
+        $self->move_by($move_x, $move_y);
     }
     
-    if ($move_y >= $group_height) {
-        while ($move_y >= $group_height) {
-            $move_y -= $group_height;
-        }
-    }
-    elsif ((-$move_y) >= $group_height) {
-        while ((-$move_y) >= $group_height) {
-            $move_y += $group_height;
-        }
-    }
-    
-    $self->move_by($move_x, $move_y);
-    
-    return ($result_angle1, $result_angle2);
+    return ($move_x, $move_y, $result_angle1, $result_angle2);
 }
 
 1;

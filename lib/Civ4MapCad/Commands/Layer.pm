@@ -408,6 +408,12 @@ my $rotate_layer_help_text = qq[
     do 3 rotations of 13 degrees. Rotating in small steps will give more accurate
     output angle but maybe jumble the result a bit more; again, some error is
     unavoidable due to the discrete nature of the problem.
+    <BREAK>
+    rotate_layer will scale the canvas and move the layer as appropriately so that
+    the result will be an exact rotation once the layer's group is flattened. However,
+    this will add a lot of empty space. You can stop this by using the '--autocrop' option. 
+    This can be useful if, for example, you want to just to crop the rotated result
+    afterwards anyways.
 ];
 
 # TODO: allow arbitrary rotation origins by shifting the tiles before/after the rotation
@@ -421,7 +427,8 @@ sub rotate_layer {
         'required_descriptions' => ['the layer to rotate', 'the angle of rotation, in degrees'],
         'help_text' => $rotate_layer_help_text,
         'optional' => {
-            'iterations' => 1
+            'iterations' => 1,
+            'autocrop' => 'false'
         }
     });
     return -1 if $pparams->has_error;
@@ -429,19 +436,25 @@ sub rotate_layer {
     
     my $result_name = $pparams->get_result_name();
     my $it = $pparams->get_named('iterations');
+    my $autocrop = $pparams->get_named('autocrop');
     my ($layer, $angle) = $pparams->get_required();
     my $copy = deepcopy($layer);
     
-    my ($result_angle1, $result_angle2) = $copy->rotate($angle, $it);
+    my ($move_x, $move_y, $result_angle1, $result_angle2) = $copy->rotate($angle, $it, $autocrop);
     
-    if ($result_angle1 !~ /^(?:90|180|270|360)$/) {
-        my $res = sprintf "%6.2f / %6.2f", $result_angle1, $result_angle2;
-        $res =~ s/\s+/ /g;
-        $state->list( "Actual angle of rotation, as measured in two different ways: $res." );
+    my $res = sprintf "%6.2f / %6.2f", $result_angle1, $result_angle2;
+    $res =~ s/\s+/ /g;
+    
+    my @results = ("Results for rotation of " . $layer->get_full_name() . " by $angle degrees:",
+                   "  After rotation, the layer was moved by $move_x, $move_y.",
+                   "  Actual angle of rotation, as measured longways / sideways: $res.");
+                   
+    if ($autocrop) {
+        $results[1] =~ s/was/would have been/;
     }
     
+    $state->list( @results );
     $state->set_variable($result_name, 'layer', $copy);
-    
     return 1;
 }
 
