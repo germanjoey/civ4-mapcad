@@ -51,7 +51,8 @@ my $evaluate_weight_inverse_help_text = qq[
    Evaluates the inverse result of a weight table with an terrain in order to get the corresponding value, e.g. 
    as if this terrain were at the coordinates of a layer tile. 'evaluate_weight_inverse' is only intended to be
    a debugging command; please see the Mask-related commands, e.g. 'generate_layer_from_mask', 'modify_layer_from_mask',
-   for actually using weights to generate/modify tiles. 
+   for actually using weights to generate/modify tiles. If '--exact_match' is set, then all fields of the terrain
+   must match all fields of the tile (except rivers), and vice versa.
 ];
 sub evaluate_weight_inverse {
     my ($state, @params) = @_;
@@ -59,16 +60,20 @@ sub evaluate_weight_inverse {
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['weight', 'terrain'],
         'required_descriptions' => ['weight', 'terrain to evaluate'],
-        'help_text' => $evaluate_weight_inverse_help_text
+        'help_text' => $evaluate_weight_inverse_help_text,
+        'optional' => {
+            'exact_match' => 'false'
+        }
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
     
+    my $exact_match = $pparams->get_named('exact_match');
     my ($weight, $terrain) = $pparams->get_required();
     
     my $tile = Civ4MapCad::Map::Tile->new_default(0, 0);
     $tile->set_tile($terrain);
-    my ($value) = $weight->evaluate_inverse($tile);
+    my ($value) = $weight->evaluate_inverse($tile, $exact_match);
     $weight->deflate();
     
     my @full;

@@ -8,8 +8,9 @@ our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(import_mask_from_ascii new_mask_from_shape mask_difference mask_union mask_intersect 
                     mask_invert mask_threshold modify_layer_with_mask cutout_layer_with_mask apply_shape_to_mask  
                     generate_layer_from_mask new_mask_from_magic_wand export_mask_to_ascii set_mask_coord
-                    export_mask_to_table import_mask_from_table mask_from_water mask_from_landmass
-                    new_mask_from_polygon grow_mask shrink_mask count_mask_value);
+                    export_mask_to_table import_mask_from_table new_mask_from_water new_mask_from_landmass
+                    new_mask_from_polygon grow_mask shrink_mask count_mask_value new_mask_from_filtered_tiles
+                    rotate_mask mask_eval2 mask_eval1);
 
 use Math::Geometry::Planar qw(IsInsidePolygon IsSimplePolygon);
 
@@ -310,12 +311,94 @@ sub mask_intersect {
     return _two_op($state, $mask_intersect_help_text, sub { my ($t, @r) = @_; return $t->intersection(@r) }, @params);
 }
 
+my $mask_eval2_help_text = qq[
+    todo
+];
+sub mask_eval2 {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'has_result' => 'mask',
+        'help_text' => $mask_eval2_help_text,
+        'required' => ['mask', 'mask', 'str'],
+        'required_descriptions' => ['mask A', 'mask B', 'code to evaluate'],
+        'optional' => {
+            'offsetX' => 0,
+            'offsetY' => 0
+        }
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my ($target, $with, $evalstr) = $pparams->get_required();
+    my $offsetX = $pparams->get_named('offsetX');
+    my $offsetY = $pparams->get_named('offsetY');
+    
+    $evalstr =~ s/\b([abxy])\b/\$$1/g;
+    
+    my $opt = sub {
+        my ($a, $b, $x, $y) = @_;
+        return eval $evalstr;
+    };
+    
+    my $test = $opt->(1, 1, 0, 0);
+    if ($@) {
+        print "$@";
+        $state->report_error('Problem with eval string "$evalstr".');
+        return -1;
+    }
+    
+    my $result = Civ4MapCad::Object::Mask::_set_opt($target, $with, $offsetX, $offsetY, $opt);
+    my $result_name = $pparams->get_result_name();
+    $state->set_variable($result_name, 'mask', $result);
+    
+    return 1;
+}
+
+my $mask_eval1_help_text = qq[
+    todo
+];
+sub mask_eval1 {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'has_result' => 'mask',
+        'help_text' => $mask_eval1_help_text,
+        'required' => ['mask', 'str'],
+        'required_descriptions' => ['mask', 'code to evaluate']
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my ($target, $evalstr) = $pparams->get_required();
+    
+    $evalstr =~ s/\b([abxy])\b/\$$1/g;
+    
+    my $opt = sub {
+        my ($a, $b, $x, $y) = @_;
+        return eval $evalstr;
+    };
+    
+    my $test = $opt->(1, 1, 0, 0);
+    if ($@) {
+        print "$@";
+        $state->report_error('Problem with eval string "$evalstr".');
+        return -1;
+    }
+    
+    my $result = Civ4MapCad::Object::Mask::_self_opt($target, $opt);
+    my $result_name = $pparams->get_result_name();
+    $state->set_variable($result_name, 'mask', $result);
+    
+    return 1;
+}
+
 my $mask_invert_help_text = qq[
     Inverts a mask; that is, '1's become '0's and vice versa. For masks with decimal values, then the result is 1-value.
 ];
 sub mask_invert {
     my ($state, @params) = @_;
-    return _one_op($state, $mask_invert_help_text, '', sub { my ($t, @r) = @_; return $t->invert(@r) }, @params);
+    return _one_op($state, $mask_invert_help_text, undef, sub { my ($t, @r) = @_; return $t->invert(@r) }, @params);
 }
 
 my $mask_threshold_help_text = qq[
@@ -323,7 +406,7 @@ my $mask_threshold_help_text = qq[
 ];
 sub mask_threshold {
     my ($state, @params) = @_;
-    return _one_op($state, $mask_threshold_help_text, 'float', sub { my ($t, @r) = @_; return $t->threshold(@r) }, @params);
+    return _one_op($state, $mask_threshold_help_text, ['float', 'threshold level'], sub { my ($t, @r) = @_; return $t->threshold(@r) }, @params);
 }
 
 sub _one_op {
@@ -331,15 +414,15 @@ sub _one_op {
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'has_result' => 'mask',
-        'required' => ($has_other_arg ne '') ? ['mask', $has_other_arg] : ['mask'],
-        'required_descriptions' => ['input mask'],
+        'required' => (defined($has_other_arg) ? ['mask', $has_other_arg->[0]] : ['mask']),
+        'required_descriptions' => (defined($has_other_arg) ? ['input mask', $has_other_arg->[1]] : ['mask']),
         'help_text' => $help_text
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
     
-    my ($target) = $pparams->get_required;
-    my $result = $sub->($target);
+    my ($target, $other) = $pparams->get_required();
+    my $result = $sub->($target, $other);
     my $result_name = $pparams->get_result_name();
     $state->set_variable($result_name, 'mask', $result);
     
@@ -428,74 +511,68 @@ sub generate_layer_from_mask {
     return 1 if $pparams->done;
     
     my $result_name = $pparams->get_result_name();
-    my ($group_name) = $result_name =~ /^(\$\w+)/;
-    my ($layer_name) = $result_name =~ /(\w+)$/;
-    my $group = $state->get_variable($group_name, 'group');
     
     my ($mask, $weight) = $pparams->get_required();
     my ($width, $height) = ($mask->get_width(), $mask->get_height());
     my $offsetX = $pparams->get_named('offsetX');
     my $offsetY = $pparams->get_named('offsetY');
     
-    my ($layer) = Civ4MapCad::Object::Layer->new_default($layer_name, $width + abs($offsetX), $height + abs($offsetY));
+    my ($layer) = Civ4MapCad::Object::Layer->new_default("new", $width + abs($offsetX), $height + abs($offsetY));
     $layer->apply_mask($mask, $weight, $offsetX, $offsetY, 1);
     
-    
-    # TODO: this should just use set_variable
-    my $result = $group->add_layer($layer);
-    if (exists $result->{'error'}) {
-        $state->report_warning($result->{'error_msg'});
-    }
-        
-    $state->set_variable("\$$group_name.$layer_name", 'layer', $layer);
+    $state->set_variable($result_name, 'layer', $layer);
     return 1;
 }
 
-my $modify_layer_from_mask_help_text = qq[
-    Modifies a layer by applying a weight table to a mask. The value at each mask coordinate is evaluated according to the weight table, which is used
-    to *modify* the existing tile. Only differing attributes will be changed; this is useful if you want to just add bonuses to existing terrain with
-    the bare_ weights and terrain, or if you want to modify terrain without touching the bonuses.
+my $modify_layer_with_mask_help_text = qq[
+    Modifies a layer by applying a weight table to a mask. The value at each mask coordinate is evaluated according to the weight, which is used
+    to *modify* the existing tile. Only terrain attributes specified with flags will be checked, e.g. if '--check_bonus' and '--check_feature' are
+    checked, height and terrain type of the tiles will be untouched regardless of what the weight specifies.
 ];
 sub modify_layer_with_mask {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'has_result' => 'layer',
-        'help_text' => $modify_layer_from_mask_help_text,
+        'help_text' => $modify_layer_with_mask_help_text,
         'allow_implied_result' => 1,
         'required' => ['layer', 'mask', 'weight'],
         'required_descriptions' => ['layer to modify', 'mask to generate from', 'weight table to generate terrain from'],
         'optional' => {
             'offsetX' => '0',
-            'offsetY' => '0'
+            'offsetY' => '0',
+            'check_bonus' => 'false',
+            'check_feature' => 'false',
+            'check_type' => 'false',
+            'check_height' => 'false',
+            'check_variety' => 'false'
         }
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
     
-    my $result_name = $pparams->get_result_name();
-    my ($group_name) = $result_name =~ /^(\$\w+)/;
-    my ($layer_name) = $result_name =~ /(\w+)$/;
-    my $group = $state->get_variable($group_name, 'group');
-    
     my ($layer, $mask, $weight) = $pparams->get_required();
     my $offsetX = $pparams->get_named('offsetX');
     my $offsetY = $pparams->get_named('offsetY');
-    my $copy = deepcopy($layer);
     
-    $copy->apply_mask($mask, $weight, $offsetX, $offsetY, 0);
+    my ($result_name) = $pparams->get_result_name();
+    my $copy = ($result_name eq $layer->get_full_name()) ? $layer : deepcopy($layer);
     
-    my $result = $group->add_layer($copy);
-    if (exists $result->{'error'}) {
-        $state->report_warning($result->{'error_msg'});
-    }
+    my %allowed = (
+        'TerrainType' => $pparams->get_named('check_type'),
+        'BonusType' => $pparams->get_named('check_bonus'),
+        'PlotType' => $pparams->get_named('check_height'),
+        'FeatureType' => $pparams->get_named('check_feature'),
+        'FeatureVariety' => $pparams->get_named('check_feature') && $pparams->get_named('check_variety')
+    );
     
-    $state->set_variable("\$$group_name.$layer_name", 'layer', $copy);
+    $copy->apply_mask($mask, $weight, $offsetX, $offsetY, 0, \%allowed);
+    $state->set_variable($result_name, 'layer', $copy);
     return 1;
 }
 
 my $cutout_layer_with_mask_help_text = qq[
-    todo 
+    Cuts tiles out of a layer with a mask into a new layer, as if the mask were a cookie-cutter and the original layer was dough. Tiles in the original layer are deleted. (replaced with blank tiles (ocean)). If '--copy' is set, then the tiles in the original layer aren't deleted. 
 ];
 sub cutout_layer_with_mask {
     my ($state, @params) = @_;
@@ -515,15 +592,12 @@ sub cutout_layer_with_mask {
     return 1 if $pparams->done;
     
     my $result_name = $pparams->get_result_name();
-    my ($group_name) = $result_name =~ /^(\$\w+)/;
-    my ($layer_name) = $result_name =~ /(\w+)$/;
-    my $group = $state->get_variable($group_name, 'group');
-    
     my ($layer, $mask) = $pparams->get_required();
-    my $copy = $pparams->get_named('copy');
-    my $clear = ($copy) ? 0 : 1;
+    my $copy_tiles = $pparams->get_named('copy_tiles');
     my $offsetX = $pparams->get_named('offsetX');
     my $offsetY = $pparams->get_named('offsetY');
+    
+    my $clear = ($copy_tiles) ? 0 : 1;
     my $selected = $layer->select_with_mask($mask, $offsetX, $offsetY, $clear);
     
     $state->set_variable($result_name, 'layer', $selected);
@@ -531,27 +605,28 @@ sub cutout_layer_with_mask {
 }
 
 my $apply_shape_to_mask_help_text = qq[
-    todo
+    Transforms a mask by applying a shape to each coordinate of the mask, meaning that the current value of the coordinate is an input to the shape function.
 ];
 sub apply_shape_to_mask {
     my ($state, @params) = @_;
 
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
-        'has_result' => 'layer',
-        'allow_implied_result' => 1,
-        'required' => ['mask', 'shape'],
-        'required_descriptions' => ['mask to change', 'shape to apply'],
         'has_shape_params' => 1,
-        'help_text' => $apply_shape_to_mask_help_text,
-        'optional' => {
-            'offsetX' => '0',
-            'offsetY' => '0'
-        }
+        'has_result' => 'mask',
+        'required' => ['shape', 'mask'],
+        'required_descriptions' => ['shape to apply', 'mask to change'],
+        'help_text' => $apply_shape_to_mask_help_text
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
     
-    die;
+    my $shape_params = $pparams->get_shape_params();
+    my ($shape, $mask) = $pparams->get_required();
+    
+    my $result_name = $pparams->get_result_name();
+    my $result = $mask->apply_shape($shape, $shape_params);
+    $state->set_variable($result_name, 'mask', $result);
+    return 1;
 }
 
 my $grow_mask_help_text = qq[ 
@@ -611,7 +686,6 @@ sub shrink_mask {
     return 1 if $pparams->done;
     
     my $result_name = $pparams->get_result_name();
-    my $realign = $pparams->get_named('realign');
     my $threshold = $pparams->get_named('threshold');
     my ($mask, $amount) = $pparams->get_required();
     
@@ -627,8 +701,6 @@ sub set_mask_coord {
     my ($state, @params) = @_;
 
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
-        'has_result' => 'mask',
-        'allow_implied_result' => 1,
         'help_text' => $set_mask_coord_help_text,
         'required' => ['mask', 'int', 'int', 'float'],
         'required_descriptions' => ['the mask to modify', 'x coordinate', 'y coordinate', 'value to set']
@@ -645,22 +717,19 @@ sub set_mask_coord {
         return -1;
     }
     
-    my $copy = deepcopy($mask);
-    $copy->{'canvas'}[$x][$y] = $value;
-    
-    $state->set_variable($names[0], 'mask', $copy);
+    $mask->{'canvas'}[$x][$y] = $value;
     return 1;
 }
 
-my $mask_from_landmass_help_text = qq[
+my $new_mask_from_landmass_help_text = qq[
     Generate a mask based on a landmass. The starting tile must be a land tile; otherwise an error will be thrown. If '--choose_coast' is set, the mask will select be all water tiles adjacent to the landmass (i.e. its coast). If '--include_coast' is set, instead both the landmass and its coast will be selected. Finally, if '--include_ocean_resources' is set in addition to '--include_coast' or '--choose_coast', then all tiles containing ocean resources that are *adjacent* to a coast tile will be included.
 ];
-sub mask_from_landmass {
+sub new_mask_from_landmass {
     my ($state, @params) = @_;
 
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'has_result' => 'mask',
-        'help_text' => $mask_from_landmass_help_text,
+        'help_text' => $new_mask_from_landmass_help_text,
         'required' => ['layer', 'int', 'int'],
         'required_descriptions' => ['the layer to generate a mask from', 'x coordinate of starting tile', 'y coordinate of starting tile'],
         'optional' => {
@@ -718,15 +787,15 @@ sub mask_from_landmass {
     return 1;
 }
 
-my $mask_from_water_help_text = qq[
+my $new_mask_from_water_help_text = qq[
     Generate a mask based on a body of water. The starting tile must be a water tile; otherwise an error will be thrown. If '--only_coast' is set, the mask will only select tiles adjacent to land (i.e. the coast). If '--choose_land' is set, only land tiles adjacent to the body of water will be selected. '--only_coast' and '--choose_land' cannot both be 1 at the same time.
 ];
-sub mask_from_water {
+sub new_mask_from_water {
     my ($state, @params) = @_;
 
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'has_result' => 'mask',
-        'help_text' => $mask_from_water_help_text,
+        'help_text' => $new_mask_from_water_help_text,
         'required' => ['layer', 'int', 'int'],
         'required_descriptions' => ['the layer to generate a mask from', 'x coordinate of starting tile', 'y coordinate of starting tile'],
         'optional' => {
@@ -786,11 +855,15 @@ sub new_mask_from_magic_wand {
         'has_result' => 'mask',
         'required' => ['layer', 'weight', 'int', 'int'],
         'required_descriptions' => ['layer to select from', 'inverse weight to match to tiles', 'start coordinate X', 'start coordinate Y'],
-        'help_text' => $new_mask_from_magic_wand_help_text
+        'help_text' => $new_mask_from_magic_wand_help_text,
+        'optional' => {
+            'exact_match' => 'false'
+        }
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
     
+    my $exact_match = $pparams->get_named('exact_match');
     my $result_name = $pparams->get_result_name();
     my ($layer, $weight, $start_x, $start_y) = $pparams->get_required();
     my $copy = deepcopy($layer);
@@ -804,9 +877,7 @@ sub new_mask_from_magic_wand {
     }
     
     my $mask = Civ4MapCad::Object::Mask->new_blank($copy->get_width(), $copy->get_height());
-    
     my (%checked, %nonexistant);
-    
     my $is_already_checked = sub {
         my ($x, $y) = @_;
         return 1 if exists($checked{"$x/$y"}) or exists($nonexistant{"$x/$y"});
@@ -829,7 +900,7 @@ sub new_mask_from_magic_wand {
         my ($x, $y) = ($tile->get('x'), $tile->get('y'));
         $mark_as_checked->($x, $y, $tile);
         
-        my $value = $weight->inverse_evaluate($tile);
+        my $value = $weight->evaluate_inverse($tile, $exact_match);
         if (defined($value)) {
             $mask->{'canvas'}[$x][$y] = $value;
             return 1;
@@ -838,9 +909,82 @@ sub new_mask_from_magic_wand {
         return 0;
     };
     
-    $layer->{'map'}->bfs_region_search($start_tile, $is_already_checked, $mark_as_checked, $process);
+    $weight->deflate();
+    $layer->{'map'}->region_search($start_tile, $is_already_checked, $mark_as_checked, $process);
     $state->set_variable($result_name, 'mask', $mask);
     
+    return 1;
+}
+
+my $new_mask_from_filtered_tiles_help_text = qq[
+    todo
+];
+sub new_mask_from_filtered_tiles {
+    my ($state, @params) = @_;
+
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'has_result' => 'mask',
+        'help_text' => $new_mask_from_filtered_tiles_help_text,
+        'required' => ['layer', 'weight'],
+        'required_descriptions' => ['the layer to find tiles in', 'the weight to filter the layer with'],
+        'optional' => {
+            'exact_match' => 'false'
+        }
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my $exact_match = $pparams->get_named('exact_match');
+    my $result_name = $pparams->get_result_name();
+    my ($layer, $weight) = $pparams->get_required();
+    my $copy = deepcopy($layer);
+    
+    $copy->fix_coast();
+    my $mask = $copy->apply_weight($weight, $exact_match);
+    $state->set_variable($result_name, 'mask', $mask);
+    return 1;
+}
+
+# TODO: allow arbitrary rotation origins by shifting the tiles before/after the rotation
+my $rotate_mask_help_text = qq[
+    todo
+];
+sub rotate_mask {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'has_result' => 'mask',
+        'allow_implied_result' => 1,
+        'required' => ['mask', 'float'],
+        'required_descriptions' => ['the mask to rotate', 'the angle of rotation, in degrees'],
+        'help_text' => $rotate_mask_help_text,
+        'optional' => {
+            'iterations' => 1,
+        }
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my $it = $pparams->get_named('iterations');
+    my $result_name = $pparams->get_result_name();
+    my ($mask, $angle) = $pparams->get_required();
+    my $copy = deepcopy($mask);
+    
+    my $autocrop = 1;
+    my ($move_x, $move_y, $result_angle1, $result_angle2) = $copy->rotate($angle, $it, 1);
+    
+    my $res = sprintf "%6.2f / %6.2f", $result_angle1, $result_angle2;
+    $res =~ s/\s+/ /g;
+    
+    my @results = ("Results for rotation of mask by $angle degrees:",
+                   "  Actual angle of rotation, as measured longways / sideways: $res.");
+                   
+    if ($autocrop) {
+        $results[1] =~ s/was/would have been/;
+    }
+    
+    $state->list( @results );
+    $state->set_variable($result_name, 'mask', $copy);
     return 1;
 }
 

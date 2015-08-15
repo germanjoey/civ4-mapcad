@@ -71,7 +71,7 @@ sub evaluate {
 }
 
 sub evaluate_inverse {
-    my ($self, $tile) = @_;
+    my ($self, $tile, $exact) = @_;
     my $state = $self->{'state'};
     
     unless ($self->{'flattened'}) {
@@ -80,9 +80,9 @@ sub evaluate_inverse {
     }
     
     my %optable = (
-        '>'  => sub { return $_[0]->compare($state->{'terrain'}{$_[1]} ) },
-        '>=' => sub { return $_[0]->compare($state->{'terrain'}{$_[1]} ) },
-        '==' => sub { return $_[0]->compare($state->{'terrain'}{$_[1]} ) },
+        '>'  => sub { return $_[0]->compare($state->{'terrain'}{$_[1]}, $exact ) },
+        '>=' => sub { return $_[0]->compare($state->{'terrain'}{$_[1]}, $exact ) },
+        '==' => sub { return $_[0]->compare($state->{'terrain'}{$_[1]}, $exact ) },
     );
     
     foreach my $pair (@{ $self->{'flat_pairs'} }) {

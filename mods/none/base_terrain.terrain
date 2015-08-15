@@ -11,7 +11,9 @@
     PlotType = 3
 </ocean>
 
- 
+<bare_peak>
+    PlotType = 0
+</bare_peak>
  
 <grass>
     TerrainType = TERRAIN_GRASS
@@ -235,6 +237,77 @@
     FeatureVariety = 3
     PlotType = 1
 </tundrahill_forest3>
+ 
+
+
+<snow>
+    TerrainType = TERRAIN_SNOW
+    PlotType = 2
+</snow>
+<snowhill>
+    TerrainType = TERRAIN_SNOW
+    PlotType = 1
+</snowhill>
+<snow_forest>
+    TerrainType = TERRAIN_SNOW
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 3
+    PlotType = 2
+</snow_forest>
+<snow_forest0>
+    TerrainType = TERRAIN_SNOW
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 0
+    PlotType = 2
+</snow_forest0>
+<snow_forest1>
+    TerrainType = TERRAIN_SNOW
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 1
+    PlotType = 2
+</snow_forest1>
+<snow_forest2>
+    TerrainType = TERRAIN_SNOW
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 2
+    PlotType = 2
+</snow_forest2>
+<snow_forest3>
+    TerrainType = TERRAIN_SNOW
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 3
+    PlotType = 2
+</snow_forest3>
+<snowhill_forest>
+    TerrainType = TERRAIN_SNOW
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 3
+    PlotType = 1
+</snowhill_forest>
+<snowhill_forest0>
+    TerrainType = TERRAIN_SNOW
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 0
+    PlotType = 1
+</snowhill_forest0>
+<snowhill_forest1>
+    TerrainType = TERRAIN_SNOW
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 1
+    PlotType = 1
+</snowhill_forest1>
+<snowhill_forest2>
+    TerrainType = TERRAIN_SNOW
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 2
+    PlotType = 1
+</snowhill_forest2>
+<snowhill_forest3>
+    TerrainType = TERRAIN_SNOW
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 3
+    PlotType = 1
+</snowhill_forest3>
  
  
 <peak>

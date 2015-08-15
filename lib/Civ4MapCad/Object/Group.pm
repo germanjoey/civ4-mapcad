@@ -14,6 +14,7 @@ sub new_blank {
     my ($name, $width, $height) = @_;
    
     my $obj = {
+        'ref_id' => $main::state->next_ref_id(),
         'name' => $name,
         'wrapX' => 1,
         'wrapY' => 1,
@@ -24,7 +25,9 @@ sub new_blank {
         'priority' => {}, # indexed by name, value is priority. bottom layer (highest priority, which is the lowest number) defines map settings
     };
    
-    return bless $obj, $class;
+    my $blessed = bless $obj, $class;
+    $main::config::{'ref_table'}{$obj->{'ref_id'}} = $blessed;
+    return $blessed;
 }
  
 sub new_from_import {
@@ -33,6 +36,7 @@ sub new_from_import {
     my ($filename) = @_;
     
     my $obj = {
+        'ref_id' => $main::state->next_ref_id(),
         'layers' => {},
         'wrapX' => 0,
         'wrapY' => 0,
@@ -57,6 +61,8 @@ sub new_from_import {
     $self->{'wrapY'} = ($layer->wrapsY()) ? 1 : 0;
     
     $self->add_layer($layer);
+    
+    $main::config::{'ref_table'}{$self->{'ref_id'}} = $self;
     return $self;
 }
 
@@ -100,6 +106,7 @@ sub get_height {
 
 sub expand_dim {
     my ($self, $width, $height) = @_;
+
     $self->{'width'} = $width;
     $self->{'height'} = $height;
 }
@@ -107,12 +114,22 @@ sub expand_dim {
 sub crop {
     my ($self, $left, $bottom, $right, $top) = @_;
     
+    # TODO: I'm not fully convinced this is correct... look into it more
+    # warn "CROP GROUP " . $self->get_name() . " $left, $bottom, $right, $top";
+
     foreach my $layer ($self->get_layers()) {
-        if ($layer->check_croppable($left, $bottom, $right, $top)) {
+        my $croppable = $layer->check_croppable($left, $bottom, $right, $top);
+        # warn "  crop layer " . $layer->get_name() . " croppable $croppable";
+        if ($croppable == 1) {
             $layer->crop($left, $bottom, $right, $top);
             
-            $layer->move_to(max(0, $layer->get_offsetX() - $left), 0) if $layer->get_offsetX() > 0;
-            $layer->move_to(0, max(0, $layer->get_offsetY() - $bottom)) if $layer->get_offsetY() > 0;
+            # warn "    cropping layer $layer->{'offsetX'} $layer->{'offsetY'}";
+            $layer->move_by(max(0, $layer->get_offsetX() - $left), 0);
+            $layer->move_by(0, max(0, $layer->get_offsetY() - $bottom));
+            # warn "    cropping layer $layer->{'offsetX'} $layer->{'offsetY'}";
+        }
+        elsif ($croppable == -1) {
+            $self->delete_layer($layer->get_name());
         }
     }
     
@@ -134,12 +151,18 @@ sub layer_exists {
 
 sub rename {
     my ($self, $new_name) = @_;
+    $new_name =~ s/\$//g;
     $self->{'name'} = $new_name;
 }
 
 sub get_name {
     my ($self) = @_;
     return $self->{'name'};
+}
+
+sub get_full_name {
+    my ($self) = @_;
+    return '$' . $self->{'name'};
 }
 
 sub get_layer {
@@ -269,10 +292,10 @@ sub decrease_priority {
  
 sub set_layer_priority {
     my ($self, $layer_name, $new_priority) = @_;
-   
+    
     foreach my $name (keys %{ $self->{'layers'} }) {
         next if $name eq $layer_name;
-        if ($self->{'priority'}{$name} >= $new_priority) {
+        if ($self->{'priority'}{$name} > $new_priority) {
             $self->{'priority'}{$name} = $self->{'priority'}{$name} + 1;
             if (($self->{'priority'}{$name}) > $self->{'max_priority'}) {
                 $self->{'max_priority'} = $self->{'priority'}{$name};
@@ -280,9 +303,28 @@ sub set_layer_priority {
         }        
     }
    
-    $self->{'priority'}{$layer_name} = $new_priority;
+    $self->{'priority'}{$layer_name} = $new_priority + 1;
     if (($self->{'priority'}{$layer_name}) > $self->{'max_priority'}) {
         $self->{'max_priority'} = $self->{'priority'}{$layer_name};
+    }
+    
+    # now get rid of gaps
+    my %inverse;
+    foreach my $name (keys %{ $self->{'layers'} }) {
+        $inverse{$self->{'priority'}{$name}} = $name;
+    }
+    
+    my $adjust = 0;
+    my @ps = sort {$b <=> $a} keys %inverse;
+    my $last = $self->{'max_priority'};
+    foreach my $i (1..$#ps) {
+        my $diff = $ps[$i-1] - $ps[$i];
+        if ($diff > 1) {
+            $adjust += ($diff-1);
+        }
+        
+        my $name = $inverse{$ps[$i]};
+        $self->{'priority'}{$name} += $adjust; 
     }
     
     # readjust so that '0' is always the top priority
@@ -297,6 +339,8 @@ sub set_layer_priority {
             $self->{'priority'}{$name} -= $min;
         }
     }
+    
+    
    
     return 1;
 }

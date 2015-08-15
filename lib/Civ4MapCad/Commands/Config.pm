@@ -138,6 +138,8 @@ sub set_mod {
             foreach my $layer ($group->get_layers()) {
                 $layer->set_max_num_players($max);
             }
+            
+            $state->set_variable($group_name, 'group', $group);
         }
         
         $state->list( @modified );

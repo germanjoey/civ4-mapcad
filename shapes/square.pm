@@ -5,7 +5,7 @@ my %params = (
 );
 
 my $gen = sub {
-    my ($state, $x, $y) = @_;
+    my ($state, $x, $y, $initial_val) = @_;
    
     my $startX = $state->{'startX'};
     my $startY = $state->{'startY'};
@@ -13,7 +13,7 @@ my $gen = sub {
     my $stopY = $state->{'startY'} + $state->{'size'};
    
     if (($x >= $startX) and ($y >= $startY) and ($x < $stopX) and ($y < $stopY)) {
-        return 1;
+        return $initial_val;
     }
    
     return 0;

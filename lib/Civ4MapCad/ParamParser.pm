@@ -363,6 +363,13 @@ sub _process {
     
         my $expected_type = ($required->[-1] =~ /^\*/) ? $required->[min($i, $#$required)] : $required->[$i];
         
+        if (! defined($expected_type)) {
+            $processed_params{'error_msg'} = "Do not know what to do with unexpected parameter '$preproc[$i]'. (perhaps you intended to assign this to a result?)";
+            $processed_params{'error'} = 1;
+            $processed_params{'help_anyways'} = 1;
+            return \%processed_params;
+        }
+        
         if ($expected_type =~ /int/) {
             unless ($preproc[$i] =~ /^[-+]?\d+$/) {
             

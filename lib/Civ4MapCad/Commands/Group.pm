@@ -95,10 +95,11 @@ sub crop_group {
         return -1;
     }
     
-    my $copy = deepcopy($group);
+    my ($result_name) = $pparams->get_result_name();
+    my $copy = ($result_name eq $group->get_full_name()) ? $group : deepcopy($group);
+    
     $copy->crop($left, $bottom, $right, $top);
     
-    my ($result_name) = $pparams->get_result_name();
     $state->set_variable($result_name, 'group', $copy);
     return 1;
 }
@@ -173,10 +174,9 @@ sub copy_group {
     return 1 if $pparams->done;
     
     my ($group) = $pparams->get_required();
-    my $copy = deepcopy($group);
-    
-    my $result_name = $pparams->get_result_name();
-    $copy->rename($result_name);
+
+    my ($result_name) = $pparams->get_result_name();
+    my $copy = ($result_name eq $group->get_full_name()) ? $group : deepcopy($group);
     
     $state->set_variable($result_name, 'group', $copy);
 }
@@ -201,7 +201,6 @@ sub flatten_group {
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
     
-    my $result_name = $pparams->get_result_name();
     my ($group) = $pparams->get_required();
     my ($rename_final) = $pparams->get_named('rename_final_layer');
     
@@ -211,7 +210,8 @@ sub flatten_group {
         return -1;
     }
     
-    my $copy = deepcopy($group);
+    my ($result_name) = $pparams->get_result_name();
+    my $copy = ($result_name eq $group->get_full_name()) ? $group : deepcopy($group);
     
     if ($rename_final) {
         my ($raw_name) = $result_name =~ /\$(\w+)/;
@@ -418,11 +418,11 @@ sub extract_starts {
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
     
-    my $result_name = $pparams->get_result_name();
     my ($group) = $pparams->get_required();
     my $bfc = $state->get_variable('@bfc_tight', 'mask');
     
-    my $copy = deepcopy($group);
+    my ($result_name) = $pparams->get_result_name();
+    my $copy = ($result_name eq $group->get_full_name()) ? $group : deepcopy($group);
     
     my $has_duplicate_owners = $copy->has_duplicate_owners();
     $state->buffer_bar() if $has_duplicate_owners;
@@ -454,9 +454,10 @@ sub export_sims {
     
     my $output_dir = $main::config{'output_dir'};
     my $delete_existing = $pparams->get_named('delete_existing');
-    my ($group) = $pparams->get_required();
-    my $copy = deepcopy($group);
     my $bfc = $state->get_variable('@bfc_for_sim', 'mask');
+    my ($group) = $pparams->get_required();
+    
+    my $copy = deepcopy($group);
     
     my @layers = $group->get_layer_names();
     if (@layers == 0) {

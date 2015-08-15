@@ -4,10 +4,10 @@ my %params = (
 );
 
 my $gen = sub {
-    my ($state, $x, $y) = @_;
+    my ($state, $x, $y, $initial_val) = @_;
    
     if (($x == $state->{'centerX'}) and ($y ==$state->{'centerY'})) {
-        return 1;
+        return $initial_val;
     }
    
     return 0;

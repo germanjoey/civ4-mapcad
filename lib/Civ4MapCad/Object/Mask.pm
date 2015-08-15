@@ -5,6 +5,7 @@ use warnings;
 
 use List::Util qw(min max);
 use Civ4MapCad::Ascii qw(import_ascii_mask export_ascii_mask);
+use Civ4MapCad::Rotator qw(rotate_grid);
 
 our $epsilon = 0.00001;
 
@@ -39,7 +40,7 @@ sub new_from_shape {
     foreach my $x (0..($width-1)) {
         $obj{'canvas'}[$x] = [];
         foreach my $y (0..($height-1)) {
-            my $val = $shape->($shape_params, $x, $y);
+            my $val = $shape->($shape_params, $x, $y, 1);
             $obj{'canvas'}[$x][$y] = max(0, min(1, $val));
         }
     }
@@ -171,7 +172,7 @@ sub _set_opt {
             my $a_val = (($aX >=0) and ($aX < $self->{'width'}) and ($aY >=0) and ($aY < $self->{'height'})) ? $self->{'canvas'}[$aX][$aY] : 0;
             my $b_val = (($bX >=0) and ($bX < $othr->{'width'}) and ($bY >=0) and ($bY < $othr->{'height'})) ? $othr->{'canvas'}[$bX][$bY] : 0;
             
-            $new->{'canvas'}[$x][$y] = max(0, min(1, $subopt->($a_val, $b_val)));
+            $new->{'canvas'}[$x][$y] = max(0, min(1, $subopt->($a_val, $b_val, $x, $y)));
         }        
     }
     
@@ -186,6 +187,24 @@ sub _self_opt {
     foreach my $x (0..$self->{'width'}-1) {
         foreach my $y (0..$self->{'height'}-1) {
             $new->{'canvas'}[$x][$y] = max(0, min(1, $subopt->($self->{'canvas'}[$x][$y])));
+        }
+    }
+    
+    return $new;
+}
+
+sub apply_shape {
+    my ($self, $shape, $shape_params) = @_;
+    
+    my $width = $self->get_width();
+    my $height = $self->get_height();
+    
+    my $new = Civ4MapCad::Object::Mask->new_blank($width, $height);
+ 
+    foreach my $x (0..($width-1)) {
+        foreach my $y (0..($height-1)) {
+            my $val = $shape->($shape_params, $x, $y, $self->{'canvas'}[$x][$y]);
+            $new->{'canvas'}[$x][$y] = max(0, min(1, $val));
         }
     }
     
@@ -304,9 +323,10 @@ sub grow {
 }
 
 sub shrink {
-    my ($self, $threshold, $amount) = @_;
+    my ($self, $amount, $threshold) = @_;
     
     my $old_mask = $self->threshold($threshold);
+    
     foreach my $i (1..$amount) {
         my $shrinking_mask = Civ4MapCad::Object::Mask->new_blank($old_mask->get_width(), $old_mask->get_height());
         
@@ -367,6 +387,29 @@ sub check_mask_edges_for_value {
     }
     
     return (($value) ? 0 : 1);
+}
+
+sub rotate {
+    my ($self, $angle, $it, $autocrop) = @_;
+    
+    return (0,0) if ($angle % 360) == 0;
+    
+    my $width = $self->get_width();
+    my $height = $self->get_height();
+    my ($grid, $new_width, $new_height, $move_x, $move_y, $result_angle1, $result_angle2) = rotate_grid($self->{'canvas'}, $width, $height, $angle, $it, $autocrop);
+    
+    $self->{'width'} = $new_width;
+    $self->{'height'} = $new_height;
+    
+    foreach my $x (0..$new_width-1) {
+        $self->{'canvas'}[$x] = [];
+        foreach my $y (0..$new_height-1) {
+            $self->{'canvas'}[$x][$y] = $grid->[$x][$y];
+            $self->{'canvas'}[$x][$y] = 0.0 unless defined $grid->[$x][$y];
+        }
+    }
+    
+    return ($move_x, $move_y, $result_angle1, $result_angle2);
 }
 
 1;

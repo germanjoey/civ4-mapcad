@@ -7,6 +7,8 @@ our @fields = qw(x y isNOfRiver isWOfRiver RouteType RiverNSDirection RiverWEDir
 our %field_names;
 @field_names{@fields} = (1) x @fields;
 
+our $DEBUG = 0;
+
 use Civ4MapCad::Map::Unit;
 use Civ4MapCad::Util qw(write_block_data);
 
@@ -16,6 +18,9 @@ sub new {
     my $obj = bless {}, $class;
     
     $obj->{'freshwater'} = 0;
+    $obj->{'coastal'} = 0;
+    $obj->{'river_adjacent'} = 0;
+    $obj->{'continent_id'} = -1;
     $obj->{'Revealed'} = {};
     $obj->{'Units'} = [];
     
@@ -28,6 +33,9 @@ sub new_default {
     my $obj = bless {}, $class;
     
     $obj->{'freshwater'} = 0;
+    $obj->{'coastal'} = 0;
+    $obj->{'river_adjacent'} = 0;
+    $obj->{'continent_id'} = -1;
     $obj->{'Revealed'} = {};
     $obj->{'Units'} = [];
     
@@ -44,6 +52,9 @@ sub default {
     $self->set('TerrainType', 'TERRAIN_OCEAN');
     $self->set('PlotType', 3);
     $self->{'freshwater'} = 0;
+    $self->{'coastal'} = 0;
+    $self->{'river_adjacent'} = 0;
+    $self->{'continent_id'} = -1;
 }
 
 sub clear {
@@ -53,6 +64,9 @@ sub clear {
     $self->{'Revealed'} = {};
     $self->{'Units'} = [];
     $self->{'freshwater'} = 0;
+    $self->{'coastal'} = 0;
+    $self->{'river_adjacent'} = 0;
+    $self->{'continent_id'} = -1;
 }
 
 sub add_reveals {
@@ -185,6 +199,39 @@ sub write {
         $self->set('TeamReveal', join(',', @revealed) . ',');
         write_block_data($self, $fh, 1, 'TeamReveal');
     }
+    
+    if ($DEBUG == 1) {
+        write_block_data($self, $fh, 1, 'freshwater');
+        write_block_data($self, $fh, 1, 'coastal');
+        write_block_data($self, $fh, 1, 'river_adjacent');
+        write_block_data($self, $fh, 1, 'continent_id');
+        write_block_data($self, $fh, 1, 'value');
+        write_block_data($self, $fh, 1, 'up_value');
+        write_block_data($self, $fh, 1, 'bfc_value');
+        write_block_data($self, $fh, 1, 'avg_value');
+        write_block_data($self, $fh, 1, 'fr_value');
+        write_block_data($self, $fh, 1, 'food');
+        write_block_data($self, $fh, 1, 'frf');
+        write_block_data($self, $fh, 1, 'trees');
+        write_block_data($self, $fh, 1, 'river');
+        write_block_data($self, $fh, 1, 'bad');
+        
+        
+        if (exists $self->{'yld'}) {
+            print $fh "\t" x 1;
+            print $fh  'yld', "=";
+            print $fh  " $self->{'yld'}[0] / $self->{'yld'}[1] / $self->{'yld'}[2]";
+            print $fh  "\n";
+        }
+        
+        if (exists $self->{'up_yld'}) {
+            print $fh "\t" x 1;
+            print $fh  'up_yld', "=";
+            print $fh  " $self->{'up_yld'}[0] / $self->{'up_yld'}[1] / $self->{'up_yld'}[2]";
+            print $fh  "\n";
+        }
+    }
+    
     print $fh "EndPlot\n";
 }
 
@@ -210,17 +257,22 @@ sub is_coast {
     
     return ($self->{'TerrainType'} eq 'TERRAIN_COAST') ? 1 : 0;
 }
+sub is_saltwater_coastal {
+    my ($self) = @_;
+    
+    return $self->{'coastal'};
+}
 
 sub has_bonus {
     my ($self) = @_;
     
-    return (exists $self->{'BonusType'}) ? 1 : 0;
+    return ((exists $self->{'BonusType'}) and defined($self->{'BonusType'}) and ($self->{'BonusType'} =~ /\w/)) ? 1 : 0;
 }
 
 sub has_feature {
     my ($self) = @_;
     
-    return (exists $self->{'FeatureType'}) ? 1 : 0;
+    return (exists $self->{'FeatureType'} and defined($self->{'BonusType'}) and ($self->{'BonusType'} =~ /\w/)) ? 1 : 0;
 }
 
 sub is_water {
@@ -229,17 +281,29 @@ sub is_water {
     return (($self->{'TerrainType'} eq 'TERRAIN_OCEAN') or ($self->{'TerrainType'} eq 'TERRAIN_COAST')) ? 1 : 0;
 }
 
+sub is_coastal {
+    my ($self) = @_;
+    return ($self->is_land() and ($self->{'coastal'} == 1)) ? 1 : 0;
+}
+
 sub is_blank {
     my ($self) = @_;  
-    return (($self->{'freshwater'} == 0) and ($self->is_water()) and (!$self->has_bonus()) and (! $self->has_feature())  ) ? 1 : 0;
+    return (($self->{'freshwater'} == 0) and ($self->is_water()) and (!$self->has_bonus()) and (! $self->has_feature())) ? 1 : 0;
 }
 
 sub update_tile {
-    my ($self, $terrain) = @_;
+    my ($self, $terrain, $allowed) = @_;
     
     foreach my $key (keys %$terrain) {
         return -1 unless exists $field_names{$key};
+        next if exists($allowed->{$key}) and ($allowed->{$key} == 0);
+        
         $self->{$key} = $terrain->{$key};
+    }
+    
+    foreach my $key (keys %$allowed) {
+        next if exists $terrain->{$key};
+        delete $self->{$key} if exists $self->{$key};
     }
     
     return 1;
@@ -286,6 +350,7 @@ sub to_cell {
     if ($feature) {
         if ($feature =~ /oasis/i) {
             $icon = qq[<img src="debug/icons/oasis.png" />];
+            $variety = ' oasis';
         }
         
         if ($feature =~ /forest/i) {
@@ -426,10 +491,20 @@ sub reassign_reveals {
 # either we have a river explicitly on us, or freshwater was marked by Map because of some other tile
 sub is_fresh {
     my ($self) = @_;
-    if (($self->{'freshwater'}) or exists($self->{'isNOfRiver'}) or exists($self->{'isWOfRiver'})) {
+    if (($self->{'freshwater'} == 1) or $self->is_river_adjacent()) {
         return 1;
     }
     return 0;
+}
+
+sub mark_continent_id {
+    my ($self, $id) = @_;
+    $self->{'continent_id'} = $id;
+}
+
+sub mark_river {
+    my ($self) = @_;
+    $self->{'river_adjacent'} = 1;
 }
 
 sub mark_freshwater {
@@ -437,14 +512,22 @@ sub mark_freshwater {
     $self->{'freshwater'} = 1;
 }
 
+# saltwater coast, e.g. can make a lighthouse/ships
+sub mark_saltwater_coastal {
+    my ($self) = @_;
+    $self->{'coastal'} = 1;
+}
+
 sub unmark_freshwater {
     my ($self) = @_;
     $self->{'freshwater'} = 0;
+    $self->{'river_adjacent'} = 0;
+    $self->{'coastal'} = 0;
 }
 
-sub has_river {
+sub is_river_adjacent {
     my ($self) = @_;
-    if (exists($self->{'isNOfRiver'}) or exists($self->{'isWOfRiver'})) {
+    if ($self->is_land() and (($self->{'river_adjacent'} == 1) or exists($self->{'isNOfRiver'}) or exists($self->{'isWOfRiver'}))) {
         return 1;
     }
     return 0;
@@ -461,16 +544,30 @@ sub is_WOfRiver {
 }
 
 sub compare {
-    my ($self, $terrain) = @_;
+    my ($self, $terrain, $exact) = @_;
     
-    foreach my $key (@fields) {
-        next unless exists $self->{$key};
-        next if ($key eq 'TeamReveal') or ($key eq 'x') or ($key eq 'y');
-        next if $key =~ /^River/;
-        return 0 unless exists $terrain->{$key};
+    if ($exact) {
+        foreach my $key (@fields) {
+            next if ($key eq 'isNOfRiver') or ($key eq 'isWOfRiver');
+            next unless exists $self->{$key};
+            next if ($key eq 'TeamReveal') or ($key eq 'x') or ($key eq 'y');
+            next if $key =~ /^River/;
+            return 0 unless exists $terrain->{$key};
+            return 0 unless $self->{$key} eq $terrain->{$key};
+        }
+        foreach my $key (keys %$terrain) {
+            return 0 unless exists $self->{$key};
+            return 0 unless $self->{$key} eq $terrain->{$key};
+        }
         
-        next if ($key eq 'isNOfRiver') or ($key eq 'isWOfRiver');
-        return 0 unless $self->{$key} eq $terrain->{$key};
+        return 1;
+    }
+    else {
+        foreach my $key (keys %$terrain) {
+            return 0 unless exists $self->{$key};
+            return 0 unless $self->{$key} eq $terrain->{$key};
+        }
+        return 1;
     }
     
     return 1;

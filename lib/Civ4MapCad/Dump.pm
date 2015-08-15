@@ -86,9 +86,6 @@ sub dump_single_layer {
         my @row;
         foreach my $x (0..$maxrow) {
             my $tile = $map->{'Tiles'}[$x][$y];
-            
-            warn "$y $x" unless defined $tile;
-            
             push @row, $tile->to_cell;
         }
         

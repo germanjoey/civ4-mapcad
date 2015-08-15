@@ -29,16 +29,29 @@ sub new {
         'log' => [],
         'return_stack' => [],
         'already_printed' => 0,
-        'buffer_ready' => 0
+        'buffer_ready' => 0,
+        'ref_id' => 0, # these two are for killing circular references between group/layer when we use deepcopy, ugh
+        'ref_table' => {}
     };
     
     return bless $obj, $class;
+}
+
+sub next_ref_id {
+    my ($self) = @_;
+    my $current = $self->{'ref_id'};
+    $self->{'ref_id'} ++;
+    return $self->{'ref_id'};
 }
 
 sub process_command {
     my ($self, $command) = @_;
     
     my $ret = eval { $self->_process_command($command) };
+    
+    open (my $log, '>>', 'output.txt') or die $!;
+    print $log join('', @_);
+    close $log;
     
     if ($@) {
         print "*** FATAL ERROR: ";
@@ -52,6 +65,7 @@ sub process_command {
     
     $self->ready_buffer_bar();
     $self->clear_printed();
+    $self->collect_garbage();
           
     return $ret;
 }
@@ -202,6 +216,7 @@ sub _process_command {
         
             if (@com_list == 0) {
                 print qq[\n* No commands found that match query '$params[0]'.\n\n];
+                return 1;
             }
         }
         
@@ -432,7 +447,12 @@ sub _assign_layer_result {
     my ($result_group_name, $result_layer_name) = $result_name =~ /\$(\w+)\.(\w+)/;
     my $group = $self->get_variable('$' . $result_group_name, 'group');
     $result_layer->rename($result_layer_name);
-         
+    
+    my $old_group = $result_layer->get_group();
+    if ((!defined($old_group)) or ($old_group->get_name() ne $result_group_name)) {
+        $result_layer->recenter();
+    }
+    
     if ($group->layer_exists($result_layer_name)) {
         $group->set_layer($result_layer_name, $result_layer);
     }
@@ -444,7 +464,6 @@ sub _assign_layer_result {
     }
     
     $result_layer->set_membership($group);
-    
     $self->{'layer'}{'$' . "$result_group_name.$result_layer_name"} = $result_layer;
 }
 
@@ -667,6 +686,46 @@ sub list {
     print "\n\n";
     
     $self->register_print();
+}
+
+# shitty do-it-yourself garbage collection to get rid of circular references between layer/group
+# whenever layer/group is created, including via deepcopy, we assign it a unique reference id
+# if, at the end of executing a command, that object is not found within $state->{'layer'} or 
+# $state->{'group'} then we nuke it with extreme prejudice to prevent gradually leaking memory
+#
+# these shenanigans are necessary because we deepcopy all over the damn place
+sub collect_garbage {
+    my ($self) = @_;
+    
+    my %still_active;
+    foreach my $layer (values %{ $self->{'layer'} }) {
+        $still_active{ $layer->{'ref_id'} } = 1;
+    }
+    foreach my $layer (values %{ $self->{'group'} }) {
+        $still_active{ $layer->{'ref_id'} } = 1;
+    }
+    
+    foreach my $id (keys %{ $main::config{'ref_table'} }) {
+        if (! exists $still_active{$id}) {
+            if (ref($main::config{'ref_table'}{$id}) =~ /Group/i) {
+                foreach my $layer (values %{$main::config{'ref_table'}{$id}{'layers'}}) {
+                    delete $main::config{'ref_table'}{$layer->{'ref_id'}};
+                    undef %{$layer->{'map'}};
+                    delete $layer->{'map'};
+                    delete $layer->{'group'} if exists $layer->{'group'};
+                    delete $main::config{'ref_table'}{$id}{'layers'};
+                }
+            }
+            elsif (ref($main::config{'ref_table'}{$id}) =~ /Layer/i) {
+                undef %{ $main::config{'ref_table'}{$id}{'map'} };
+                delete $main::config{'ref_table'}{$id}{'map'};
+                delete $main::config{'ref_table'}{$id}{'group'} if exists $main::config{'ref_table'}{$id}{'group'};
+            }
+            
+            undef %{ $main::config{'ref_table'}{$id} };
+            delete $main::config{'ref_table'}{$id};
+        }
+    }
 }
 
 1;

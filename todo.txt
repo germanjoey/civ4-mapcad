@@ -23,10 +23,15 @@ Medium Ticket TODO:
     - A: organize module methods
     - B: handle signs
     - B: river tools
+    - B: mask eval
+        - eval shape
+        - eval one_op
+        - eval two_op
 
 Small Ticket TODO:
+    - CRITICAL ERROR: for some reason importing a group, then setting a different mod, somehow causes the layers in the group to get messed up? I have no idea
+    - add --comparison_op option to count_mask_value (e.g. ==, >=, etc)
     - add a see_also field to params
-    - redo images i4 and i5 in tutorial 1
     - count commands
         - mask done, need to do layer w/ weight
     - fix freshwater
@@ -34,6 +39,8 @@ Small Ticket TODO:
     - add exponential multiplication factor for rotate_grid on <45 degree angles
     - allow rotations from arbitrary origin points
         - just move the layer before/after
+    - new_mask_from_layer
+    - delete option for modify_layer_with_mask
     
 six tutorials (4/6 done)
     - enhancing your banana

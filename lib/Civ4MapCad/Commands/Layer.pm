@@ -55,10 +55,16 @@ sub expand_layer_canvas {
     
     my ($layer, $by_width, $by_height) = $pparams->get_required();
     
-    my $width = $layer->get_width();
-    my $height = $layer->get_height();
+    my $new_width = $layer->get_width() + $by_width;
+    my $new_height = $layer->get_height() + $by_height;
     
-    $layer->expand_dim($width + $by_width, $height + $by_height);
+    my $group = $layer->get_group();
+    if (($group->get_width() < $new_width) or ($group->get_height() < $new_height)) {
+        $state->report_warning("new width/height of $new_width/$new_height exceeds dimensions of group \$" . $group->get_name() . " - expanding that as well.");
+        $group->expand_dim($new_width, $new_height);
+    }
+    
+    $layer->expand_dim($new_width, $new_height);
     return 1;
 }
 
@@ -137,11 +143,11 @@ sub set_layer_priority {
     my $group = $layer->get_group();
     
     my $max = $group->{'max_priority'};
-    $priority = $max if $priority > $max;
+    $priority = ($max+2) if $priority > ($max+1);
     $priority = 0 if $priority < 0;
     
     # priorities are actually stored so that 0 is the highest, so we need to adjust
-    $group->set_layer_priority($layer->get_name(), $max-$priority-1);
+    $group->set_layer_priority($layer->get_name(), ($max+1)-$priority);
     
     return 1;
 }
@@ -188,7 +194,7 @@ sub decrease_layer_priority {
 
 # apply a mask to a layer, delete everything outside of it, then resize the layer
 my $crop_layer_help_text = qq[
-    This layer's dimensions are trimmed to left/bottom/right/top, from the nominal dimensions of 0 / 0 / width-1 / height-1.
+    This layer's dimensions are trimmed to left/bottom/right/top, from the nominal dimensions of 0 / 0 / width-1 / height-1, in reference to the layer.
 ];
 sub crop_layer {
     my ($state, @params) = @_;
@@ -216,10 +222,11 @@ sub crop_layer {
         return -1;
     }
     
-    my $copy = deepcopy($layer);
-    $copy->crop($left, $bottom, $right, $top);
-    
     my ($result_name) = $pparams->get_result_name();
+    my $copy = ($result_name eq $layer->get_full_name()) ? $layer : deepcopy($layer);
+    
+    $copy->crop($left, $bottom, $right, $top);
+    $copy->move_by($left, $bottom);
     $state->set_variable($result_name, 'layer', $copy);
         
     return 1;
@@ -242,12 +249,11 @@ sub flip_layer_lr {
     return 1 if $pparams->done;
     
     my ($layer) = $pparams->get_required();
-    my $copy = deepcopy($layer);
-    $copy->fliplr();
-    
     my ($result_name) = $pparams->get_result_name();
-    $state->set_variable($result_name, 'layer', $copy);
+    my $copy = ($result_name eq $layer->get_full_name()) ? $layer : deepcopy($layer);
     
+    $copy->fliplr();
+    $state->set_variable($result_name, 'layer', $copy);
     return 1;
 }
 
@@ -268,17 +274,16 @@ sub flip_layer_tb {
     return 1 if $pparams->done;
     
     my ($layer) = $pparams->get_required();
-    my $copy = deepcopy($layer);
-    $copy->fliptb();
-    
     my ($result_name) = $pparams->get_result_name();
-    $state->set_variable($result_name, 'layer', $copy);
+    my $copy = ($result_name eq $layer->get_full_name()) ? $layer : deepcopy($layer);
     
+    $copy->fliptb();
+    $state->set_variable($result_name, 'layer', $copy);
     return 1;
 }
 
 my $copy_layer_from_group_help_text = qq[
-    Copy a layer from one group to another (or the same) group. If a new name is not specified, the same name is used.
+    Copy a layer from one group to another (or the same) group. If '--place_on_top' is set, then the copied layer is set to max priority in the new group.
 ];
 sub copy_layer_from_group {
     my ($state, @params) = @_;
@@ -287,17 +292,25 @@ sub copy_layer_from_group {
         'required' => ['layer'],
         'required_descriptions' => ['layer to copy'],
         'has_result' => 'layer',
-        'help_text' => $copy_layer_from_group_help_text
+        'help_text' => $copy_layer_from_group_help_text,
+        'optional' => {
+            'place_on_top' => 'false'
+        }
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
     
     my $result_name = $pparams->get_result_name();
+    my $place_on_top = $pparams->get_named('place_on_top');
     my ($layer) = $pparams->get_required();
     my $copy = deepcopy($layer);
     
     $copy->move_to(0,0);
     $state->set_variable($result_name, 'layer', $copy);
+    
+    if ($place_on_top) {
+        $copy->get_group()->set_layer_priority($copy->get_name(), -1);
+    }
     
     return 1;
 }
@@ -309,8 +322,6 @@ sub set_tile {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
-        'has_result' => 'layer',
-        'allow_implied_result' => 1,
         'help_text' => $set_tile_help_text,
         'required' => ['layer', 'int', 'int', 'terrain'],
         'required_descriptions' => ['the layer to modify', 'x coordinate', 'y coordinate', 'terrain name to set']
@@ -329,9 +340,7 @@ sub set_tile {
     }
     
     my $copy = deepcopy($layer);
-    $copy->set_tile($x, $y, $terrain);
-    $state->set_variable($result_name, 'layer', $copy);
-    
+    $layer->set_tile($x, $y, $terrain);
     return 1;
 }
 
@@ -434,11 +443,12 @@ sub rotate_layer {
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
     
-    my $result_name = $pparams->get_result_name();
     my $it = $pparams->get_named('iterations');
     my $autocrop = $pparams->get_named('autocrop');
     my ($layer, $angle) = $pparams->get_required();
-    my $copy = deepcopy($layer);
+    
+    my ($result_name) = $pparams->get_result_name();
+    my $copy = ($result_name eq $layer->get_full_name()) ? $layer : deepcopy($layer);
     
     my ($move_x, $move_y, $result_angle1, $result_angle2) = $copy->rotate($angle, $it, $autocrop);
     

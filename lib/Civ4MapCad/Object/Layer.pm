@@ -6,6 +6,7 @@ use warnings;
 use List::Util qw(min max);
 
 use Civ4MapCad::Map;
+use Civ4MapCad::Object::Mask;
 use Civ4MapCad::Util qw(deepcopy);
 
 sub new_default {
@@ -14,6 +15,7 @@ sub new_default {
     my ($name, $width, $height) = @_;
     
     my $obj = {
+        'ref_id' => $main::state->next_ref_id(),
         'd' => 0,
         'name' => $name,
         'map' => Civ4MapCad::Map->new_default($width, $height),
@@ -21,7 +23,9 @@ sub new_default {
         'offsetY' => 0,
     };
     
-    return bless $obj, $class;
+    my $blessed = bless $obj, $class;
+    $main::config::{'ref_table'}{$obj->{'ref_id'}} = $blessed;
+    return $blessed;
 }
 
 sub new_from_import {
@@ -35,6 +39,7 @@ sub new_from_import {
     }
     
     my $obj = {
+        'ref_id' => $main::state->next_ref_id(),
         'd' => 0,
         'name' => $name,
         'map' => $map,
@@ -42,7 +47,9 @@ sub new_from_import {
         'offsetY' => 0,
     };
     
-    return bless $obj, $class;
+    my $blessed = bless $obj, $class;
+    $main::config::{'ref_table'}{$obj->{'ref_id'}} = $blessed;
+    return $blessed;
 }
 
 sub get_name {
@@ -81,7 +88,6 @@ sub recenter {
     $self->{'offsetX'} = 0;
     $self->{'offsetY'} = 0;
 }
-
 
 sub get_offsetX {
     my ($self) = @_;
@@ -171,11 +177,14 @@ sub merge_with_layer {
     
     $copy->{'map'}->clear_map();
     
+    my $group_width = $self->get_group()->get_width();
+    my $group_height = $self->get_group()->get_width();
+    
     for my $x (0 .. $othr->get_width()-1) {
         for my $y (0 .. $othr->get_height()-1) {
             my ($tx, $ty) = $copy->translate_merge_coords($x, $y, $othr->{'offsetX'}, $othr->{'offsetY'});
-            next if ($tx < 0) or ($tx >= $self->get_group()->get_width());
-            next if ($ty < 0) or ($ty >= $self->get_group()->get_height());
+            next if ($tx < 0) or ($tx >= $group_width);
+            next if ($ty < 0) or ($ty >= $group_height);
             
             $copy->{'map'}{'Tiles'}[$tx][$ty] = deepcopy($othr->{'map'}{'Tiles'}[$x][$y]);
             $copy->{'map'}{'Tiles'}[$tx][$ty]->set('x', $tx);
@@ -187,8 +196,8 @@ sub merge_with_layer {
         for my $y (0 .. $self->get_height()-1) {
             next if $self->{'map'}{'Tiles'}[$x][$y]->is_blank();
             my ($tx, $ty) = $copy->translate_merge_coords($x, $y, $self->{'offsetX'}, $self->{'offsetY'});
-            next if ($tx < 0) or ($tx >= $self->get_group()->get_width());
-            next if ($ty < 0) or ($ty >= $self->get_group()->get_height());
+            next if ($tx < 0) or ($tx >= $group_width);
+            next if ($ty < 0) or ($ty >= $group_height);
             
             $copy->{'map'}{'Tiles'}[$tx][$ty] = deepcopy($self->{'map'}{'Tiles'}[$x][$y]);
             $copy->{'map'}{'Tiles'}[$tx][$ty]->set('x', $tx);
@@ -255,18 +264,18 @@ sub set_tile {
 }
 
 sub update_tile {
-    my ($self, $x, $y, $terrain) = @_;
-    $self->{'map'}{'Tiles'}[$x][$y]->update_tile($terrain);
+    my ($self, $x, $y, $terrain, $allowed) = @_;
+    $self->{'map'}{'Tiles'}[$x][$y]->update_tile($terrain, $allowed);
 }
 
 sub apply_mask {
-    my ($self, $mask, $weight, $mask_offsetX, $mask_offsetY, $overwrite) = @_;
+    my ($self, $mask, $weight, $mask_offsetX, $mask_offsetY, $overwrite, $allowed) = @_;
     
     for my $x (0 .. $mask->get_width()-1) {
         for my $y (0 .. $mask->get_height()-1) {
             my ($tx, $ty) = $self->translate_mask_coords($x, $y, $mask_offsetX, $mask_offsetY);
             next if ($tx < 0) or ($tx >= $self->get_width());
-            next if ($ty < 0) or ($ty >= $self->get_width());
+            next if ($ty < 0) or ($ty >= $self->get_height());
         
             my ($terrain_name, $terrain) = $weight->evaluate($mask->{'canvas'}[$x][$y]);
             next unless defined $terrain;
@@ -275,12 +284,30 @@ sub apply_mask {
                 $self->set_tile($tx, $ty, $terrain);
             }
             else {
-                $self->update_tile($tx, $ty, $terrain);
+                $self->update_tile($tx, $ty, $terrain, $allowed);
             }
         }
     }
     
     $weight->deflate();
+}
+
+sub apply_weight {
+    my ($self, $weight, $exact) = @_;
+    
+    my $mask = Civ4MapCad::Object::Mask->new_blank($self->get_width(), $self->get_height());
+    
+    for my $x (0 .. $self->get_width()-1) {
+        for my $y (0 .. $self->get_height()-1) {
+            my $tile = $self->{'map'}{'Tiles'}[$x][$y];
+            
+            my ($value) = $weight->evaluate_inverse($tile, $exact);
+            $mask->{'canvas'}[$x][$y] = (defined $value) ? $value : 0.0;
+        }
+    }
+    
+    $weight->deflate();
+    return $mask;
 }
 
 sub select_with_mask {
@@ -293,12 +320,11 @@ sub select_with_mask {
     
     for my $x (0 .. $mask->get_width()-1) {
         for my $y (0 .. $mask->get_height()-1) {
-            die "$x $y" unless defined $mask->{'canvas'}[$x][$y];
             if ($mask->{'canvas'}[$x][$y] > 0) { # TODO: add variable threshold
                 my ($tx, $ty) = $self->translate_mask_coords($x, $y, $mask_offsetX, $mask_offsetY);
                 
                 next if ($tx < 0) or ($tx >= $self->get_width());
-                next if ($ty < 0) or ($ty >= $self->get_width());
+                next if ($ty < 0) or ($ty >= $self->get_height());
             
                 $selection->{'map'}{'Tiles'}[$x][$y] = deepcopy($self->{'map'}{'Tiles'}[$tx][$ty]);
                 $selection->{'map'}{'Tiles'}[$x][$y]->set('x', $x);
@@ -461,6 +487,11 @@ sub check_croppable {
     my $layer_bottom = $self->{'offsetY'};
     my $layer_top = $self->{'offsetY'} + $self->get_height() - 1;
     
+    my $cropped_width = min($right, $layer_right) - max($left, $layer_left);
+    my $cropped_height = min($right, $layer_top) - max($left, $layer_bottom);
+    
+    return -1 if ($cropped_height <= 0) or ($cropped_width <= 0);
+
     return 1 if ($layer_left < $left) and ($layer_right > $left);
     return 1 if ($layer_right > $left) and ($layer_right > $right);
     return 1 if ($layer_bottom < $bottom) and ($layer_top > $bottom);
@@ -476,8 +507,9 @@ sub crop {
     my $actual_bottom = max(0, $bottom - $self->{'offsetY'});
     my $actual_right = min($self->get_width() - 1, $right - $self->{'offsetX'});
     my $actual_top = min($self->get_height() - 1, $top - $self->{'offsetY'});
-
+    
     $self->{'map'}->crop($actual_left, $actual_bottom, $actual_right, $actual_top);
+    return 1;
 }
 
 sub get_player_data {
@@ -674,10 +706,9 @@ sub follow_tiles {
         }
     };
     
-    $self->{'map'}->bfs_region_search($start_tile, $is_already_checked, $mark_as_checked, $process);
+    $self->{'map'}->region_search($start_tile, $is_already_checked, $mark_as_checked, $process);
     return (\%land, \%water);
 }
-
 
 sub rotate {
     my ($self, $angle, $it, $autocrop) = @_;
@@ -695,7 +726,6 @@ sub rotate {
     }
         
     if ($autocrop == 0) {
-        
         # now correctly position the rotated layer
         $move_x = -$move_x;
         $move_y = -$move_y;

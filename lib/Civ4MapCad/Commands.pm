@@ -27,8 +27,9 @@ use Civ4MapCad::Commands::Mask qw(
     new_mask_from_magic_wand new_mask_from_shape mask_difference mask_union mask_intersect
     mask_invert mask_threshold modify_layer_with_mask cutout_layer_with_mask apply_shape_to_mask
     generate_layer_from_mask import_mask_from_ascii export_mask_to_ascii set_mask_coord
-    export_mask_to_table import_mask_from_table mask_from_water mask_from_landmass
-    new_mask_from_polygon grow_mask shrink_mask count_mask_value
+    export_mask_to_table import_mask_from_table new_mask_from_water new_mask_from_landmass
+    new_mask_from_polygon grow_mask shrink_mask count_mask_value new_mask_from_filtered_tiles
+    rotate_mask mask_eval2 mask_eval1
 );
 
 use Civ4MapCad::Commands::Layer qw(

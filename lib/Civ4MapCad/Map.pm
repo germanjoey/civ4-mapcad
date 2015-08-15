@@ -146,6 +146,70 @@ sub expand_dim {
     }
 }
 
+sub find_line_distance_between_coords {
+    my ($self, $from_x, $from_y, $to_x, $to_y) = @_;
+    
+    my $width = $self->info('grid width');
+    my $height = $self->info('grid height');
+    
+    my $dx; my $dy;
+    
+    if ($self->wrapsX() and $self->wrapsY()) {
+        $dx = abs($from_x - $to_x);
+        $dx = min($width - $dx, $dx);
+        
+        $dy = abs($from_y - $to_y);
+        $dy = min($height - $dy, $dy);
+        
+    }
+    elsif ($self->wrapsX()) {
+        $dx = abs($from_x - $to_x);
+        $dx = min($width - $dx, $dx);
+        $dy = abs($from_y - $to_y);
+    }
+    elsif ($self->wrapsY()) {
+        $dy = abs($from_y - $to_y);
+        $dy = min($height - $dy, $dy);
+        $dx = abs($from_x - $to_x);
+    }
+    else {
+        $dx = abs($from_x - $to_x);
+        $dy = abs($from_y - $to_y);
+    }
+    
+    return sqrt($dx*$dx + $dy*$dy);
+    
+}
+
+sub find_tile_distance_between_coords {
+    my ($self, $from_x, $from_y, $to_x, $to_y) = @_;
+    
+    my $width = $self->info('grid width');
+    my $height = $self->info('grid height');
+    
+    if ($self->wrapsX() and $self->wrapsY()) {
+        my $dx = abs($from_x - $to_x);
+        $dx = min($width - $dx, $dx);
+        
+        my $dy = abs($from_y - $to_y);
+        $dy = min($height - $dy, $dy);
+        
+        return max($dx, $dy);
+    }
+    elsif ($self->wrapsX()) {
+        my $dx = abs($from_x - $to_x);
+        $dx = min($width - $dx, $dx);
+        return max($dx, abs($from_y - $to_y));
+    }
+    elsif ($self->wrapsY()) {
+        my $dy = abs($from_y - $to_y);
+        $dy = min($height - $dy, $dy);
+        return max(abs($from_x - $to_x), $dy);
+    }
+    
+    return max(abs($from_x - $to_x), abs($from_y - $to_y));
+}
+
 sub wrapsX {
     my ($self) = @_;
     return ((defined($self->info('wrap X')) and ($self->info('wrap X') eq '1')) ? 1 : 0);
@@ -355,8 +419,6 @@ sub find_starts {
     my @starts;
     foreach my $x (0..$#{$self->{'Tiles'}}) {
         foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
-            warn "$x/$y" unless defined $self->{'Tiles'}[$x][$y];
-        
             if ($self->{'Tiles'}[$x][$y]->has_settler()) {
                 push @starts, $self->{'Tiles'}[$x][$y]->get_starts();
             }
@@ -772,10 +834,50 @@ sub fix_coast {
     return 1;
 }
 
+sub mark_continents {
+    my ($self) = @_;
+    
+    my $cont_id = 0;
+    my %already_checked;
+    
+    my $is_already_checked = sub {
+        my ($x, $y) = @_;
+        return 1 if exists $already_checked{"$x/$y"};
+        return 0;
+    };
+
+    my $mark_as_checked = sub {
+        my ($x, $y, $tile) = @_;
+        $already_checked{"$x/$y"} = $tile;
+    };
+    
+    my $process = sub {
+        my ($mark_as_checked, $tile) = @_;
+        $mark_as_checked->($tile->get('x'), $tile->get('y'), $tile);
+        if ($tile->is_land()) {
+            $tile->mark_continent_id($cont_id);
+            return 1;
+        }
+        return 0;
+    };
+    
+    foreach my $x (0..$#{$self->{'Tiles'}}) {
+        foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
+            my $tile = $self->{'Tiles'}[$x][$y];
+            next if exists $already_checked{"$x/$y"};
+            next if $tile->is_water();
+            
+            $self->region_search($tile, $is_already_checked, $mark_as_checked, $process);
+            $cont_id ++;
+        }
+    }
+}
+
 sub mark_freshwater {
     my ($self) = @_;
     
     $self->fix_coast();
+    $self->mark_rivers();
     
     my %already_checked;
     foreach my $x (0..$#{$self->{'Tiles'}}) {
@@ -784,65 +886,116 @@ sub mark_freshwater {
             next if exists $already_checked{"$x/$y"};
             next unless $tile->is_water();
             
-            $self->bfs_region_search($tile, \%already_checked);
+            my (%land, %water);
             
-=head1
+            my $is_already_checked = sub {
+                my ($x, $y) = @_;
+                return 1 if exists($land{"$x/$y"}) or exists($already_checked{"$x/$y"});
+                return 0;
+            };
 
-        # collect all water in this particular ocean/lake
-            if ($tile->is_water()) { 
-                $already_checked->{"$tx/$ty"} = 1; # mark here so we don't keep adding this to the queue
-                $water_bin{"$tx/$ty"} = $tile;
-                push @queue, [$x, $y];
+            my $mark_as_checked = sub {
+                my ($x, $y, $tile) = @_;
+                if (! defined($tile)) {
+                    $already_checked{"$x/$y"} = $tile;
+                }
+                elsif ($tile->is_land()) {
+                    # land doesn't get marked globally here cause a land tile
+                    # can potentially be adjacent to multiple bodies of water
+                    $land{"$x/$y"} = $tile;
+                }
+                else {
+                    $already_checked{"$x/$y"} = $tile;
+                    $water{"$x/$y"} = $tile;
+                }
+            };
+            
+            my $process = sub {
+                my ($mark_as_checked, $tile) = @_;
+                $mark_as_checked->($tile->get('x'), $tile->get('y'), $tile);
+                return 1 if $tile->is_water();
+                return 0;
+            };
+            
+            $self->region_search($tile, $is_already_checked, $mark_as_checked, $process);
+            
+            my @water = keys %water;
+            if (@water <= 8) {
+                $_->mark_freshwater() foreach (values %water);
+                $_->mark_freshwater() foreach (values %land);
             }
-            
-            # collect all land adjacent to a coast
-            elsif ($tile->is_land()) {
-                # we don't add land to %already_checked because a land 
-                # could be next to both coast and a lake, for example,
-                # so we need to keep checking it over and over
-                
-                $land_bin{"$x/$y"} = $tile;
-                
-                # check if a tile is east or south of a river
-                my $right_tile = $self->get_tile($tx+1, $ty);
-                if (defined($right_tile) and $right_tile->is_WOfRiver()) {
-                    $tile->mark_freshwater();
-                    next;
-                }
-                
-                my $bottom_tile = $self->get_tile($tx, $ty-1);
-                if (defined($bottom_tile) and $bottom_tile->is_NOfRiver()) {
-                    $tile->mark_freshwater();
-                    next;
-                }
-                
-                # this picks out land tiles with a river explicitly
-                # on them or land tiles adjacent to a river that we've marked
-                
-                if($tile->is_fresh()) {
-
-                }
+            else {
+                $_->mark_saltwater_coastal() foreach (values %land);
             }
-
-            
-            
-            
-            
-    my @water = keys %water_bin;
-    #if (@water <= 8) {
-    #    $_->mark_freshwater() foreach (values %water_bin);
-    #    $_->mark_freshwater() foreach (values %land_bin);
-    #}
-    
-=cut
-            
-            
         }
     }
     
     $self->{'freshwater_marked'} = 1;
     
     return 1;
+}
+
+sub mark_rivers {
+    my ($self) = @_;
+    
+    foreach my $x (0..$#{$self->{'Tiles'}}) {
+        foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
+            my $tile = $self->{'Tiles'}[$x][$y];
+            
+            if ($tile->is_land()) {
+                next if $tile->is_river_adjacent();
+            
+                # check if a tile is east or south of a river
+                
+                my $west_tile = $self->get_tile($x-1, $y);
+                if (defined($west_tile) and $west_tile->is_WOfRiver()) {
+                    $tile->mark_river();
+                    next;
+                }
+                
+                my $north_tile = $self->get_tile($x, $y+1);
+                if (defined($north_tile) and $north_tile->is_NOfRiver()) {
+                    $tile->mark_river();
+                    next;
+                }
+                
+                # next, the corners
+                
+                #  northeast corner
+                my $northeast_tile = $self->get_tile($x+1, $y+1);
+                if ( (defined($northeast_tile) and $northeast_tile->is_NOfRiver()) and
+                     (defined($north_tile)     and $north_tile->is_WOfRiver()) ) {
+                    $tile->mark_river();
+                    next;
+                }
+                
+                #  southeast corner
+                my $east_tile = $self->get_tile($x+1, $y);
+                my $south_tile = $self->get_tile($x, $y-1);
+                if ( (defined($east_tile) and $east_tile->is_NOfRiver()) and
+                     (defined($south_tile) and $south_tile->is_WOfRiver()) ) {
+                    $tile->mark_river();
+                    next;
+                }
+                
+                #  northwest corner
+                my $northwest_tile = $self->get_tile($x-1, $y+1);
+                if ( defined($northwest_tile) and $northwest_tile->is_NOfRiver() and$northwest_tile->is_WOfRiver() ) {
+                    $tile->mark_river();
+                    next;
+                }
+                
+                #  southwest corner
+                my $southwest_tile = $self->get_tile($x-1, $y-1);
+                if ( (defined($southwest_tile) and $southwest_tile->is_WOfRiver()) and
+                     (defined($west_tile) and $west_tile->is_NOfRiver())
+                ) {
+                    $tile->mark_river();
+                    next;
+                }
+            }
+        }
+    }
 }
 
 sub clear_coasts {
@@ -852,7 +1005,7 @@ sub clear_coasts {
     foreach my $x (0..$#{$self->{'Tiles'}}) {
         foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
             my $tile = $self->{'Tiles'}[$x][$y];
-            $tile->{'TerrainType'}->unmark_freshwater();
+            $tile->unmark_freshwater();
             
             if ($tile->{'TerrainType'} eq 'TERRAIN_COAST') {
                 $tile->{'TerrainType'} = 'TERRAIN_OCEAN';
@@ -860,6 +1013,7 @@ sub clear_coasts {
         }
     }
     
+    $self->{'coast_fixed'} = 0;
     $self->{'freshwater_marked'} = 0;
     
     return 1;
@@ -868,8 +1022,9 @@ sub clear_coasts {
 # is_already_checked - gets x/y, returns 1 or 0 on whether this tile has already been seen
 # mark_as_checked - gets x/y/tile, updates is_already_checked
 # process - gets a tile, decides how to bin the result. returns 1 if this tile should be added to the queue, 0 otherwise
-
-sub bfs_region_search {
+#
+# breadth-first-search for finding a contiguous region, and its surroundings, based on an arbitrary condition
+sub region_search {
     my ($self, $start_tile, $is_already_checked, $mark_as_checked, $process) = @_;
     
     my $start_x = $start_tile->get('x');

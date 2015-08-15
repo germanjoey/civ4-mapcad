@@ -12,6 +12,7 @@ sub PRINT {
     open (my $log, '>>', 'output.txt');
     print $log join('', @_);
     print $OLD_STDOUT join('', @_ );
+    close $log;
 }
 
 tie *PRINTOUT, 'IO::Override';

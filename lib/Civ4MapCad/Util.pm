@@ -9,6 +9,7 @@ our @EXPORT_OK = qw(write_block_data deepcopy write_config slurp);
 
 use Data::Dumper;
 use Config::General qw(SaveConfig);
+use Scalar::Util qw(weaken);
 
 sub write_block_data {
     my ($obj, $fh, $indent, $name1, $name2) = @_;
@@ -35,7 +36,9 @@ sub deepcopy {
         eval "use Civ4MapCad::Object::Group; "; # delay import to prevent recursive import goofiness
         my $copy = Civ4MapCad::Object::Group->new_blank($v->get_width(), $v->get_height());
         foreach my $k (keys %$v) {
+            next if $k eq 'ref_id';
             $copy->{$k} = deepcopy($v->{$k});
+        
         }
         return $copy;
     }
@@ -48,6 +51,7 @@ sub deepcopy {
         
         foreach my $k (keys %$v) {
             next if $k eq 'member_of';
+            next if $k eq 'ref_id';
             $copy->{$k} = deepcopy($v->{$k});
         }
         
