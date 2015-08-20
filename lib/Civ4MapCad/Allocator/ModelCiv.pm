@@ -10,9 +10,10 @@ use Civ4MapCad::Allocator::ModelCity;
 sub new {
     my $proto = shift;
     my $class = ref $proto || $proto;
-    my ($x, $y, $player, $tiles_per_player, $map, $alloc) = @_;
+    my ($x, $y, $player, $tiles_per_player, $map, $raycasts, $alloc) = @_;
     
     my $obj = bless {
+        'raycasts' => $raycasts,
         'map' => $map,
         'player' => $player,
         'safe_dist' => sqrt($tiles_per_player/3.14159),
@@ -76,6 +77,33 @@ sub strategic_adjustment {
     
     # now adjust to try gaining more land... after a certain number of cities, settling aggressively towards opponents will become more and more appealing
     my $comp_bonus = 1;
+    
+    # now calculate whether we're on or past a chokepoint
+    
+    #$self->{'raycasts'}{$dx}{$dy};
+    my @closest = $self->find_closet_cities($spot);
+    
+    if ($tile_dist > $s) {
+        my $worst_congestion = 1000;
+        foreach my $city (@closest) {
+            my $sx = $spot->get('x');
+            my $sy = $spot->get('y');
+        
+            my $dx = $sx - $city->{'center'}->get('x');
+            my $dy = $sy - $city->{'center'}->get('y');
+            my $path = $self->{'raycasts'}{$dx}{$dy};
+            
+            my $path_congestion = 0;
+            for my $i (1..$#$path) {
+                $path_congestion += $self->{'map'}[$sx + $path->[$i][0]][$sy + $path->[$i][1]]->{'congestion'};
+            }
+            
+            print "$sx $sy / " . $city->{'center'}->get('x') . " " . $city->{'center'}->get('y') . " / $dx $dy / $path_congestion\n";
+            
+            $worst_congestion = $path_congestion if $path_congestion < $worst_congestion;
+        }
+    }
+    
     $comp_bonus += sqrt($d-$s)*(log($city_count-5)-2)/20 if ($d > $s) and ($city_count > 5);
     
     # the AZZA FACTOR
@@ -110,6 +138,23 @@ sub strategic_adjustment {
     # my $lux_count = 0;
     
     return $contention_bonus + $strat_bonus + $dist_bonus + $comp_bonus*$spot->{'bfc_value'} - $overseas;
+}
+
+sub find_closet_cities_to_spot {
+    my ($self, $spot) = @_;
+    my $min_d = 1000;
+    my @closest;
+    foreach my $city (@{ $self->{'cities'} }) {
+        my $d = $self->{'map'}->find_tile_distance_between_coords($spot->get('x'), $spot->get('y'), $city->{'center'}->get('x'), $city->{'center'}->get('y'));
+        if ($d < $min_d) {
+            $min_d = $d;
+            @closest = ($city);
+        }
+        elsif ($d == $min_d) {
+            push @closest, $min_d;
+        }
+    }
+    return @closest;
 }
 
 sub city_count {

@@ -52,3 +52,7 @@ dump.html
 out.txt
 error.txt
 dump.html
+test/test.out
+alloc.html
+alloc_c1.html
+alloc_c2.html

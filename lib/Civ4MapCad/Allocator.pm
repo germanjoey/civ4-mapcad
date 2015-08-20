@@ -650,7 +650,7 @@ sub allocate_single {
     my $civs = $self->{'civs'};
     foreach my $start (@{ $self->{'starts'} }) {
         my ($x, $y, $player) = @$start;
-        $civs->{$player} = Civ4MapCad::Allocator::ModelCiv->new($x, $y, $player, $tiles_per_player, $self->{'map'}, $alloc);
+        $civs->{$player} = Civ4MapCad::Allocator::ModelCiv->new($x, $y, $player, $tiles_per_player, $self->{'map'}, $self->{'raycasts'}, $alloc);
     }
     
     foreach my $turn (30..$to_turn) {
@@ -684,6 +684,8 @@ sub allocate_single {
                     $min = $adjust if $adjust < $min;
                     push @stat_adjust, [$adjust, $spot];
                 }
+                
+                print "\n" if @stat_adjust > 0;
                 
                 my $total = 0;
                 foreach my $s (@stat_adjust) {
