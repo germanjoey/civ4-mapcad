@@ -572,7 +572,7 @@ sub modify_layer_with_mask {
 }
 
 my $cutout_layer_with_mask_help_text = qq[
-    Cuts tiles out of a layer with a mask into a new layer, as if the mask were a cookie-cutter and the original layer was dough. Tiles in the original layer are deleted. (replaced with blank tiles (ocean)). If '--copy' is set, then the tiles in the original layer aren't deleted. 
+    Cuts tiles out of a layer with a mask into a new layer, as if the mask were a cookie-cutter and the original layer was dough. Tiles in the original layer are deleted. (replaced with blank tiles (ocean)). If '--copy_tiles' is set, then the tiles in the original layer aren't deleted. 
 ];
 sub cutout_layer_with_mask {
     my ($state, @params) = @_;
@@ -583,7 +583,7 @@ sub cutout_layer_with_mask {
         'required' => ['layer', 'mask'],
         'required_descriptions' => ['layer to cutout from', 'mask to define selection'],
         'optional' => {
-            'copy' => 'false',
+            'copy_tiles' => 'false',
             'offsetX' => '0',
             'offsetY' => '0'
         }

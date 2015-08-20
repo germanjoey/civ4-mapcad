@@ -50,37 +50,58 @@ sub strategic_adjustment {
         $overseas = 2 if ($access == 2) and ($self->{'turn'} < 150);
     }
     
+    my $city_count = $self->city_count();
+    
     # line_dist is the straight-line distance between points, while tile-dist is the number of tiles a warrior needs to move
     # to get from one tile to another without the help of roads. The line-distance will be greater of the two; we average them here to estimate distance because diagonals can "feel" farther because cities can't overlap as easily on the diagonal.
     my $line_dist = $spot->{'distance'}{$self->{'player'}}[0];
     my $tile_dist = $spot->{'distance'}{$self->{'player'}}[1];
     my $d = ($line_dist + $tile_dist)/2;
-    my $s = $self->{'safe_dist'};
+    
+    # boost effective distance early to clamp down on pink-dotting
+    my $db = $d*(1 + 1/$city_count);
+    
+    # slowly grow a zone around our capital where we are "safe"
+    my $s = max(4, 1 + 3 * int(($city_count+1)/4));
+    #my $s = $self->{'safe_dist'};
     
     # now give a bonus or malus depending on how far away a city is; closer cities are rewarded
     # https://www.wolframalpha.com/input/?i=plot++%28-0.25-%28%28%28x-7%29%2Fx%29%2Fsqrt%281%2B%28%28x-7%29%2Fx%29%5E2%29%29%29%2F2+from+0+to+20
     # note that we only look at sites between 3 and 5 tiles away from any city we've currently settled, so we don't have to worry about this
     # clamining some sick site on the other side of the map
-    my $dist_bonus = (-0.25 - ((($d-$s)/$d)/sqrt(1+(($d-$s)/$d)**2)))/2;
+    my $dist_bonus_pre_adjust = (-0.25 - ((($db-$s)/$db)/sqrt(1+(($db-$s)/$db)**2)))/1.5;
     
-    # now adjust to try gaining more land... after a certain number of cities, settling towards opponents will become more and more appealing
-    my $city_count = $self->city_count();
+    # instead of just dividing by 2, we'll make the bonus matter more at few cities and matter less at a lot of cities
+    my $dist_bonus = 1.25*$dist_bonus_pre_adjust/log($city_count + 2);
+    
+    # now adjust to try gaining more land... after a certain number of cities, settling aggressively towards opponents will become more and more appealing
     my $comp_bonus = 1;
-    $comp_bonus += sqrt($d-$s)*(log($city_count-2)-2)/5 if ($d > $s) and ($city_count > 2);
+    $comp_bonus += sqrt($d-$s)*(log($city_count-5)-2)/20 if ($d > $s) and ($city_count > 5);
     
+    # the AZZA FACTOR
     # tiles that were estimated to be contested are also valuable to claim, so lets give another bonus based on that
     # however, we don't want it to go nuts giving bonuses to 0% or 100% tiles either, so lets give the max bonus around 50% contention
+    my $contention_bonus = 0;
+    my $ownership = $spot->{'bfc'}->get_estimated_ownership($self->{'player'});
     if ($estimate_contention == 1) {
-        my $contention = 1 - $spot->{'bfc'}->get_estimated_ownership($self->{'player'});
-        $contention = abs(0.5 - abs($contention - 0.5))/2;
-        $comp_bonus += $contention;
+        my $contention = 1 - $ownership;
+        # first, lets consider a contention threshold. if the area is not at least this much ours on average, then its probably too far of a reach
+        # we start at thinking 0.5 is a good limit, and this decreases slowly
+        my $threshold = 0.5/log($city_count + 1);
+        my $ownership = $spot->{'bfc'}->get_estimated_ownership($self->{'player'});
+        if ($ownership > $threshold) {
+            
+            # here, the contention will slowly end up matter more, until we're adding approximately $contention/2
+            $contention_bonus = $contention*(1 - 1/sqrt(sqrt($city_count-5))) if $city_count > 5;
+            $contention_bonus /= 8;
+        }
     }
     
     # now lets consider access to resources
     my $strat_bonus = 0;
     my $def = \%Civ4MapCad::Allocator::resource_yield;
     
-    if (! exists $self->{'resource_access'}{'copper'} and $spot->{'bfc'}->has_resource_any_ring('copper')) {
+    if ((! exists $self->{'resource_access'}{'copper'}) and $spot->{'bfc'}->has_resource_any_ring('copper')) {
         $strat_bonus += max(1, (1/10)*(2**($self->city_count() - 2)));
     }
     
@@ -88,7 +109,7 @@ sub strategic_adjustment {
     # my @resource_list = $spot->{'bfc'}->resource_list();
     # my $lux_count = 0;
     
-    return $strat_bonus + $dist_bonus + $comp_bonus*$spot->{'bfc_value'} - $overseas;
+    return $contention_bonus + $strat_bonus + $dist_bonus + $comp_bonus*$spot->{'bfc_value'} - $overseas;
 }
 
 sub city_count {

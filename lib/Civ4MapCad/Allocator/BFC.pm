@@ -50,11 +50,12 @@ sub find_expected_ownership {
         my $total_ownership = $self->{'center'}{'contention_estimate'}{$player};
         my $t = 1;
         foreach my $tile ($self->get_all_tiles()) {
-            $total_ownership += $tile->{'contention_estimate'};
+            $total_ownership += $tile->{'contention_estimate'}{$player};
             $t ++;
         }
         $self->{'average_ownership'}{$player} = $total_ownership/$t;
     }
+    
 }
 
 sub get_estimated_ownership {
@@ -70,6 +71,11 @@ sub get_value {
 sub get_first_ring {
     my ($self) = @_;
     return @{ $self->{'ring_1st'} };
+}
+
+sub get_second_ring {
+    my ($self) = @_;
+    return @{ $self->{'ring_2nd'} };
 }
 
 sub get_all_tiles {
@@ -200,6 +206,7 @@ sub reset {
 
 sub calc_bfc_value {
     my ($self) = @_;
+    return if ($self->{'center'}{'PlotType'} == 0) or ($self->{'center'}{'PlotType'} == 3);
     
     # total BFC value
     # things that i want in a city in terms of pure output:
@@ -246,7 +253,10 @@ sub calc_bfc_value {
     my $trees = 0;
     foreach my $tile (@all_tiles) {
         next unless exists $tile->{'FeatureType'};
-        $trees += 1 if $tile->{'FeatureType'} eq 'FEATURE_FOREST';
+        
+        # camp resources can keep their forest
+        next if (exists $tile->{'BonusType'}) and ($tile->{'BonusType'} =~ /^(?:deer|ivory|fur)$/);
+        $trees ++ if $tile->{'FeatureType'} eq 'FEATURE_FOREST';
     }
     $self->{'trees_count'} = $trees;
     $trees = min(1, $trees/8);
@@ -263,15 +273,22 @@ sub calc_bfc_value {
     my $bad = 0;
     foreach my $tile (@all_tiles) {
         if ((exists $tile->{'FeatureType'}) and ($tile->{'FeatureType'} eq 'FEATURE_JUNGLE')) {
-            $bad -= 0.5;
+            $bad += 0.5;
         }
         
+        # 
         if ($tile->{'TerrainType'} =~ /snow|desert|tundra/i) {
-            $bad ++ unless (exists $tile->{'FeatureType'}) and ($tile->{'FeatureType'} =~ /flood|oasis/i);
+            $bad ++ unless ((exists $tile->{'FeatureType'}) and ($tile->{'FeatureType'} =~ /flood|oasis/i)) or (exists $tile->{'BonusType'});
             next;
         }
         
+        # coast tiles without being coastal
         if ($tile->is_water() and ($self->{'first_ring_coastal'} == 0) and ($tile->{'freshwater'} == 0)) {
+            $bad ++;
+        }
+        
+        # peaks
+        if ($tile->{'PlotType'} == 0) {
             $bad ++;
         }
     }
@@ -279,7 +296,6 @@ sub calc_bfc_value {
     $bad = min(1.25, max(0, ($bad-3)/8)); # BFC can have 3 bad tiles with no penalty
     
     my $twohp = (exists $self->{'center'}{'2h_plant'}) ? 1 : 0;
-    
     my $fresh = $self->{'center'}->is_fresh();
     
     my $w1 = 1;
@@ -314,7 +330,7 @@ sub upgrade_via_resource {
         next unless exists $self->{'upgrades_' . $ring}{$bonus};
         next if $self->{'upgraded_' . $ring}{$bonus} == 1;
         
-        my $rep = $self->{'upgrade_replacements'}[$NUM_TILES_FULL - 1 - $self->{'replacement_counter'}];
+        my $rep = $self->{'upgrade_replacements'}[$NUM_TILES_FULL - 1 - $self->{'replacement_counter'}] || 0;
         $rep = (abs($rep)*$rep/$NUM_TILES_FULL);
         
         $self->{'replacement_counter'} ++;

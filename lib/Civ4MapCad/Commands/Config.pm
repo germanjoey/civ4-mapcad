@@ -58,6 +58,9 @@ sub set_output_dir {
     my ($directory) = $pparams->get_required();
     
     $main::config{'output_dir'} = $directory;
+    if (! -e $directory) {
+        mkdir($directory);
+    }
     
     return 1;
 }
@@ -105,6 +108,12 @@ sub set_mod {
         exit(-1);
     }
     
+    $main::config{'output_dir'} = '.' unless exists $main::config{'output_dir'};
+    
+    if (! -e $main::config{'output_dir'}) {
+        mkdir($main::config{'output_dir'});
+    }
+    
     if (! exists $main::config{'civ4_path'}) {
         $main::config{'civ4_path'} = "$main::config{'civ4_exe'}";
         $main::config{'civ4_path'} =~ s/Civ4BeyondSword.exe$//;
@@ -135,14 +144,16 @@ sub set_mod {
             my $group = $state->{'group'}{$group_name};
             push @modified, "* Setting $group_name to $max players.";
             
+            my $total = 0;
             foreach my $layer ($group->get_layers()) {
-                $layer->set_max_num_players($max);
+                $total += $layer->set_max_num_players($max);
             }
+            shift @modified unless $total > 0;
             
             $state->set_variable($group_name, 'group', $group);
         }
         
-        $state->list( @modified );
+        $state->list( @modified ) if @modified > 0;
     }
     
     delete $state->{'data'};
@@ -381,12 +392,14 @@ sub set_difficulty {
             my $group = $state->{'group'}{$group_name};
             push @modified, "* Setting all players in $group_name to $diff_name handicap.";
             
+            my $total = 0;
             foreach my $layer ($group->get_layers()) {
-                $layer->set_difficulty($diff_name);
+                $total += $layer->set_difficulty($diff_name);
             }
+            shift @modified unless $total > 0;
         }
         
-        $state->list( @modified );
+        $state->list( @modified ) if @modified > 0;
     }
     
     $main::config{'difficulty'} = $diff_name;

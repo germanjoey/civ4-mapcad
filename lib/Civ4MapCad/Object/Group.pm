@@ -14,7 +14,6 @@ sub new_blank {
     my ($name, $width, $height) = @_;
    
     my $obj = {
-        'ref_id' => $main::state->next_ref_id(),
         'name' => $name,
         'wrapX' => 1,
         'wrapY' => 1,
@@ -26,7 +25,7 @@ sub new_blank {
     };
    
     my $blessed = bless $obj, $class;
-    $main::config::{'ref_table'}{$obj->{'ref_id'}} = $blessed;
+    $main::state->set_ref_id($blessed);
     return $blessed;
 }
  
@@ -36,7 +35,6 @@ sub new_from_import {
     my ($filename) = @_;
     
     my $obj = {
-        'ref_id' => $main::state->next_ref_id(),
         'layers' => {},
         'wrapX' => 0,
         'wrapY' => 0,
@@ -61,8 +59,8 @@ sub new_from_import {
     $self->{'wrapY'} = ($layer->wrapsY()) ? 1 : 0;
     
     $self->add_layer($layer);
+    $main::state->set_ref_id($self);
     
-    $main::config::{'ref_table'}{$self->{'ref_id'}} = $self;
     return $self;
 }
 
@@ -376,7 +374,12 @@ sub merge_two_and_replace {
 sub merge_all {
     my ($self, $rename_final_to_match) = @_;
     
-    $self->normalize_starts(); # important!
+    my $ret = $self->normalize_starts(); # important!
+    if (exists $ret->{'error'}) {
+        return $ret;
+    }
+    
+    $self->fix_reveal();
     
     while (1) {
         my @remaining_layers_names = $self->get_layer_names();
@@ -407,6 +410,7 @@ sub merge_all {
     }
     
     $self->{'max_priority'} = 0;
+    return {};
 }
 
 sub find_difference {
@@ -458,7 +462,20 @@ sub normalize_starts {
     my ($self) = @_;
     
     my $starts_found = $self->get_duplicate_owners();
-    my @duplicates = grep { @{$starts_found->{$_}} > 1 } (keys %$starts_found);
+    
+    my $c = 0;
+    my @duplicates;
+    foreach my $s (keys %$starts_found) {
+        push @duplicates, $s if @{$starts_found->{$s}} > 1;
+        $c += @{$starts_found->{$s}};
+    }
+    
+    if ($c > $main::config{'max_players'}) {
+        return {
+            'error' => 1,
+            'error_msg' => "The total number of players in this group ($c) exceeds the allowed maximum number of players! ($main::config{'max_players'}) Use 'help strip' or 'set_mod' to find ways to either remove settlers or expand the total number of allowed players."
+        }
+    }
     
     print "\n" if @duplicates > 0;
     
@@ -483,7 +500,7 @@ sub normalize_starts {
     
     print "\n" if @duplicates > 0;
     
-    return 1;
+    return {};
 }
 
 sub _get_next_open_start_id {
@@ -540,6 +557,7 @@ sub export {
     my $group_name = $self->get_name();
     $group_name =~ s/\$//;
     
+    $self->fix_reveal();
     my @layers = $self->get_layers();
     
     print "\n";
@@ -554,6 +572,7 @@ sub export {
         }
         
         $layer->reduce_players();
+        
         $layer->add_dummy_start() if $layer->num_players() == 1;
         $layer->export_layer($path);
         
@@ -568,9 +587,11 @@ sub export {
 sub set_difficulty {
     my ($self, $level) = @_;
 
+    my $total = 0;
     foreach my $layer ($self->get_layers()) {
-        $layer->set_difficulty($level);
+        $total += $layer->set_difficulty($level);
     }
+    return $total;
 }
 
 sub set_player_from_civdata {
@@ -646,6 +667,14 @@ sub add_scouts_to_settlers {
 
     foreach my $layer ($self->get_layers()) {
         $layer->add_scouts_to_settlers();
+    }
+}
+
+sub fix_reveal {
+    my ($self) = @_;
+
+    foreach my $layer ($self->get_layers()) {
+        $layer->fix_reveal();
     }
 }
 

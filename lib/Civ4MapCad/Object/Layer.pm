@@ -15,7 +15,6 @@ sub new_default {
     my ($name, $width, $height) = @_;
     
     my $obj = {
-        'ref_id' => $main::state->next_ref_id(),
         'd' => 0,
         'name' => $name,
         'map' => Civ4MapCad::Map->new_default($width, $height),
@@ -24,7 +23,7 @@ sub new_default {
     };
     
     my $blessed = bless $obj, $class;
-    $main::config::{'ref_table'}{$obj->{'ref_id'}} = $blessed;
+    $main::state->set_ref_id($blessed);
     return $blessed;
 }
 
@@ -48,7 +47,7 @@ sub new_from_import {
     };
     
     my $blessed = bless $obj, $class;
-    $main::config::{'ref_table'}{$obj->{'ref_id'}} = $blessed;
+    $main::state->set_ref_id($blessed);
     return $blessed;
 }
 
@@ -338,13 +337,19 @@ sub select_with_mask {
         }
     }
     
+    my $starts = $selection->find_starts();
+    foreach my $start (@$starts) {
+        my ($x,$y,$player) = @$start;
+        $selection->set_player_from_layer($player, $self);
+    }
+    
     $selection->move_to($mask_offsetX, $mask_offsetY);
     return $selection;
 }
 
 sub set_difficulty {
     my ($self, $level) = @_;
-    $self->{'map'}->set_difficulty($level);
+    return $self->{'map'}->set_difficulty($level);
 }
 
 sub set_player_from_layer {
@@ -759,6 +764,13 @@ sub rotate {
     }
     
     return ($move_x, $move_y, $result_angle1, $result_angle2);
+}
+
+
+sub fix_reveal {
+    my ($self) = @_;
+
+    $self->{'map'}->fix_reveal();
 }
 
 1;

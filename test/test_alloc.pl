@@ -15,8 +15,8 @@ use Civ4MapCad::Dump qw(dump_framework);
 use Civ4MapCad::Object::Mask;
 
 $Civ4MapCad::Map::Tile::DEBUG = 1;
-my $iterations = 50;
-my $tuning_iterations = 20;
+my $iterations = 1;
+my $tuning_iterations = 1;
 
 our $state = Civ4MapCad::State->new();
 our %config = Config::General->new('def/config.cfg')->getall();
@@ -34,26 +34,20 @@ $SIG{__DIE__} = sub {
 };
 
 $state->process_command('run_script "def/init.civ4mc"');
+$state->process_command('set_mod "rtr 2.0.7.4"');
 $state->clear_log();
 
 my $map = Civ4MapCad::Map->new();
 
-my $filename = 'input/pb27/LooksGoodForDraft_v2.CivBeyondSwordWBSave';
+my $filename = 'input/pb27/pb27_final_v2.CivBeyondSwordWBSave';
+
 my $ret = $map->import_map($filename);
 if ($ret ne '') {
     die $ret;
 }
 
 my $alloc = Civ4MapCad::Allocator->new($map);
-#$alloc->upgrade_resource_event(35);
-#$alloc->reset_resources();
-
 $alloc->allocate($tuning_iterations, $iterations, 185, 150);
-
-#use Data::Dumper;
-#print Dumper $map->{'Tiles'}[84][6]->{'access'};
-#print Dumper $map->{'Tiles'}[84][7]->{'access'};
-#print Dumper $map->{'Tiles'}[80][5]->{'access'};
 
 dump_overlay($alloc);
 report($alloc);
@@ -64,15 +58,17 @@ my $mask = Civ4MapCad::Object::Mask->new_blank($width, $height);
 
 foreach my $x (0..$width-1) {
     foreach my $y (0..$height-1) {
-        my $v = $map->{'Tiles'}[$x][$y]->{'bfc_value'};
+        my $v = $map->{'Tiles'}[$x][$y]->{'congestion'};
         $mask->{'canvas'}[$x][$y] = (defined $v) ? $v : 0;
     }
 }
 
 $state->set_variable('@bfc_value', 'mask', $mask);
-$state->process_command('import_group "' . $filename . '" => $pb27_c2');
-$state->process_command('dump_group $pb27_c2');
-$state->process_command('dump_mask @bfc_value --add_to_existing');
+$state->process_command('import_group "' . $filename . '" => $pb27');
+$state->process_command('dump_group $pb27');
+rename('dump.html','pb27.html');
+$state->process_command('dump_mask @bfc_value');
+rename('dump.html','pb27_bfc.html');
 $map->export_map("test/test.out");
 
 sub report {
@@ -140,7 +136,9 @@ sub report {
         my $std = sqrt($contested_var{$civ}/$contested_count{$civ});
         my $capital = $alloc->{'civs'}{$civ}{'cities'}[0]{'center'};
         my $average_value = $alloc->{'avg_city_value'}{$civ}/$alloc->{'avg_city_count'}{$civ};
-        print "For $civ:\n";
+        my $name = $map->{'Players'}[$civ]{'LeaderName'};
+        
+        print "For $civ ($name):\n";
         print "  Capital at: $capital->{'x'}, $capital->{'y'}\n";
         print "  Average number/value of cities: $alloc->{'avg_city_count'}{$civ}/$average_value\n";
         print "  Average number of strong/weak food resources: $food_count{$civ}/$wfood_count{$civ}\n";
@@ -170,7 +168,8 @@ sub dump_overlay {
             foreach my $player (sort keys %{ $alloc->{'average_allocation'}[$x][$y] }) {
                 my $value = $canvas->[$x][$y]{$player};
                 $max_value = $value if $value > $max_value;
-                $title .= "; player $player: $value" if $value > 0;
+                my $name = $alloc->{'map'}{'Players'}[$player]{'LeaderName'};
+                $title .= sprintf("; $name: %5.3f", $value) if $value > 0;
             }
             
             $max_value = $max_value;

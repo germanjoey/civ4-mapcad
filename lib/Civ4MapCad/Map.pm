@@ -635,6 +635,7 @@ sub reassign_player {
     
     my $teamcount = 0;
     foreach my $i (0 .. $#{ $self->{'Players'} }) {
+        print "PLAYER $i\n";
         $teamcount ++ if $self->{'Players'}[$i]->get('Team') eq $self->{'Players'}[$to]->get('Team');
     }
     
@@ -685,9 +686,14 @@ sub strip_hidden_strategic {
 sub set_difficulty {
     my ($self, $level) = @_;
     
+    my $total = 0;
     foreach my $player (@{ $self->{'Players'} }) {
-        $player->set('Handicap', $level) if $player->get('CivType') ne 'NONE';
+        if (($player->get('CivType') ne 'NONE') and ($player->get('Handicap') ne $level)) {
+            $player->set('Handicap', $level);
+            $total ++;
+        }
     }
+    return $total;
 }
 
 sub strip_victories {
@@ -704,12 +710,14 @@ sub set_max_num_players {
             $self->{'Players'}[$i] = Civ4MapCad::Map::Player->new_default($i);
             $self->{'Teams'}{$i} = Civ4MapCad::Map::Team->new_default($i);
         }
+        return ($new_max - $old_max);
     }
     else {
         foreach my $i ($new_max .. ($old_max-1)) {
             delete $self->{'Players'}[$i];
             delete $self->{'Teams'}{$i}
         }
+        return 0;
     }
 }
 
@@ -755,6 +763,7 @@ sub fliplr {
         foreach my $y (0..$#{$self->{'Tiles'}[$xx]}) {
             $new[$x][$y] = $self->{'Tiles'}[$xx][$y];
             $new[$x][$y]->set('x', $x);
+            $new[$x][$y]->flip_rivers_lr();
         }
     }
     
@@ -772,6 +781,7 @@ sub fliptb {
             my $y = $#{$self->{'Tiles'}[$x]} - $yy;
             $new[$x][$y] = $self->{'Tiles'}[$x][$yy];
             $new[$x][$y]->set('y', $y);
+            $new[$x][$y]->flip_rivers_tb();
         }
     }
     
@@ -1077,6 +1087,7 @@ sub rotate {
     $self->{'MapInfo'}->set('grid height', $new_height);
     $self->{'MapInfo'}->set('num plots written', $new_width*$new_height);
     
+    $self->{'Tiles'} = [];
     foreach my $x (0..$new_width-1) {
         $self->{'Tiles'}[$x] = [];
         foreach my $y (0..$new_height-1) {
@@ -1088,6 +1099,26 @@ sub rotate {
     }
     
     return ($new_width, $new_height, $move_x, $move_y, $result_angle1, $result_angle2);
+}
+
+sub fix_reveal {
+    my ($self) = @_;
+
+    my $starts = $self->find_starts();
+    
+    my @starts;
+    foreach my $start (@$starts) {
+        my ($start_x, $start_y, $player) = @_;
+        
+        foreach my $x (0..$#{$self->{'Tiles'}}) {
+            foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
+                $self->{'Tiles'}[$x][$y]->clear_reveals();
+                $self->{'Tiles'}[$x][$y]->add_reveals($player) if (abs($start_x-$x) <= 2) and (abs($start_y-$y) <= 2);
+            }
+        }
+    }
+    
+    return 1;
 }
  
 1;

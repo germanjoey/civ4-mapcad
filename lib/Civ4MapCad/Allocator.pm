@@ -127,16 +127,6 @@ sub initialize {
     my $width = $self->get_width();
     my $height = $self->get_height();
     
-    # casting call for ray romano
-    foreach my $ddx (0..10) {
-        my $dx = $ddx - 5;
-        foreach my $ddy (0..10) {
-            my $dy = $ddy - 5;
-            next if (abs($dx) <= 2) and (abs($dy) <= 2);
-            $self->{'raycasts'}{$dx}{$dy} = [line(0,0 => $dx,$dy)];
-        }
-    }
-    
     $self->{'map'}->mark_freshwater();
     $self->{'map'}->mark_continents();
     
@@ -176,12 +166,98 @@ sub initialize {
         }
     }
     
+    $self->precalculate_tile_access($width, $height);
+    $self->precalculate_congestion($width, $height);
+    
+    return;
+}
+
+
+            
+# ok so what we're going to do is to take a look at this BFC
+# and then look at the first ring.
+# there's some patterns we want to look for:
+# a.) multiple peaks near city center are a huge warning sign
+# b.) as are lake tiles
+# c.) coast less so, but still somewhat
+# d.) ice/regular desert cause city spacing to grow, so they contribute some
+# e.) hills are a problem too, when the city is first settled
+#
+# eventually what we'll do is project a line towards the nearest city and sum up the congestion
+# if: a.) congestion is high near this spot but not towards our nearest city, then this is a chokepoint. if contention is high her
+#     b.) if congestion is low near this city, and we're on the same continent as our nearest city, but congestion is high towards the next city, we just settled past a chokepoint. that's BAD
+#     c.) if congestion is high near this spot and near the other spot, and we're on the same continent, this this is probably the other side of a big chokepoint. we don't want this either
+#     d.) if congestion is low near this spot but high towards the prev city, and we have different continent ids, then this is just an overseas city. use overseas adjustment instead
+#     e.) medium congestion here and at previous - sites are probably just cramped
+sub precalculate_congestion {
+    my ($self, $width, $height) = @_;
+    
+    foreach my $x (0 .. $width-1) {
+        foreach my $y (0 .. $height-1) {
+            my $bfc = $self->{'map'}{'Tiles'}[$x][$y]{'bfc'};
+            
+            my %count = (
+                'lake' => 0,
+                'peak' => 0,
+                'hill' => 0,
+                'dead' => 0,
+            );
+            
+            foreach my $tile ($bfc->get_first_ring()) {
+                if ($tile->is_water() and ($tile->{'freshwater'} == 1)) {
+                    $count{'lake'} += 3;
+                }
+                elsif ($tile->{'PlotType'} == 0) {
+                    $count{'peak'} += 3;
+                }
+                elsif ($tile->{'PlotType'} == 1) {
+                    $count{'hill'} += 3;
+                }
+                elsif ((!exists $tile->{'BonusType'}) and (!exists $tile->{'FeatureType'}) and ($tile->{'TerrainType'} =~ /snow|tundra|desert/)) {
+                    $count{'dead'} += 2;
+                }
+            }
+            
+            foreach my $tile ($bfc->get_second_ring()) {
+                if ($tile->is_water() and ($tile->{'freshwater'} == 1)) {
+                    $count{'lake'} ++;
+                }
+                elsif ($tile->{'PlotType'} == 0) {
+                    $count{'peak'} ++;
+                }
+                elsif ($tile->{'PlotType'} == 1) {
+                    $count{'hill'} ++;
+                }
+            }
+            
+            my $congestion = 5*$count{'peak'} + 3*$count{'lake'} + $count{'hill'} + $count{'dead'};
+            $congestion /= 100; # / (5*20)
+            $self->{'map'}{'Tiles'}[$x][$y]->{'congestion'} = $congestion;
+        }
+    }
+}
+
+sub precalculate_tile_access {
+    my ($self, $width, $height) = @_;
+
+    # casting call for ray romano
+    foreach my $ddx (0..10) {
+        my $dx = $ddx - 5;
+        foreach my $ddy (0..10) {
+            my $dy = $ddy - 5;
+            next if (abs($dx) <= 2) and (abs($dy) <= 2);
+            
+            # line() is a call to Algorithm::Line::Bresenham::line
+            $self->{'raycasts'}{$dx}{$dy} = [line(0,0 => $dx,$dy)];
+        }
+    }
+    
     foreach my $x (0 .. $width-1) {
         foreach my $y (0 .. $height-1) {
             my $tile = $self->{'map'}{'Tiles'}[$x][$y];
+            $tile->{'bfc'} = Civ4MapCad::Allocator::BFC->new($self->{'map'}, $tile);
             next if $tile->is_water();
             next if $tile->{'PlotType'} == 0;
-            $tile->{'bfc'} = Civ4MapCad::Allocator::BFC->new($self->{'map'}, $tile);
             
             # now raycast between points to determine whether a travel line is across water or not
             foreach my $ddx (0..10) {
@@ -212,8 +288,6 @@ sub initialize {
             
         }
     }
-    
-    return;
 }
 
 sub calculate_tile_yield {
@@ -439,29 +513,6 @@ sub reset_resources {
     }
 }
 
-sub create_blank_alloc {
-    my ($self) = @_;
-    
-    my $width = $self->get_width();
-    my $height = $self->get_height();
-    
-    my @alloc;
-    foreach my $x (0 .. $width-1) {
-        $alloc[$x] = [];
-        foreach my $y (0 .. $height-1) {
-            my %dist;
-            foreach my $start (@{ $self->{'starts'} }) {
-                my ($x, $y, $player) = @$start; 
-                $dist{$player} = 0;
-            }
-            
-            $alloc[$x][$y] = \%dist;
-        }
-    }
-    
-    return \@alloc;
-}
-
 sub allocate {
     my ($self, $tuning_iterations, $iterations, $to_turn, $tiles_per_player) = @_;
     
@@ -518,9 +569,33 @@ sub set_contention_estimate {
     foreach my $x (0 .. $width-1) {
         foreach my $y (0 .. $height-1) {
             my $tile = $self->{'map'}{'Tiles'}[$x][$y];
+            next if ($tile->{'PlotType'} == 0) or ($tile->{'PlotType'} == 3);
             $tile->{'bfc'}->find_expected_ownership() if exists $tile->{'bfc'};
         }
     }
+}
+
+sub create_blank_alloc {
+    my ($self) = @_;
+    
+    my $width = $self->get_width();
+    my $height = $self->get_height();
+    
+    my @alloc;
+    foreach my $x (0 .. $width-1) {
+        $alloc[$x] = [];
+        foreach my $y (0 .. $height-1) {
+            my %dist;
+            foreach my $start (@{ $self->{'starts'} }) {
+                my ($x, $y, $player) = @$start; 
+                $dist{$player} = 0;
+            }
+            
+            $alloc[$x][$y] = \%dist;
+        }
+    }
+    
+    return \@alloc;
 }
 
 sub update_alloc {

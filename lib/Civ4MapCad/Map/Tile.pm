@@ -69,6 +69,11 @@ sub clear {
     $self->{'continent_id'} = -1;
 }
 
+sub clear_reveals {
+    my ($self) = @_;
+    $self->{'Revealed'} = {};
+}
+
 sub add_reveals {
     my ($self, @vals) = @_;
     
@@ -166,6 +171,39 @@ sub parse {
     }
     
     $self->{'freshwater'} = 0;
+}
+
+sub flip_rivers_tb {
+    my ($self) = @_;
+    
+    if (exists $self->{'RiverWEDirection'}) {
+        $self->{'RiverWEDirection'} = ($self->{'RiverWEDirection'} == 0) ? 2 : 0;
+    }
+}
+
+sub flip_rivers_lr {
+    my ($self) = @_;
+    
+    if (exists $self->{'RiverNSDirection'}) {
+        $self->{'RiverNSDirection'} = ($self->{'RiverNSDirection'} == 1) ? 3 : 1;
+    }
+}
+
+sub transpose_rivers {
+    my ($self) = @_;
+    
+    if (exists $self->{'isNOfRiver'}) {
+        delete $self->{'isNOfRiver'};
+        $self->{'isWOfRiver'} = 1;
+        $self->{'RiverNSDirection'} = ($self->{'RiverWEDirection'} == 1) ? 2 : 0;
+        delete $self->{'RiverWEDirection'};
+    }
+    elsif (exists $self->{'isWOfRiver'}) {
+        delete $self->{'isWOfRiver'};
+        $self->{'isNOfRiver'} = 1;
+        $self->{'RiverWEDirection'} = ($self->{'RiverNSDirection'} == 0) ? 1 : 3;
+        delete $self->{'RiverNSDirection'};
+    }
 }
 
 sub write {
@@ -470,13 +508,14 @@ sub add_scout_if_settler {
             $scout->set('FacingDirection','2');
             $scout->set('UnitAIType','UNITAI_EXPLORE');
             
-            push @added, $scout;
+            #push @added, $scout;
+            push @{$self->{'Units'}}, $scout;
         }
         
-        push @added, $unit;
+        #push @added, $unit;
     }
     
-    $self->{'Units'} = \@added;
+    #$self->{'Units'} = \@added;
 }
 
 sub reassign_reveals {

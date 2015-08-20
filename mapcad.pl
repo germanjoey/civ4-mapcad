@@ -10,8 +10,16 @@ sub TIEHANDLE { return bless geniosym, __PACKAGE__ }
 sub PRINT { 
     shift;
     open (my $log, '>>', 'output.txt');
-    print $log join('', @_);
-    print $OLD_STDOUT join('', @_ );
+    
+    my @ok;
+    foreach my $item (@_) {
+        push @ok, $item if ref($item) eq '';
+    }
+    
+    my @has_nl = grep { $_ =~ /\n/ } @ok;
+    print $log join('', @ok);
+    print $log "\n" unless @has_nl > 0;
+    print $OLD_STDOUT join('', @ok);
     close $log;
 }
 

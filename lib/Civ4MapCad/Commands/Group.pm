@@ -155,6 +155,7 @@ sub import_group {
     
     $result->set_difficulty($main::config{'difficulty'});
     $state->set_variable($result_name, 'group', $result);
+    
     return 1;
 }
 
@@ -220,9 +221,13 @@ sub flatten_group {
     
     my $has_duplicate_owners = $group->has_duplicate_owners();
     $state->buffer_bar() if $has_duplicate_owners;
-    $copy->merge_all($rename_final);
-    $state->register_print() if $has_duplicate_owners;
+    my $ret = $copy->merge_all($rename_final);
+    if (exists $ret->{'error'}) {
+        $state->report_error($ret->{'error_msg'});
+        return -1;
+    }
     
+    $state->register_print() if $has_duplicate_owners;
     $state->set_variable($result_name, 'group', $copy);
     
     return 1;
@@ -282,7 +287,11 @@ sub export_group {
         print "\n  Exporting flat version of group ", $copy->get_name(), ".\n";
         
         my $has_duplicate_owners = $group->has_duplicate_owners();
-        $copy->merge_all(1);
+        my $ret = $copy->merge_all(1);
+        if (exists $ret->{'error'}) {
+            $state->report_error($ret->{'error_msg'});
+            return -1;
+        }
         
         my ($flat_layer) = $copy->get_layers();
         $flat_layer->export_layer($output_dir . '/' . $copy->get_name() . ".flat.CivBeyondSwordWBSave");
@@ -337,7 +346,13 @@ sub normalize_starts {
     
     my $has_duplicate_owners = $group->has_duplicate_owners();
     $state->buffer_bar() if $has_duplicate_owners;
-    $group->normalize_starts();
+    my $ret = $group->normalize_starts();
+    
+    if (exists $ret->{'error'}) {
+        $state->report_error($ret->{'error_msg'});
+        return -1;
+    }
+    
     $state->register_print() if $has_duplicate_owners;
     
     return 1;
@@ -426,7 +441,13 @@ sub extract_starts {
     
     my $has_duplicate_owners = $copy->has_duplicate_owners();
     $state->buffer_bar() if $has_duplicate_owners;
-    $copy->merge_all(1);
+    
+    my $ret = $copy->merge_all(1);
+    if (exists $ret->{'error'}) {
+        $state->report_error($ret->{'error_msg'});
+        return -1;
+    }
+    
     $state->register_print() if $has_duplicate_owners;
     
     $copy->extract_starts_with_mask($bfc, 0, 1);
@@ -467,7 +488,12 @@ sub export_sims {
     
     my $has_duplicate_owners = $copy->has_duplicate_owners();
     $state->buffer_bar() if $has_duplicate_owners;
-    $copy->merge_all(1);
+    my $ret = $copy->merge_all(1);
+    if (exists $ret->{'error'}) {
+        $state->report_error($ret->{'error_msg'});
+        return -1;
+    }
+    
     $state->register_print() if $has_duplicate_owners;
 
     $copy->extract_starts_with_mask($bfc, 1, 0);

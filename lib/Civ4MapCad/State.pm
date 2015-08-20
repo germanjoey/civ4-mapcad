@@ -37,21 +37,31 @@ sub new {
     return bless $obj, $class;
 }
 
+sub set_ref_id {
+    my ($self, $obj) = @_;
+    $self->{'ref_id'} ++;
+    $obj->{'ref_id'} = $self->{'ref_id'};
+    $self->{'ref_table'}{$self->{'ref_id'}} = $obj;
+}
+
 sub next_ref_id {
     my ($self) = @_;
     my $current = $self->{'ref_id'};
-    $self->{'ref_id'} ++;
     return $self->{'ref_id'};
 }
 
 sub process_command {
     my ($self, $command) = @_;
     
-    my $ret = eval { $self->_process_command($command) };
+    if ($self->is_off_script()) {
+        open (my $log, '>>', 'output.txt') or die $!;
+        print $log join('', @_[1..$#_]);
+        my @has_nl = grep { $_ =~ /\n/ } @_[1..$#_];
+        print $log "\n" unless @has_nl > 0;
+        close $log;
+    }
     
-    open (my $log, '>>', 'output.txt') or die $!;
-    print $log join('', @_);
-    close $log;
+    my $ret = eval { $self->_process_command($command) };
     
     if ($@) {
         print "*** FATAL ERROR: ";
@@ -66,7 +76,7 @@ sub process_command {
     $self->ready_buffer_bar();
     $self->clear_printed();
     $self->collect_garbage();
-          
+    
     return $ret;
 }
 
@@ -427,11 +437,11 @@ sub set_variable {
         
         # clear out old layer names, in case some got deleted in a merge
         foreach my $full_layer_name (keys %{ $self->{'layer'} }) {
-            if ($full_layer_name =~ /^\$$name/) {
+            if ($full_layer_name =~ /^\$$name\./) {
                 delete $self->{'layer'}{$full_layer_name};
             }
         }
-    
+        
         # now add them back
         foreach my $layer ($value->get_layers()) {
             my $layer_name = $layer->get_name();

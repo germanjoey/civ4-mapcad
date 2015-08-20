@@ -151,6 +151,7 @@ sub rotate180 {
     my ($grid, $width, $height) = @_;
     ($grid, $width, $height) = flip_lr($grid, $width, $height);
     ($grid, $width, $height) = flip_tb($grid, $width, $height);
+    
     return ($grid, $width, $height);
 }
 
@@ -511,6 +512,10 @@ sub flip_lr {
         
         foreach my $y (0..$height-1) {
             $new[$x][$y] = $grid->[$xx][$y];
+            
+            if (ref($new[$y][$x]) =~ /tile/i) {
+                $new[$y][$x]->flip_rivers_lr();
+            }
         }
     }
     
@@ -526,8 +531,11 @@ sub flip_tb {
         
         foreach my $yy (0..$height-1) {
             my $y = $height - 1 - $yy;
-            
             $new[$x][$y] = $grid->[$x][$yy];
+            
+            if (ref($new[$y][$x]) =~ /tile/i) {
+                $new[$y][$x]->flip_rivers_tb();
+            }
         }
     }
     
@@ -545,6 +553,10 @@ sub transpose_grid {
     for my $x (0..$width-1) {
         for my $y (0..$height-1) {
             $new[$y][$x] = $grid->[$x][$y];
+            
+            if (ref($new[$y][$x]) =~ /tile/i) {
+                $new[$y][$x]->transpose_rivers();
+            }
         }
     }
     
