@@ -52,9 +52,9 @@ And then we invoke the *import_mask_from_ascii* command like so:
 
     import_mask_from_ascii "tutorials/t3/circle.txt" => @circle1
     
-Groups had a '$' in front of them, while now we see masks have a '@' in front of them to distinguish them. (these sigils help the commands do type checking and give better error reporting without needing to declare these objects beforehand).  We can dump a mask with the *dump_mask* command, like so:
+Groups had a '$' in front of them, while now we see masks have a '@' in front of them to distinguish them. (these sigils help the commands do type checking and give better error reporting without needing to declare these objects beforehand).  We can debug a mask with the *debug_mask* command, like so:
 
-    dump_mask @circle1
+    debug_mask @circle1
     
 ![tutorial3-i1](t3/i1.png)
 
@@ -135,11 +135,11 @@ Try entering the following on the command line:
 
     > new_mask_from_shape *circle 17 17 --centerX 8 --centerY 8 --radius 7 => @mask
     
-This command is a bit more complicated than the stuff we've seen previously, so I'll go through it step-by-step. *new_mask_from_shape* is the command name of course, while "*circle" is the shape and 17 x 17 is the size of the mask. The flags here (--centerX, --centerY, and ---radius) are actually specific to the "*circle* shape in particular. Finally, the result is stored in @circle2 mask. You can look at it with the "dump_mask" command:
+This command is a bit more complicated than the stuff we've seen previously, so I'll go through it step-by-step. *new_mask_from_shape* is the command name of course, while "*circle" is the shape and 17 x 17 is the size of the mask. The flags here (--centerX, --centerY, and ---radius) are actually specific to the "*circle* shape in particular. Finally, the result is stored in @circle2 mask. You can look at it with the *debug_mask* command:
 
-    > dump_mask @circle2 --add_to_existing
+    > debug_mask @circle2 --add_to_existing
     
-Refresh dump.html and take a look. As you can see, both circle1 and circle2 look exactly the same... if you ask if they want ice cream, they both say yes. In fact, it might not surprise you that I actually generated the circle with *new_mask_from_shape* to begin with and then saved it to circle.txt with the *export_mask_to_ascii* command. (*import_mask_to_ascii*/ *export_mask_to_table* is another option, by the way, which could be very useful if you want to generate a very complicated mask in some other way (e.g. matlab or python) and bring it into the tool). 
+Refresh debug.html and take a look. As you can see, both circle1 and circle2 look exactly the same... if you ask if they want ice cream, they both say yes. In fact, it might not surprise you that I actually generated the circle with *new_mask_from_shape* to begin with and then saved it to circle.txt with the *export_mask_to_ascii* command. (*import_mask_to_ascii*/ *export_mask_to_table* is another option, by the way, which could be very useful if you want to generate a very complicated mask in some other way (e.g. matlab or python) and bring it into the tool). 
 
 ![tutorial3-i2](t3/i2.png)
 
@@ -155,7 +155,7 @@ Now that's a fine looking banana, if I don't say so myself! Think Venn diagrams;
 
     new_group 25 25 => $a_green_banana
     generate_layer_from_mask @random_banana %land => $a_green_banana.background
-    dump_group $a_green_banana --add_to_existing
+    debug_mask $a_green_banana --add_to_existing
     
 ![tutorial3-i4](t3/i5.png)
 
@@ -168,14 +168,14 @@ Ok, so how do we do random? We'll use the *random shape, of course. This isn't s
     # (by the way, The *random shape actually allows --min and --max flags, which must
     #  be between 0 and 1, of course, but we're just leaving their default values here.
     > new_mask_from_shape *random 17 17 => @rand_field
-    > dump_mask @rand_field --add_to_existing
+    > debug_mask @rand_field --add_to_existing
     
 ![tutorial3-i4](t3/i5.png)
 
 Now that's more like it!  Now if there was only a way to combine this with our @banana_mask... but oh wait, there is! We can do another move out of our Venn diagram playbook and use the *mask_intersect* command to get their overlap. Since @banana_mask has values of only 1 or 0, it will act like another cookie-cutter and punch out a banana-shaped field of random values from @rand_field.
     
     mask_intersect @banana_mask @rand_field => @random_banana
-    dump_mask @random_banana --add_to_existing
+    debug_mask @random_banana --add_to_existing
 
 ![tutorial3-i5](t3/i6.png)
 
@@ -194,7 +194,7 @@ We've got a lot of bananas, a mix of resources, a few lakes, and the rest is lan
 
     new_group 25 25 => $the_real_banana
     generate_layer_from_mask @random_banana %bananaland => $the_real_banana.background
-    dump_group $the_real_banana --add_to_existing
+    debug_group $the_real_banana --add_to_existing
 
 ![tutorial3-i6](t3/i7.png)
 

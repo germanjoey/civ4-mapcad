@@ -54,18 +54,18 @@ This sounds good. We can set our mod to RtR very easily; as soon as we switch mo
 
 ## Working with the map
 
-Alright, cool. Our map is now an object that we can manipulate with other commands. Specifically, it is a "Group" type object, short for "Group of Layers." Don't worry what that means right now, just know that this object contains all the tiles in our map. We'll talk more about groups, layers, and the other object types in the second tutorial. For now, let's just take a look at our map with the "dump_group" command:
+Alright, cool. Our map is now an object that we can manipulate with other commands. Specifically, it is a "Group" type object, short for "Group of Layers." Don't worry what that means right now, just know that this object contains all the tiles in our map. We'll talk more about groups, layers, and the other object types in the second tutorial. For now, let's just take a look at our map with the "debug_group" command:
 
-    > dump_group $tutorial1
+    > debug_group $tutorial1
 
-Nothing happened, huh? Civ4 MC doesn't have a gui of its own, but there's still two other guis we can use - the Map Editor for Civ4 Beyond the Sword, and your handy internet browser. In this case, dump_group generates an html file that you can look at as a webpage. Go back to your Civ4 Map Cad directory and drag the "dump.html" file into your browser. You should see something like this:
+Nothing happened, huh? Civ4 MC doesn't have a gui of its own, but there's still two other guis we can use - the Map Editor for Civ4 Beyond the Sword, and your handy internet browser. In this case, debug_group generates an html file that you can look at as a webpage. Go back to your Civ4 Map Cad directory and drag the "debug.html" file into your browser. You should see something like this:
 
 ![tutorial1-img7](t1/i7.png)
 
 It's our map in handy html form! You can drop this file in your dropbox and link to it in a lurker thread, and now suddenly the 90% of posters who spend 90% of their internet browsing time while they are at work can look over your map too. Mousing-over each tile will pop up a little tooltip with coordinate and tile information. We can also look at the starts seperately. Try:
 
     > extract_starts $tutorial1
-    > dump_group $tutorial1
+    > debug_group $tutorial1
 
 Refresh the page, and you should see: 
 

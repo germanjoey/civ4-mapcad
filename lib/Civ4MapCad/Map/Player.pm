@@ -36,7 +36,7 @@ sub default {
     $self->set('CivType', 'NONE');
     $self->set('Color', 'NONE');
     $self->set('ArtStyle', 'NONE');
-    $self->set('Handicap', $main::config{'difficulty'});
+    $self->set('Handicap', $main::state->{'config'}{'difficulty'});
 }
 
 sub clear {
@@ -138,6 +138,8 @@ sub is_active {
 
 sub set_from_data {
     my ($self, $data) = @_;
+    
+    my $teamID = $self->get('Team');
     $self->clear();
     
     # we don't expect every single field here, so only do these
@@ -148,7 +150,7 @@ sub set_from_data {
         $self->set($key, $data->{$key});
     }
             
-    $self->set('Handicap', $main::config{'difficulty'});
+    $self->set('Handicap', $main::state->{'config'}{'difficulty'});
     
     # assign a random leader for that civ
     my $leader_count = 0 + @{ $data->{'_LeaderType'} };
@@ -160,6 +162,8 @@ sub set_from_data {
     foreach my $civic (@{ $data->{'_Civics'} }) {
         $self->add_civics($civic);
     }
+    
+    $self->set('Team', $teamID);
 }
 
 1;

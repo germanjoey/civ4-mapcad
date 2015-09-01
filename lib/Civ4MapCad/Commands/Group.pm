@@ -7,7 +7,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(
     export_sims export_group combine_groups flatten_group import_group new_group find_difference set_wrap
-    extract_starts_as_mask normalize_starts strip_nonsettlers strip_all_units add_scouts_to_settlers extract_starts export_sims
+    extract_starts_as_mask normalize_starts strip_nonsettlers strip_all_units add_scouts_to_settlers extract_starts
     copy_group crop_group expand_group_canvas 
 );
 
@@ -153,7 +153,7 @@ sub import_group {
         return -1;
     }
     
-    $result->set_difficulty($main::config{'difficulty'});
+    $result->set_difficulty($state->{'config'}{'difficulty'});
     $state->set_variable($result_name, 'group', $result);
     
     return 1;
@@ -272,7 +272,7 @@ sub export_group {
     return 1 if $pparams->done;
     
     my ($group) = $pparams->get_required();
-    my $output_dir = $main::config{'output_dir'};
+    my $output_dir = $state->{'config'}{'output_dir'};
     my @layers = $group->get_layer_names();
     
     if (@layers == 0) {
@@ -283,6 +283,7 @@ sub export_group {
     $state->buffer_bar();
     
     if (@layers > 1) {
+        # TODO: does this need cleanup?
         my $copy = deepcopy($group);
         print "\n  Exporting flat version of group ", $copy->get_name(), ".\n";
         
@@ -295,6 +296,8 @@ sub export_group {
         
         my ($flat_layer) = $copy->get_layers();
         $flat_layer->export_layer($output_dir . '/' . $copy->get_name() . ".flat.CivBeyondSwordWBSave");
+        
+        $copy->destroy_group($state);
     }
     
     $group->export($output_dir);
@@ -419,7 +422,7 @@ sub strip_nonsettlers {
 }
 
 my $extract_starts_help_text = qq[
-    The '\@bfc_tight' mask is applied on each settler, and then that selected area is extracted as a new layer. If a result is not specified, this command modifies the group.
+    The '\@bfc' mask is applied on each settler, and then that selected area is extracted as a new layer. If a result is not specified, this command modifies the group.
 ];
 sub extract_starts {
     my ($state, @params) = @_;
@@ -434,7 +437,7 @@ sub extract_starts {
     return 1 if $pparams->done;
     
     my ($group) = $pparams->get_required();
-    my $bfc = $state->get_variable('@bfc_tight', 'mask');
+    my $bfc = $state->get_variable('@bfc', 'mask');
     
     my ($result_name) = $pparams->get_result_name();
     my $copy = ($result_name eq $group->get_full_name()) ? $group : deepcopy($group);
@@ -449,36 +452,35 @@ sub extract_starts {
     }
     
     $state->register_print() if $has_duplicate_owners;
-    
     $copy->extract_starts_with_mask($bfc, 0, 1);
     $state->set_variable($result_name, 'group', $copy);
     
     return 1;
 }
 
-# TODO: respect delete_existing
 my $export_sims_help_text = qq[
-    The '\@bfc_for_sim' mask is applied on each settler, and then that selected area is extracted as a new layer. The group is then exported ala the 'export_group' command, with each layer being saved as its own CivBeyondSwordWBSave. This command does not modify the specified group.
+    The '\@bfc' mask is applied on each settler, and then that selected area is extracted as a new layer. The group is then exported ala the 'export_group' command, with each layer being saved as its own CivBeyondSwordWBSave. This command does not modify the specified group.
 ];
 sub export_sims {
     my ($state, @params) = @_;
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['group'],
         'required_descriptions' => ['group to extract from'],
-        'help_text' => $export_sims_help_text,
-        'optional' => {
-            'delete_existing' => 'false'
-        }
+        'help_text' => $export_sims_help_text
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
     
-    my $output_dir = $main::config{'output_dir'};
-    my $delete_existing = $pparams->get_named('delete_existing');
-    my $bfc = $state->get_variable('@bfc_for_sim', 'mask');
+    my $output_dir = $state->{'config'}{'output_dir'};
     my ($group) = $pparams->get_required();
-    
     my $copy = deepcopy($group);
+    
+    my $width = $copy->get_width();
+    my $height = $copy->get_height();
+    
+    my $bfc = $state->get_variable('@bfc', 'mask');
+    my $bfc_for_sim = Civ4MapCad::Object::Mask->new_blank($width, $height);
+    $bfc_for_sim = $bfc_for_sim->union($bfc, int($width/2)-2, int($height/2)-2);
     
     my @layers = $group->get_layer_names();
     if (@layers == 0) {
@@ -496,8 +498,9 @@ sub export_sims {
     
     $state->register_print() if $has_duplicate_owners;
 
-    $copy->extract_starts_with_mask($bfc, 1, 0);
+    $copy->extract_starts_with_mask($bfc_for_sim, 1, 0);
     $copy->export($output_dir);
+    $copy->destroy_group($state);
     
     return 1;
 }

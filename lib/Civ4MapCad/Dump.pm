@@ -10,7 +10,7 @@ our @EXPORT_OK = qw(dump_out dump_framework dump_single_layer);
 use Civ4MapCad::Util qw(slurp);
 
 sub dump_framework {
-    my ($template_filename, $dump_filename, $full_name, $start_index, $tabs) = @_;
+    my ($template_filename, $dump_filename, $full_name, $start_index, $tabs, $alloc_css) = @_;
     
     my @tab_heads; my @tab_bodies;
     
@@ -20,10 +20,12 @@ sub dump_framework {
         my $id = $t + $start_index;
         my $head = qq[<li><a href="#tabs-$id">$name</a></li>];
         
-        my $body = qq[<div id="tabs-$id">\n];
-        #if (@$info > 0) {
-        #    
-        #}
+        my $body = qq[<div class="map_tab" id="tabs-$id">\n];
+        
+        if (@$info > 0) {
+            $body .= $info->[0];
+            $body .= "\n";
+        }
         
         $body .= "    <table>\n";
         foreach my $row (@$rows) {
@@ -51,18 +53,21 @@ sub dump_framework {
         $body .= $tb;
     }
     
-    dump_out($template_filename, $dump_filename, $full_name, $head, $body);
+    dump_out($template_filename, $dump_filename, $full_name, $head, $body, $alloc_css);
 }
 
 sub dump_out {
-    my ($template_filename, $dump_filename, $name, $head, $body) = @_;
+    my ($template_filename, $dump_filename, $name, $head, $body, $alloc_css) = @_;
     
     $head =~ s/\n/\n    /g;
     $body =~ s/\n/\n    /g;
     $head .= "\n		<!-- \$\$\$\$HEAD\$\$\$\$ -->\n";
     $body .= "\n		<!-- \$\$\$\$BODY\$\$\$\$ -->\n";
     
+    $alloc_css = "<style>\n" . $alloc_css . "\n    </style>\n";
+    
     my ($template) = slurp($template_filename);
+    $template =~ s/\<!-- \$\$\$\$CIVSTYLE\$\$\$\$ -->/$alloc_css/;
     $template =~ s/\<!--\s+\$\$\$\$HEAD\$\$\$\$\s+\-\-\>/$head/;
     $template =~ s/\<!--\s+\$\$\$\$BODY\$\$\$\$\s+\-\-\>/$body/;
     $template =~ s/(<!--\s+\$\$\$\$TITLE\$\$\$\$\s+\-\-\>).*(?:\1)/$1$name$1/;
@@ -73,8 +78,7 @@ sub dump_out {
 }
 
 sub dump_single_layer {
-    my ($layer, $name, $do_info) = @_;
-    
+    my ($layer, $name, $alloc) = @_;
     my $map = $layer->{'map'};
     
     my $maxrow = $#{ $map->{'Tiles'} };
@@ -86,23 +90,39 @@ sub dump_single_layer {
         my @row;
         foreach my $x (0..$maxrow) {
             my $tile = $map->{'Tiles'}[$x][$y];
-            push @row, $tile->to_cell;
+            
+            if (!defined $alloc) {
+                push @row, $tile->to_cell(0);
+            }
+            else {
+                push @row, $tile->to_cell(1, $alloc->{$x}{$y});
+            }
         }
         
         push @cells, \@row;
     }
     
-    my $info = [];
-    if ($do_info) {
-        $info = dump_layer_info($layer);
-    }
-    
+    my $info = dump_layer_info($layer);
     return [$name, $info, \@cells];
 }
 
 sub dump_layer_info {
     my ($layer) = @_;
-    return [];
+    
+    my $speed = lc $layer->get_speed();
+    my $size = lc $layer->get_size();
+    my $era = lc $layer->get_era();
+    
+    $speed =~ s/^gamespeed_//i;
+    $size =~ s/^worldsize_//i;
+    $era =~ s/^era_//i;
+    
+    my $info = sprintf '<p><b>Speed:</b> %s, <b>Size:</b> %s, <b>Starting Era:</b> %s</p>', ucfirst($speed), ucfirst($size), ucfirst($era);
+    
+    my ($template) = slurp('debug/info.html.tmpl');
+    $template =~ s/\<!--\s+\$\$\$\$INFO\$\$\$\$\s+\-\-\>/$info/;
+    
+    return [$template];
 }
     
 1;

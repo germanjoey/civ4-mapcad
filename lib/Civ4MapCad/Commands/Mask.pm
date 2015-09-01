@@ -9,8 +9,8 @@ our @EXPORT_OK = qw(import_mask_from_ascii new_mask_from_shape mask_difference m
                     mask_invert mask_threshold modify_layer_with_mask cutout_layer_with_mask apply_shape_to_mask  
                     generate_layer_from_mask new_mask_from_magic_wand export_mask_to_ascii set_mask_coord
                     export_mask_to_table import_mask_from_table new_mask_from_water new_mask_from_landmass
-                    new_mask_from_polygon grow_mask shrink_mask count_mask_value new_mask_from_filtered_tiles
-                    rotate_mask mask_eval2 mask_eval1);
+                    new_mask_from_polygon grow_mask shrink_mask count_mask_value new_mask_from_filtered_tiles 
+                    rotate_mask mask_eval2 mask_eval1 grow_mask_by_bfc count_tiles delete_from_layer_with_mask);
 
 use Math::Geometry::Planar qw(IsInsidePolygon IsSimplePolygon);
 
@@ -571,6 +571,36 @@ sub modify_layer_with_mask {
     return 1;
 }
 
+
+my $delete_from_layer_with_mask_help_text = qq[
+    Uses a mask to match tiles on a layer, and then sets them to blank ocean tiles. Any mask coordinate with a positive value will match a tile.
+];
+sub delete_from_layer_with_mask {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'help_text' => $delete_from_layer_with_mask_help_text,
+        'required' => ['layer', 'mask'],
+        'required_descriptions' => ['layer to modify', 'mask to select with'],
+        'optional' => {
+            'offsetX' => '0',
+            'offsetY' => '0'
+        }
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my $result_name = $pparams->get_result_name();
+    my ($layer, $mask) = $pparams->get_required();
+    my $copy = $mask->threshold(0.001);
+    
+    my $offsetX = $pparams->get_named('offsetX');
+    my $offsetY = $pparams->get_named('offsetY');
+    
+    my $selected = $layer->select_with_mask($mask, $offsetX, $offsetY, 1);
+    return 1;
+}
+
 my $cutout_layer_with_mask_help_text = qq[
     Cuts tiles out of a layer with a mask into a new layer, as if the mask were a cookie-cutter and the original layer was dough. Tiles in the original layer are deleted. (replaced with blank tiles (ocean)). If '--copy_tiles' is set, then the tiles in the original layer aren't deleted. 
 ];
@@ -663,6 +693,38 @@ sub grow_mask {
     }
     
     $state->set_variable($result_name, 'mask', $grown);
+    return 1;
+}
+
+my $grow_mask_by_bfc_help_text = qq[ 
+    Expands the mask as if you put a city's BFC on each value with a 1.0. Only values of '1' are considered; thus, before the actual grow operation occurs, the mask is first thresholded. Use '--threshold' to set a custom threshold.
+    Unlike 'grow_mask', this command does not increase the size of the output mask, since you're probably only going to use this to check something on a map. Instead, you're given the option to specify x/y wrap, both of which are off by default.
+];
+sub grow_mask_by_bfc {
+    my ($state, @params) = @_;
+
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'has_result' => 'mask',
+        'allow_implied_result' => 1,
+        'help_text' => $grow_mask_by_bfc_help_text,
+        'required' => ['mask'],
+        'required_descriptions' => ['mask to grow'],
+        'optional' => {
+            'threshold' => 0.5,
+            'wrapX' => 'false',
+            'wrapY' => 'false'
+        }
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my $result_name = $pparams->get_result_name();
+    my $threshold = $pparams->get_named('threshold');
+    my ($mask, $amount) = $pparams->get_required();
+    
+    my $grown = $mask->grow_bfc($threshold);
+    $state->set_variable($result_name, 'mask', $grown);
+    
     return 1;
 }
 
@@ -845,7 +907,7 @@ sub new_mask_from_water {
 }
 
 my $new_mask_from_magic_wand_help_text = qq[
-    todo
+    Creates a mask by applying a weight to a region, starting with a single tile. If this tile matches to a result greater than 0, then the tiles surrounding it will be tested, and so on, until the weight stops matching tiles or it runs out of tiles to match. (This command similar in concept to the "magic wand" selection tool in Photopshop). Matches by default are not exact; e.g. a 'bare_hill' would match both a grassland hill or a plains hill with a forest and a fur on it. Use --exact_match to require exact matches from tiles to terrains. 
 ];
 sub new_mask_from_magic_wand {
     my ($state, @params) = @_;
@@ -917,7 +979,7 @@ sub new_mask_from_magic_wand {
 }
 
 my $new_mask_from_filtered_tiles_help_text = qq[
-    todo
+    Creates a mask by applying a weight to every single tile of a layer, i.e. a full scan. Matches by default are not exact; e.g. a 'bare_hill' would match both a grassland hill or a plains hill. Use --exact_match to require exact from tiles to terrains. 
 ];
 sub new_mask_from_filtered_tiles {
     my ($state, @params) = @_;
@@ -942,6 +1004,45 @@ sub new_mask_from_filtered_tiles {
     $copy->fix_coast();
     my $mask = $copy->apply_weight($weight, $exact_match);
     $state->set_variable($result_name, 'mask', $mask);
+    return 1;
+}
+
+my $count_tiles_help_text = qq[
+    Filters tiles in a layer based on a weight, and then counts the ones that match a value. Matches by default are not exact; e.g. a 'bare_hill' would match both a grassland hill or a plains hill. Use --exact_match to require exact from tiles to terrains. 
+];
+sub count_tiles {
+    my ($state, @params) = @_;
+
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'help_text' => $count_tiles_help_text,
+        'required' => ['layer', 'weight', 'float'],
+        'required_descriptions' => ['the layer to find tiles in', 'the weight to filter the layer with'],
+        'optional' => {
+            'exact_match' => 'false',
+            'threshold' => 'false',
+            'threshold_value' => '0.0001'
+        }
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my $exact_match = $pparams->get_named('exact_match');
+    my $threshold_first = $pparams->get_named('threshold');
+    my $threshold_value = $pparams->get_named('threshold_value');
+    my ($layer, $weight, $value) = $pparams->get_required();
+    my $copy = deepcopy($layer);
+    $copy->fix_coast();
+    
+    my $mask = $copy->apply_weight($weight, $exact_match);
+    if ($threshold_first) {
+        $mask = $mask->threshold($threshold_value);
+    }
+    
+    my $count = $mask->count_matches($value);
+    
+    my $inv_count = $mask->get_width() * $mask->get_height() - $count;
+    $state->list( "Matches: $count", "Non-Matches: $inv_count" );
+    
     return 1;
 }
 

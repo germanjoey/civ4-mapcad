@@ -14,6 +14,15 @@
 <bare_peak>
     PlotType = 0
 </bare_peak>
+<bare_hill>
+    PlotType = 1
+</bare_hill>
+<bare_flat>
+    PlotType = 2
+</bare_peak>
+<bare_water>
+    PlotType = 3
+</bare_water>
  
 <grass>
     TerrainType = TERRAIN_GRASS

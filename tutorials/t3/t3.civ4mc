@@ -1,24 +1,24 @@
 # generate our banana!
 import_mask_from_ascii "tutorials/t3/circle.txt" => @circle1
-dump_mask @circle1
+debug_mask @circle1
 
 new_mask_from_shape *circle 17 17 --centerX 8 --centerY 8 --radius 7 => @circle2
 mask_difference @circle2 @circle2 --offsetX 5 -offsetY 2 => @banana_mask
 
 # visualize our banana... 
-dump_mask @circle2 --add_to_existing
-dump_mask @banana_mask --add_to_existing
+debug_mask @circle2 --add_to_existing
+debug_mask @banana_mask --add_to_existing
 
 # and build it!
 new_group 25 25 => $a_green_banana
 generate_layer_from_mask @banana_mask %land => $a_green_banana.background
-dump_group $a_green_banana --add_to_existing
+debug_group $a_green_banana --add_to_existing
 
 # but now lets make it random!
 new_mask_from_shape *random 17 17 => @rand_field
 mask_intersect @banana_mask @rand_field => @random_banana
-dump_mask @rand_field --add_to_existing
-dump_mask @random_banana --add_to_existing
+debug_mask @rand_field --add_to_existing
+debug_mask @random_banana --add_to_existing
 
 new_weight_table >= 0.90 => %banana,
                  >= 0.87 => %luxury,
@@ -33,4 +33,4 @@ new_weight_table >= 0.90 => %banana,
 # now summon!
 new_group 25 25 => $the_real_banana
 generate_layer_from_mask @random_banana %bananaland => $the_real_banana.background
-dump_group $the_real_banana --add_to_existing
+debug_group $the_real_banana --add_to_existing

@@ -15,6 +15,9 @@ sub new_blank {
    
     my $obj = {
         'name' => $name,
+        'speed' => 'GAMESPEED_NORMAL',
+        'size' => 'WORLDSIZE_STANDARD',
+        'era' => 'ERA_ANCIENT',
         'wrapX' => 1,
         'wrapY' => 1,
         'layers' => {}, # indexed by name
@@ -36,6 +39,9 @@ sub new_from_import {
     
     my $obj = {
         'layers' => {},
+        'speed' => 'GAMESPEED_NORMAL',
+        'size' => 'WORLDSIZE_STANDARD',
+        'era' => 'ERA_ANCIENT',
         'wrapX' => 0,
         'wrapY' => 0,
         'width' => 0,
@@ -57,11 +63,75 @@ sub new_from_import {
     $self->{'height'} = $layer->get_height();
     $self->{'wrapX'} = ($layer->wrapsX()) ? 1 : 0;
     $self->{'wrapY'} = ($layer->wrapsY()) ? 1 : 0;
+    $self->{'speed'} = $layer->get_speed();
+    $self->{'size'} = $layer->get_size();
+    $self->{'era'} = $layer->get_era();
     
     $self->add_layer($layer);
     $main::state->set_ref_id($self);
     
     return $self;
+}
+
+sub destroy_group {
+    my ($self) = @_;
+    
+    my $id = $self->{'ref_id'};
+    foreach my $layer ($self->get_layers()) {
+        if (defined $layer) {
+            my $layer_name = $layer->{'name'};
+            $layer->destroy_layer();
+            delete $self->{'layer'}{$layer_name} if defined $layer_name;
+        }
+    }
+    
+    undef %{ $self->{'ref_table'}{$id} };
+    delete $self->{'ref_table'}{$id};
+}
+
+sub count_layers {
+    my ($self) = @_;
+    my @layer_names = $self->get_layer_names();
+    return (@layer_names+0);
+}
+
+sub get_size {
+    my ($self) = @_;
+    return $self->{'size'}
+}
+
+sub set_size {
+    my ($self, $size) = @_;
+
+    foreach my $layer ($self->get_layers()) {
+        $layer->set_speed($size);
+    }
+}
+
+sub get_speed {
+    my ($self) = @_;
+    return $self->{'speed'}
+}
+
+sub set_speed {
+    my ($self, $speed) = @_;
+
+    foreach my $layer ($self->get_layers()) {
+        $layer->set_speed($speed);
+    }
+}
+
+sub get_era {
+    my ($self) = @_;
+    return $self->{'era'}
+}
+
+sub set_era {
+    my ($self, $era) = @_;
+
+    foreach my $layer ($self->get_layers()) {
+        $layer->set_speed($era);
+    }
 }
 
 sub wrapsX {
@@ -139,6 +209,12 @@ sub set_layer {
     my ($self, $name, $new_layer) = @_;
     $self->{'layers'}{$name} = $new_layer;
     $new_layer->set_membership($self);
+    
+    $new_layer->set_wrapX($self->{'wrapX'});
+    $new_layer->set_wrapY($self->{'wrapY'});
+    $new_layer->set_size($self->{'size'});
+    $new_layer->set_speed($self->{'speed'});
+    $new_layer->set_era($self->{'era'});
 }
 
 sub layer_exists {
@@ -203,12 +279,25 @@ sub add_layer {
     my $layer_name = $layer->get_name();
     my $group_name = $self->get_name();
     
+    my @layers = keys %{ $self->{'layers'} };
+    
     $layer->set_membership($self);
-    $layer->set_wrapX($self->{'wrapX'});
-    $layer->set_wrapY($self->{'wrapY'});
+    if (@layers > 0) {
+        $layer->set_wrapX($self->{'wrapX'});
+        $layer->set_wrapY($self->{'wrapY'});
+        $layer->set_size($self->{'size'});
+        $layer->set_speed($self->{'speed'});
+        $layer->set_era($self->{'era'});
+    }
+    else {
+        $self->set_wrapX($layer->wrapsX());
+        $self->set_wrapY($layer->wrapsY());
+        $self->set_size($layer->get_size());
+        $self->set_speed($layer->get_speed());
+        $self->set_era($layer->get_era());
+    }
     
     my %ret = ('error_msg' => '');
-    
     if (exists $self->{'layers'}{$layer_name}) {
         $self->{'layers'}{$layer_name} = $layer;
         
@@ -278,7 +367,7 @@ sub increase_priority {
     my ($self, $layer_name) = @_;
    
     if ($self->{'priority'}{$layer_name} > 0) {
-        $self->set_layer_priority($layer_name, $self->{'priority'}{$layer_name} - 1);
+        $self->set_layer_priority($layer_name, $self->{'priority'}{$layer_name} - 2);
     }
 }
  
@@ -470,7 +559,7 @@ sub normalize_starts {
         $c += @{$starts_found->{$s}};
     }
     
-    if ($c > $main::config{'max_players'}) {
+    if ($c > $main::state->{'config'}{'max_players'}) {
         return {
             'error' => 1,
             'error_msg' => "The total number of players in this group ($c) exceeds the allowed maximum number of players! ($main::config{'max_players'}) Use 'help strip' or 'set_mod' to find ways to either remove settlers or expand the total number of allowed players."
@@ -519,6 +608,7 @@ sub extract_starts_with_mask {
     my ($self, $mask, $as_sim, $clear_selected) = @_;
     
     my @layer_names = $self->get_layer_names();
+    
     my $all_starts = $self->find_starts();
     
     my @sorted_starts;
@@ -540,7 +630,7 @@ sub extract_starts_with_mask {
         if ($as_sim) {
             $start_layer->strip_hidden_strategic();
             $start_layer->strip_victories();
-            $start_layer->set_difficulty($main::config{'difficulty'});
+            $start_layer->set_difficulty($main::state->{'config'}{'difficulty'});
         }
         
         my $p = $self->{'priority'}{$layer_name};
@@ -563,6 +653,7 @@ sub export {
     print "\n";
     foreach my $layer (@layers) {
         my $layer_name = $layer->get_name();
+        $layer->set_turn0();
         my $path = $output_dir . "/" . $self->get_name() . "." . $layer_name . ".CivBeyondSwordWBSave";
         
         my $strip = 1;
@@ -576,7 +667,7 @@ sub export {
         $layer->add_dummy_start() if $layer->num_players() == 1;
         $layer->export_layer($path);
         
-        $main::config{'state'}->report_message("Exported layer $layer_name.");
+        $main::state->report_message("Exported layer $layer_name.");
         print "\n";
     }
     

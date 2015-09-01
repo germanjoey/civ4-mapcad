@@ -51,6 +51,18 @@ sub new_from_import {
     return $blessed;
 }
 
+sub destroy_layer {
+    my ($self) = @_;
+    
+    my $id = $self->{'ref_id'};
+    undef %{ $main::state->{'ref_table'}{$id}{'map'} };
+    delete $main::state->{'ref_table'}{$id}{'map'};
+    delete $main::state->{'ref_table'}{$id}{'member_of'} if exists $self->{'ref_table'}{$id}{'member_of'};
+   
+    undef %{ $main::state->{'ref_table'}{$id} };
+    delete $main::state->{'ref_table'}{$id};
+}
+
 sub get_name {
     my ($self) = @_;
     return $self->{'name'};
@@ -66,6 +78,11 @@ sub rename {
     $self->{'name'} = $new_name;
 }
 
+sub set_turn0 {
+    my ($self) = @_;
+    $self->{'map'}->set_turn0();
+}
+
 sub get_group {
     my ($self) = @_;
     return $self->{'member_of'};
@@ -74,6 +91,36 @@ sub get_group {
 sub set_membership {
     my ($self, $group) = @_;
     $self->{'member_of'} = $group;
+}
+
+sub get_speed {
+    my ($self) = @_;
+    return $self->{'map'}->get_speed();
+}
+
+sub set_speed {
+    my ($self, $speed) = @_;
+    $self->{'map'}->set_speed($speed);
+}
+
+sub get_size {
+    my ($self) = @_;
+    return $self->{'map'}->get_size();
+}
+
+sub set_size {
+    my ($self, $size) = @_;
+    $self->{'map'}->set_size($size);
+}
+
+sub get_era {
+    my ($self) = @_;
+    return $self->{'map'}->get_era();
+}
+
+sub set_era {
+    my ($self, $era) = @_;
+    $self->{'map'}->set_era($era);
 }
 
 # this should only be called when merging a layer into this one, as the merge function returns a new map
@@ -173,12 +220,12 @@ sub merge_with_layer {
     my $new_height = $self->get_group()->get_height();
     
     $copy->expand_dim($new_width, $new_height);
-    
     $copy->{'map'}->clear_map();
     
     my $group_width = $self->get_group()->get_width();
-    my $group_height = $self->get_group()->get_width();
+    my $group_height = $self->get_group()->get_height();
     
+    # first we do the tiles in the other layer
     for my $x (0 .. $othr->get_width()-1) {
         for my $y (0 .. $othr->get_height()-1) {
             my ($tx, $ty) = $copy->translate_merge_coords($x, $y, $othr->{'offsetX'}, $othr->{'offsetY'});
@@ -191,6 +238,7 @@ sub merge_with_layer {
         }
     }
     
+    # then we write on top of them with this layer
     for my $x (0 .. $self->get_width()-1) {
         for my $y (0 .. $self->get_height()-1) {
             next if $self->{'map'}{'Tiles'}[$x][$y]->is_blank();
@@ -203,6 +251,24 @@ sub merge_with_layer {
             $copy->{'map'}{'Tiles'}[$tx][$ty]->set('y', $ty);
         }
     }
+    
+    $copy->{'Signs'} = [];
+    
+    # finally we do the signs
+    foreach my $sign (@{ $othr->{'map'}{'Signs'} }) {
+        my ($tx, $ty) = $copy->translate_merge_coords($sign->{'plotX'}, $sign->{'plotY'}, $othr->{'offsetX'}, $othr->{'offsetY'});
+        next if ($tx < 0) or ($tx >= $group_width);
+        next if ($ty < 0) or ($ty >= $group_height);
+        
+        $copy->{'map'}->add_sign_to_coord($tx, $ty, $sign->get('caption'));
+    }    
+    
+    foreach my $sign (@{ $self->{'map'}{'Signs'} }) {
+        my ($tx, $ty) = $copy->translate_merge_coords($sign->{'plotX'}, $sign->{'plotY'}, $self->{'offsetX'}, $self->{'offsetY'});
+        next if ($tx < 0) or ($tx >= $group_width);
+        next if ($ty < 0) or ($ty >= $group_height);
+        $copy->{'map'}->add_sign_to_coord($tx, $ty, $sign->get('caption'));
+    }    
     
     $copy->{'offsetX'} = 0;
     $copy->{'offsetY'} = 0;
@@ -342,6 +408,13 @@ sub select_with_mask {
         my ($x,$y,$player) = @$start;
         $selection->set_player_from_layer($player, $self);
     }
+    
+    $selection->rename($self->get_name() . '_selection');
+    $selection->set_wrapX($self->wrapsX());
+    $selection->set_wrapY($self->wrapsY());
+    $selection->set_speed($self->get_speed());
+    $selection->set_size($self->get_size());
+    $selection->set_era($self->get_era());
     
     $selection->move_to($mask_offsetX, $mask_offsetY);
     return $selection;
@@ -771,6 +844,11 @@ sub fix_reveal {
     my ($self) = @_;
 
     $self->{'map'}->fix_reveal();
+}
+
+sub add_sign {
+    my ($self, $x, $y, $caption) = @_;
+    $self->{'map'}->add_sign_to_coord($x, $y, $caption);
 }
 
 1;

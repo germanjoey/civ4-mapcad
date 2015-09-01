@@ -12,6 +12,8 @@ use Civ4MapCad::ParamParser;
 use Civ4MapCad::Util qw(deepcopy slurp);
 use Civ4MapCad::Dump qw(dump_out dump_framework dump_single_layer);
 
+# basically everything in this module is just a bunch of text formatting, blah blah blah boring
+
 my $list_shapes_help_text = qq[
   Command Format: 
   
@@ -114,7 +116,7 @@ sub list_groups {
 sub _group_description {
     my ($group) = @_;
 
-    my $description = '$' . $group->get_name() . " (size: " . $group->get_width() . ' x ' . $group->get_height() . ")";
+    my $description = '$' . $group->get_name() . " (size: " . $group->get_width() . ' x ' . $group->get_height() . ', ' . $group->count_layers() . " layers)";
     $description .= ', ' if $group->wrapsX() or $group->wrapsY();
     $description .= 'wraps in X' if $group->wrapsX();
     $description .= ' and ' if $group->wrapsX() and $group->wrapsY();
@@ -369,7 +371,7 @@ sub list_civs {
         foreach my $key (sort keys %$data) {
             next if $key =~ /^_/;
             my $value = $data->{$key};
-            $value = _format_color_name($value) if $key eq 'Color';
+            $value = _format_color_name($state, $value) if $key eq 'Color';
             $value = _format_civ_name($value) if $key eq 'CivType';
             
             print "      $key=$value}\n";
@@ -404,9 +406,11 @@ sub list_colors {
     
     my $color_name_exact = $pparams->get_named("color");
     my $color_name = $pparams->get_named("color");
-    $color_name = _format_color_name($color_name);
     my $color_name_proper = 'PLAYERCOLOR_' . uc("$color_name");
     $color_name_proper =~ s/\s+/_/g;
+    
+    $color_name = _format_color_name($state, $color_name_proper);
+    my @raw_colors = sort keys %{ $state->{'data'}{'colors'} };
     
     if ($color_name_exact ne '') {
         if (! exists $state->{'data'}{'colors'}{$color_name_proper}) {
@@ -419,7 +423,7 @@ sub list_colors {
         return 1;
     }
     
-    my @colors = map { _format_color_name($_) } (sort keys %{ $state->{'data'}{'colors'} });
+    my @colors = map { _format_color_name($state, $_) } (sort keys %{ $state->{'data'}{'colors'} });
     $state->list( @colors );
     return 1;
 }
@@ -602,7 +606,7 @@ sub show_difficulty {
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
     
-    my $diff = $main::config{'difficulty'};
+    my $diff = $state->{'config'}{'difficulty'};
     $diff =~ s/^HANDICAP_//;
     $state->list ( ucfirst(lc($diff)) );
     return 1;
@@ -696,9 +700,15 @@ sub _format_tech_name {
 }
 
 sub _format_color_name {
-    my ($name) = @_;
+    my ($state, $name) = @_;
+    
     $name =~ s/^PLAYERCOLOR_//i;
-    return join ' ', (map { ucfirst(lc($_)) } (split /_|\s+/, $name));
+    my $code = "$name";
+    $code = 'COLOR_PLAYER_' . $code;
+    my $hex = $state->{'data'}{'colorcodes'}{$code}{'hex'};
+    
+    my $formatted_name = join ' ', (map { ucfirst(lc($_)) } (split /_|\s+/, $name));
+    return ($formatted_name . " ($hex)");
 }
 
 sub _format_trait {

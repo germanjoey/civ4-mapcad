@@ -249,10 +249,67 @@ sub count_matches {
     return $count;
 }
 
+sub grow_bfc {
+    my ($self, $threshold, $wrapX, $wrapY) = @_;
+    my $old_mask = $self->threshold($threshold); # copies the original
+    
+    my $width = $self->get_width();
+    my $height = $self->get_height();
+    
+    my $growing_mask = Civ4MapCad::Object::Mask->new_blank($width, $height);
+    
+    my $min_x = $width; my $max_x = 0;
+    my $min_y = $height; my $max_y = 0;
+    foreach my $x (0 .. ($growing_mask->get_width() - 1)) {
+        foreach my $y (0 .. ($growing_mask->get_height() - 1)) {
+            next unless $old_mask->compare_value($x, $y, 1);
+
+            foreach my $ddx (0..4) {
+                my $dx = $ddx - 2;
+                foreach my $ddy (0..4) {
+                    my $dy = $ddy - 2;
+                    
+                    next if ($dx == 0) and ($dy == 0); # skip city tile
+                    next if (abs($dx) == 2) and (abs($dy) == 2); # skip corners
+                    
+                    my $use_x = $x + $dx;
+                    my $use_y = $y + $dy;
+                    
+                    if ($wrapX == 1) {
+                        if ($use_x > $width) {
+                            $use_x -= $width;
+                        }
+                        elsif ($use_x < 0) {
+                            $use_x += $width;
+                        }
+                    }
+                    elsif (($use_x > $height) or ($use_x < 0)) {
+                        next;
+                    }
+                    
+                    if ($wrapY == 1) {
+                        if ($use_y > $height) {
+                            $use_y -= $height;
+                        }
+                        elsif ($use_y < 0) {
+                            $use_y += $height;
+                        }
+                    }
+                    elsif (($use_y > $height) or ($use_y < 0)) {
+                        next;
+                    }
+                    
+                    $growing_mask->{'canvas'}[$use_x][$use_y] = 1;
+                }
+            }
+        }        
+    }
+}
+
 sub grow {
     my ($self, $amount, $threshold, $rescale) = @_;
     
-    my $old_mask = $self->threshold($threshold);
+    my $old_mask = $self->threshold($threshold); # copies the original
     my $overfold_warning = 0;
     foreach my $i (1..$amount) {
         my $growing_mask = Civ4MapCad::Object::Mask->new_blank($old_mask->get_width()+2, $old_mask->get_height()+2);
@@ -325,7 +382,7 @@ sub grow {
 sub shrink {
     my ($self, $amount, $threshold) = @_;
     
-    my $old_mask = $self->threshold($threshold);
+    my $old_mask = $self->threshold($threshold); # copies the original
     
     foreach my $i (1..$amount) {
         my $shrinking_mask = Civ4MapCad::Object::Mask->new_blank($old_mask->get_width(), $old_mask->get_height());

@@ -1,0 +1,10 @@
+run_script "tutorials/t4/bunch.civ4mc" --debug_result
+new_mask_from_polygon 14 17 "8,1" "1,8" "8,15" "12,3" "8,1" => @sharp_banana
+cutout_layer_with_mask $banana_bunch.banana1 @sharp_banana --copy_tiles => $banana_bunch.sharp
+
+new_mask_from_magic_wand $the_real_banana.the_real_banana %any_grass 5 3 => @grassy_banana
+cutout_layer_with_mask $banana_bunch.banana1 @grassy_banana  --copy_tiles => $banana_bunch.grass
+
+debug_mask @sharp_banana --add_to_existing
+debug_mask @grassy_banana --add_to_existing
+debug_group $banana_bunch --add_to_existing

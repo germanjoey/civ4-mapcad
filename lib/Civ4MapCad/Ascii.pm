@@ -7,6 +7,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(import_ascii_mask export_ascii_mask import_ascii_mapping_file clean_ascii);
 
+# read in an ascii art shape and turn it into a mask
 sub import_ascii_mask {
     my ($filename, $mapping) = @_;
 
@@ -56,6 +57,7 @@ sub import_ascii_mask {
     return {'canvas' => \@transposed};
 }
 
+# export a mask as ascii art
 sub export_ascii_mask {
     my ($filename, $canvas, $width, $height, $rmapping) = @_;
 
@@ -81,6 +83,8 @@ sub export_ascii_mask {
     close $file;
 }
 
+# our mapping error, caused by the fact that mask values are continuous while
+# we only have like 30 characters or whatever to put in our ascii art shape
 sub find_nearest_mapping_match {
     my ($value, $rmapping) = @_;
     return $rmapping->{$value} if exists $rmapping->{$value};
@@ -99,6 +103,7 @@ sub find_nearest_mapping_match {
     return $rmapping->{$dkey};
 }
 
+# a mapping file is a map from characters to a value range for our ascii art mask
 sub import_ascii_mapping_file {
     my ($mapping_file) = @_;
     
@@ -149,6 +154,7 @@ sub import_ascii_mapping_file {
     return \%mapping;
 }
 
+# cleans up an ascii art shape
 sub clean_ascii {
     my ($filename) = @_;
 

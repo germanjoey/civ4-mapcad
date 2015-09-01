@@ -5,7 +5,7 @@ use warnings;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(set_output_dir list_mods set_mod write_log history set_player_data load_xml_data set_difficulty ls);
+our @EXPORT_OK = qw(set_output_dir list_mods set_mod write_log history set_player_data load_xml_data set_difficulty ls set_settings add_sign);
 
 use Config::General;
 use XML::Simple qw(:strict);
@@ -57,7 +57,7 @@ sub set_output_dir {
     my $delete_existing = $pparams->get_named('delete_existing');
     my ($directory) = $pparams->get_required();
     
-    $main::config{'output_dir'} = $directory;
+    $state->{'config'}{'output_dir'} = $directory;
     if (! -e $directory) {
         mkdir($directory);
     }
@@ -78,6 +78,8 @@ sub list_mods {
     return 1 if $pparams->done;
     
     my @mods = map { /mods\/(.+)$/ } grep { -d $_ } glob("mods/*");
+    
+    $state->list( qq[The current mod is: "$state->{'mod'}"] );
     $state->list( @mods );
     return 1;
 }
@@ -103,40 +105,40 @@ sub set_mod {
         return -1;
     }
     
-    if ((! exists $main::config{'civ4_exe'}) or (! -e $main::config{'civ4_exe'})) {
+    if ((! exists $state->{'config'}{'civ4_exe'}) or (! -e $state->{'config'}{'civ4_exe'})) {
         $state->report_error("The civ4 .exe path was not found or does not exist! Please set it correctly in 'def/config.cfg'.");
         exit(-1);
     }
     
-    $main::config{'output_dir'} = '.' unless exists $main::config{'output_dir'};
+    $state->{'config'}{'output_dir'} = '.' unless exists $state->{'config'}{'output_dir'};
     
-    if (! -e $main::config{'output_dir'}) {
-        mkdir($main::config{'output_dir'});
+    if (! -e $state->{'config'}{'output_dir'}) {
+        mkdir($state->{'config'}{'output_dir'});
     }
     
-    if (! exists $main::config{'civ4_path'}) {
-        $main::config{'civ4_path'} = "$main::config{'civ4_exe'}";
-        $main::config{'civ4_path'} =~ s/Civ4BeyondSword.exe$//;
-        $main::config{'civ4_path'} =~ s/\/+$//;
-        $main::config{'civ4_path'} =~ s/\\+$//;
-        $main::config{'civ4_path'} =~ s/\\+/\//g;
+    if (! exists $state->{'config'}{'civ4_path'}) {
+        $state->{'config'}{'civ4_path'} = "$state->{'config'}{'civ4_exe'}";
+        $state->{'config'}{'civ4_path'} =~ s/Civ4BeyondSword.exe$//;
+        $state->{'config'}{'civ4_path'} =~ s/\/+$//;
+        $state->{'config'}{'civ4_path'} =~ s/\\+$//;
+        $state->{'config'}{'civ4_path'} =~ s/\\+/\//g;
     }
     
     our %config = Config::General->new("mods/$mod/$mod.cfg")->getall();
     foreach my $item (keys %config) {
         if ($config{$item} =~ /\$civ4_path/) {
             $config{$item} =~ s/\\+/\//g;
-            $config{$item} =~ s/\$civ4_path/$main::config{'civ4_path'}/;
+            $config{$item} =~ s/\$civ4_path/$state->{'config'}{'civ4_path'}/;
             if (! -e $config{$item}) {
                 $state->report_error("Can't find XML file: \"$config{$item}\".");
                 exit(-1);
             }
         }
     
-        $main::config{$item} = $config{$item};
+        $state->{'config'}{$item} = $config{$item};
     }
     
-    my $max = $main::config{'max_players'};
+    my $max = $state->{'config'}{'max_players'};
     my @groups = sort keys %{ $state->{'group'} };
     if (@groups > 0) {
         my @modified;
@@ -159,8 +161,9 @@ sub set_mod {
     delete $state->{'data'};
     delete $state->{'terrain'};
     
-    $state->process_command(qq[run_script "mods/$mod/$mod.init.civ4mc"]);
+    $state->{'mod'} = $mod;
     
+    $state->process_command(qq[run_script "mods/$mod/$mod.init.civ4mc"]);
     return 1;
 }
 
@@ -229,16 +232,18 @@ sub load_xml_data {
     print "\n  Loading XML data...";
     $| = 0;
     
-    my $civdata = XMLin($main::config{'civ4_info_path'}, KeyAttr => {  }, ForceArray => [ 'CivilizationInfo', 'Cities', 'Building', 'Unit', 'FreeTech', 'FreeBuildingClass', 'FreeUnitClass', 'CivicType', 'Leader' ]);
-    my $flagdata = XMLin($main::config{'civ4_artdefines_path'}, KeyAttr => {  }, ForceArray => [ 'CivilizationArtInfo' ]);
-    my $leaderdata = XMLin($main::config{'civ4_leaders_path'}, KeyAttr => {  }, ForceArray => [ 'LeaderHeadInfo', 'DiploMusicPeaceEra', 'DiploMusicWarEra', 'MemoryDecay', 'ContactDelay', 'ContactRand', 'Flavor', 'Trait', 'MemoryAttitudePercent', 'NoWarAttitudeProb'  ]);
-    my $civicdata = XMLin($main::config{'civ4_civics_path'}, KeyAttr => {  }, ForceArray => [ 'CivicInfo' ]);
+    my $civdata = XMLin($state->{'config'}{'civ4_info_path'}, KeyAttr => {  }, ForceArray => [ 'CivilizationInfo', 'Cities', 'Building', 'Unit', 'FreeTech', 'FreeBuildingClass', 'FreeUnitClass', 'CivicType', 'Leader' ]);
+    my $flagdata = XMLin($state->{'config'}{'civ4_artdefines_path'}, KeyAttr => {  }, ForceArray => [ 'CivilizationArtInfo' ]);
+    my $leaderdata = XMLin($state->{'config'}{'civ4_leaders_path'}, KeyAttr => {  }, ForceArray => [ 'LeaderHeadInfo', 'DiploMusicPeaceEra', 'DiploMusicWarEra', 'MemoryDecay', 'ContactDelay', 'ContactRand', 'Flavor', 'Trait', 'MemoryAttitudePercent', 'NoWarAttitudeProb'  ]);
+    my $civicdata = XMLin($state->{'config'}{'civ4_civics_path'}, KeyAttr => {  }, ForceArray => [ 'CivicInfo' ]);
+    my $colordata = XMLin($state->{'config'}{'civ4_colors_path'}, KeyAttr => {  }, ForceArray => [ 'ColorVal' ]);
     
     my %flags;
     foreach my $flag (@{ $flagdata->{'CivilizationArtInfos'}{'CivilizationArtInfo'} }) {
         $flags{ $flag->{'Type'} } = {
+            'FlagType' => $flag->{'Type'},
             'FlagDecal' => $flag->{'Path'},
-            'WhiteFlag' => $flag->{'bWhiteFlag'}
+            'WhiteFlag' => $flag->{'bWhiteFlag'},
         }
     }
     
@@ -255,6 +260,7 @@ sub load_xml_data {
         my $type = $leaderhead->{'Type'};
         $leaders{$type} = {
             'Traits' => [],
+            'LeaderType' => $type,
             'Name' => $leaderhead->{ 'Description' }
         };
         
@@ -264,6 +270,23 @@ sub load_xml_data {
             
             $traits{$trait_type} = [] unless exists $traits{$trait_type};
             push @{ $traits{$trait_type} }, $type;
+        }
+    }
+    
+    my %colorcodes;
+    foreach my $colorcode (@{ $colordata->{'ColorVals'}{'ColorVal'} }) {
+        my $type = $colorcode->{'Type'};
+        
+        my $red = $colorcode->{'fRed'};
+        my $green = $colorcode->{'fGreen'};
+        my $blue = $colorcode->{'fBlue'};
+        my $alpha = $colorcode->{'fAlpha'};
+        my $hex = sprintf "%02x%02x%02x", int(255*$red), int(255*$green), int(255*$blue);
+        
+        $colorcodes{$type} = {
+            'opacity' => $alpha,
+            'rgba' => [$red, $green, $blue, $alpha],
+            'hex' => '#' .$hex
         }
     }
 
@@ -287,7 +310,7 @@ sub load_xml_data {
             'StartingY' => 0,
             'StateReligion' => '',
             'RandomStartLocation' => 'false',
-            'Handicap' => $main::config{'difficulty'},
+            'Handicap' => $state->{'config'}{'difficulty'},
             '_Tech' => [],
             '_LeaderType' => [],
             '_Civics' => []
@@ -331,6 +354,7 @@ sub load_xml_data {
     $state->{'data'} = {
         'leaders' => \%leaders,
         'colors' => \%colors,
+        'colorcodes' => \%colorcodes,
         'civs' => \%civs,
         'techs' => \%techs,
         'traits' => \%traits,
@@ -402,13 +426,12 @@ sub set_difficulty {
         $state->list( @modified ) if @modified > 0;
     }
     
-    $main::config{'difficulty'} = $diff_name;
+    $state->{'config'}{'difficulty'} = $diff_name;
     return 1;
 }
 
 my $set_player_data_help_text = qq[
     Sets a particular player's data. You can pick and choose from any or all four options (civ/leader/color/player_name), although a map will not be playable unless civ is set either with this command or from importing an already-built map. Setting '--civ' (see 'list_civs' for possible values) will load all values for that civ, including a default leader, leader name, color, and techs. If '--leader' is set (see list_leaders for possible values) will override the default leader value for '--civ'; similiar deal for '--color'. If '--leader' is set but '--civ' is not, the matching restricted civ for that leader will be used. If '--player_name' is set, the default name from a player's leader is overwritten. See 'list_civs', 'list_leaders', 'list_traits', 'list_techs', and 'list_colors' for more info.
-
 ];
 sub set_player_data {
     my ($state, @params) = @_;
@@ -443,7 +466,7 @@ sub set_player_data {
     }
     
     if ($civ ne '') {
-        my $civ_proper = $pparams->get_named('civ');
+        my $civ_proper = uc $pparams->get_named('civ');
         $civ_proper =~ s/^CIVILIZATION_//i;
         $civ_proper =~ s/\s+/_/g;
         $civ_proper = 'CIVILIZATION_' . uc($civ_proper);
@@ -455,10 +478,12 @@ sub set_player_data {
         $group->set_player_from_civdata($owner, $state->{'data'}{'civs'}{$civ_proper});
     }
     elsif ($leader ne '') {
-        my $leader_proper = $pparams->get_named('leader');
+        my $leader_proper = uc $pparams->get_named('leader');
         $leader_proper =~ s/^LEADER_//i;
         $leader_proper =~ s/\s+/_/g;
         $leader_proper = 'LEADER_' . uc($leader_proper);
+        
+        my @pos = sort keys %{$state->{'data'}{'leaders'}};
         
         if (! exists $state->{'data'}{'leaders'}{$leader_proper}) {
             $state->report_error("leader '$leader' not found. Use 'list_leaders' for valid leader names.");
@@ -469,15 +494,21 @@ sub set_player_data {
     }
     
     if ($leader ne '') {
-        if (! exists $state->{'data'}{'leaders'}{$leader}) {
+        my $leader_proper = uc $pparams->get_named('leader');
+        $leader_proper =~ s/^LEADER_//i;
+        $leader_proper =~ s/\s+/_/g;
+        $leader_proper = 'LEADER_' . uc($leader_proper);
+        my @pos = sort keys %{$state->{'data'}{'leaders'}};
+        
+        if (! exists $state->{'data'}{'leaders'}{$leader_proper}) {
             $state->report_error("leader '$leader' not found. Use 'list_leaders' for valid leader names.");
         }
     
-        $group->set_player_leader($owner, $state->{'data'}{'leaders'}{$leader});
+        $group->set_player_leader($owner, $state->{'data'}{'leaders'}{$leader_proper});
     }
     
     if ($color ne '') {
-        my $color_proper = $pparams->get_named('color');
+        my $color_proper = uc $pparams->get_named('color');
         $color_proper =~ s/^PLAYERCOLOR_//i;
         $color_proper =~ s/\s+/_/g;
         $color_proper = 'PLAYERCOLOR_' . uc($color_proper);
@@ -493,6 +524,91 @@ sub set_player_data {
         $group->set_player_name($owner, $player_name);
     }
     
+    return 1;
+}
+
+my $set_settings_help_text = qq[
+    Sets settings data for a group and all of its layers. Available options are era (ancient, classical, medieval, renaissance, industrial, modern, and future),
+    speed (quick, normal, epic, and marathon), and size (duel, tiny, small, standard, large, and huge). Options that aren't set will be ignored.
+];
+sub set_settings {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'required' => ['group'],
+        'required_descriptions' => ['group whose settings to set'],
+        'help_text' => $set_settings_help_text,
+        'optional' => {
+            'size' => '',
+            'speed' => '',
+            'era' => '',
+        }
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my ($group) = $pparams->get_required();
+    
+    my $size = $pparams->get_named('size');
+    my $speed = $pparams->get_named('speed');
+    my $era = $pparams->get_named('era');
+    
+    $size =~ s/^WORLDSIZE_//i;
+    if ($size ne '') {
+        if ($size !~ /^(?:duel|tiny|small|standard|large|huge)$/i) {
+            $state->report_error("Unknown size '$size'. Valid options are: duel, tiny, small, standard, large, and huge.");
+            return -1;
+        }
+        $size = 'WORLDSIZE_' . uc($size);
+    }
+    
+    if ($speed ne '') {
+        $speed =~ s/^GAMESPEED_//i;
+        if ($speed !~ /^(?:quick|normal|epic|marathon)$/) {
+            $state->report_error("Unknown speed '$speed'. Valid options are: quick, normal, epic, and marathon.");
+            return -1;
+        }
+        $speed = 'GAMESPEED_' . uc($speed);
+    }
+    
+    $era =~ s/^ERA_//i;
+    if ($era ne '') {
+        if ($era !~ /^(?:ancient|classical|medieval|renaissance|industrial|modern|future)$/) {
+            $state->report_error("Unknown era '$era'. Valid options are: ancient, classical, medieval, renaissance, industrial, modern, and future.");
+            return -1;
+        }
+        $era = 'ERA_' . uc($era);
+    }
+    
+    $group->set_size($size) if $size ne '';
+    $group->set_speed($speed) if $speed ne '';
+    $group->set_era($era) if $era ne '';
+    
+    return 1;
+}
+
+my $add_sign_help_text = qq[
+    Adds a sign to a specified coordinate
+];
+sub add_sign {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'required' => ['layer', 'int', 'int', 'str'],
+        'required_descriptions' => ['layer in which to add the sign', 'x coordinate', 'y coordinate', 'caption'],
+        'help_text' => $add_sign_help_text,
+    });
+    
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my ($layer, $x, $y, $caption) = $pparams->get_required();
+    if (($x < 0) or ($x >= $layer->get_width()) or ($y < 0) or ($y < $layer->get_height())) {
+        $state->report_error("Coordinate '$x,$y' is out of bounds!");
+        return -1;
+    }
+    
+    $layer->add_sign($x, $y, $caption);
     return 1;
 }
 

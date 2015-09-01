@@ -1,9 +1,10 @@
-package Civ4MapCad::State;
+package Civ4MapCad;
 
 use strict;
 use warnings;
 
 use Text::Wrap qw(wrap);
+use Config::General;
 
 use Civ4MapCad::Commands;
 our $repl_table = create_dptable Civ4MapCad::Commands; 
@@ -16,7 +17,11 @@ sub new {
     my $class = ref $proto || $proto;
     my ($spec) = @_;
     
+    our %config = Config::General->new('def/config.cfg')->getall();
+    $config{'max_players'} = 0;
+    
     my $obj = {
+        'config' => \%config,
         'data' => {},
         'output_dir' => './',
         'variables' => {},
@@ -152,15 +157,43 @@ sub _process_command {
             return 1;
         }
         
-        my ($expected_name, $expected_type) = $self->shift_script_return();
-        if ($expected_type ne $return_type) {
-            $self->report_error("Result variable '$expected_name' does not match returned variable '$to_return'.");
+        my ($expected_name, $expected_type, $dump_output) = $self->shift_script_return();
+        
+        my $has_result = 1;
+        if (($expected_name eq '') and ($expected_type eq '')) {
+            $has_result = 0;
+        }
+        elsif ($expected_type ne $return_type) {
+            $self->report_error("Result variable '$expected_name' does not match type of returned variable '$to_return'.");
+            return -1;
         }
         
-        my $obj = $self->get_variable($to_return, $return_type);
-        my $copy = deepcopy($obj);
+        if ($dump_output == 1) {
+            if ($return_type eq 'group') {
+                $self->process_command("debug_group $to_return");
+            }
+            elsif ($return_type eq 'layer') {
+                $self->process_command("debug_layer $to_return");
+            }
+            elsif ($return_type eq 'mask') {
+                $self->process_command("debug_mask $to_return");
+            }
+            elsif ($return_type eq 'weight') {
+                $self->process_command("debug_weight $to_return");
+            }
+            else {
+                $self->report_error("Can't debug result '$to_return'!");
+                return -1;
+            }
+            
+            $self->remove_log();
+        }
         
-        $self->set_variable($expected_name, $return_type, $copy);
+        if ($has_result) {
+            my $obj = $self->get_variable($to_return, $return_type);
+            my $copy = deepcopy($obj);
+            $self->set_variable($expected_name, $return_type, $copy);
+        }
         
         return 1;
     }
@@ -271,6 +304,7 @@ sub process_script {
         my $line = $lines[$i];
         chomp $line;
         
+        $line =~ s/^\s*// if $current_line eq '';
         $line =~ s/#.*//; # strip comments
         next unless $line =~ /\w/;
         
@@ -322,8 +356,8 @@ sub process_script {
 }
 
 sub push_script_return {
-    my ($self, $name, $type) = @_;
-    push @{ $self->{'return_stack'} }, [$name, $type];
+    my ($self, $name, $type, $dump) = @_;
+    push @{ $self->{'return_stack'} }, [$name, $type, $dump];
 }
 
 sub return_stack_empty {
@@ -334,7 +368,7 @@ sub return_stack_empty {
 
 sub shift_script_return {
     my ($self) = @_;
-    my ($ret) = shift @{ $self->{'return_stack'} };    
+    my ($ret) = pop @{ $self->{'return_stack'} };
     return @$ret;
 }
 
@@ -363,6 +397,11 @@ sub add_log {
     }
     
     push @{ $self->{'log'} }, $command;
+}
+
+sub remove_log {
+    my ($self, $command) = @_;
+    pop @{ $self->{'log'} };
 }
 
 sub get_log {
@@ -402,12 +441,19 @@ sub delete_variable {
     if ($type eq 'layer') {
         my $layer = $self->get_variable($name, $type);
     
-        my $name = $layer->get_name();
+        my $layer_name = $layer->get_name();
         my $full_name = $layer->get_full_name();
     
-        $layer->get_group()->delete_layer($name);
+        $layer->get_group()->delete_layer($layer_name);
         delete $self->{'layer'}{$full_name};
+        
+        $layer->destroy_layer();
         return;
+    }
+    elsif ($type eq 'group') {
+        my $group = $self->get_variable($name, $type);
+        delete $self->{$type}{$name};
+        $group->destroy_group();
     }
     else {
         delete $self->{$type}{$name};
@@ -715,27 +761,48 @@ sub collect_garbage {
         $still_active{ $layer->{'ref_id'} } = 1;
     }
     
-    foreach my $id (keys %{ $main::config{'ref_table'} }) {
+    foreach my $id (keys %{ $self->{'ref_table'} }) {
         if (! exists $still_active{$id}) {
-            if (ref($main::config{'ref_table'}{$id}) =~ /Group/i) {
-                foreach my $layer (values %{$main::config{'ref_table'}{$id}{'layers'}}) {
-                    delete $main::config{'ref_table'}{$layer->{'ref_id'}};
-                    undef %{$layer->{'map'}};
-                    delete $layer->{'map'};
-                    delete $layer->{'group'} if exists $layer->{'group'};
-                    delete $main::config{'ref_table'}{$id}{'layers'};
-                }
-            }
-            elsif (ref($main::config{'ref_table'}{$id}) =~ /Layer/i) {
-                undef %{ $main::config{'ref_table'}{$id}{'map'} };
-                delete $main::config{'ref_table'}{$id}{'map'};
-                delete $main::config{'ref_table'}{$id}{'group'} if exists $main::config{'ref_table'}{$id}{'group'};
-            }
             
-            undef %{ $main::config{'ref_table'}{$id} };
-            delete $main::config{'ref_table'}{$id};
+            if (ref($self->{'ref_table'}{$id}) =~ /Layer/i) {
+                $self->{'ref_table'}{$id}->destroy_layer();
+            }
         }
     }
+}
+
+sub debug_ref_table {
+    my ($self, $still_active) = @_;
+
+    print "    ------------------------------------------    \n";
+    foreach my $id (keys %{ $self->{'ref_table'} }) {
+        my $type = 'group';
+        $type = 'layer' if ref($self->{'ref_table'}{$id}) =~ /Layer/i;
+        my $status = (exists $still_active->{$id}) ? 'active' : 'inactive';
+        my $name = $self->{'ref_table'}{$id}->{'name'};
+        $name = 'undef' unless defined($name);
+        
+        if ($type eq 'layer') {
+            if (defined $self->{'ref_table'}{$id}{'member_of'}) {
+                $name = $self->{'ref_table'}{$id}->get_full_name();
+            }
+            else {
+                $name = '$undef.' . $name;
+            }
+        }
+        else {
+            $name = '$' . $name;
+            my @layers = $self->{'ref_table'}{$id}->get_layers();
+            $name .= ('/' . (@layers+0));
+        }
+
+        my $padding = ' ' x (20 - length($name));
+        $padding = ' ' if (20 - length($name)) < 1;
+        
+        printf "    | %03d %s: %7s %s$padding|\n", $id, $type, $status, $name;
+    }
+    print "    ------------------------------------------    \n\n";
+    
 }
 
 1;

@@ -7,6 +7,27 @@ use base qw<Tie::Handle>;
 use Symbol qw<geniosym>;
 
 sub TIEHANDLE { return bless geniosym, __PACKAGE__ }
+
+sub PRINTF { 
+    shift;
+    my $format = shift;
+    
+    open (my $log, '>>', 'output.txt');
+    
+    my @ok;
+    foreach my $item (@_) {
+        push @ok, $item if ref($item) eq '';
+    }
+    
+    my @has_nl = grep { $_ =~ /\n/ } @ok;
+    my $to_print = eval qq[sprintf '$format',] . join(', ', map { "'" . $_ . "'" } @ok);
+    
+    print $log $to_print;
+    print $log "\n" unless @has_nl > 0;
+    print $OLD_STDOUT $to_print;
+    close $log;
+}
+
 sub PRINT { 
     shift;
     open (my $log, '>>', 'output.txt');
@@ -33,28 +54,23 @@ use warnings;
 
 use lib 'lib';
 
-use Config::General;
-use Civ4MapCad::State;
-
+# here's some crazy stuff for output/error logging
 use sigtrap qw(handler dump_log error-signals);
-
 tie *PRINTOUT, 'IO::Override';
 our $OLD_STDOUT = select( *PRINTOUT );
-
-our %config = Config::General->new('def/config.cfg')->getall();
-our $state = Civ4MapCad::State->new();
-
-$config{'max_players'} = 0;
-$config{'state'} = $state;
-
-$SIG{'INT'} = sub { $main::config{'state'}->process_command('write_log'); exit(0) };
+$SIG{'INT'} = sub { $main::state->process_command('write_log'); exit(0) };
 $SIG{__DIE__} = sub {
     my $message = shift; 
     open (my $error_log, '>>', "error.txt");
     print $error_log $message;
     close $error_log;
-    $main::config{'state'}->process_command('write_log');;
+    $main::state->process_command('write_log');;
 };
+open (my $error_log, '>', "error.txt") or die $!;
+open (my $output_log, '>', "output.txt") or die $!;
+
+use Civ4MapCad;
+our $state = Civ4MapCad->new();
 
 print "\n";
 print "  Welcome to Civ4 Map Cad!\n\n";
@@ -63,9 +79,6 @@ print "  Type 'commandname --help' for more info on a particular command.\n";
 
 $state->process_command('run_script "def/init.civ4mc"');
 $state->clear_log();
-
-open (my $error_log, '>', "error.txt") or die $!;
-open (my $output_log, '>', "output.txt") or die $!;
 
 close $error_log;
 close $output_log;
@@ -80,7 +93,7 @@ while (1) {
 }
 
 sub dump_log {
-    $main::config{'state'}->process_command('write_log');
+    $main::state->process_command('write_log');
     my $message = shift;
     die $message;
 }

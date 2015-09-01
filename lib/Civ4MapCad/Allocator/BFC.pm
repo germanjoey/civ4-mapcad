@@ -43,6 +43,7 @@ sub new {
     return $obj;
 }
 
+# find the average ownership of a BFC, to see how contentious this spot is
 sub find_expected_ownership {
     my ($self) = @_;
     
@@ -55,12 +56,6 @@ sub find_expected_ownership {
         }
         $self->{'average_ownership'}{$player} = $total_ownership/$t;
     }
-    
-}
-
-sub get_estimated_ownership {
-    my ($self, $player) = @_;
-    return $self->{'average_ownership'}{$player};
 }
 
 sub get_value {
@@ -132,12 +127,44 @@ sub has_resource_any_ring {
     return 0;
 }
 
+sub get_estimated_ownership {
+    my ($self, $player) = @_;
+    return $self->{'average_ownership'}{$player};
+}
+
+sub reset {
+    my ($self) = @_;
+    
+    $self->{'bfc_value'} = $self->{'original_bfc_value'};
+    $self->{'replacement_counter'} = 0;
+}
+
+# here we upgrade a bfc's value based on a resource that just became available
+sub upgrade_via_resource {
+    my ($self, $bonus) = @_;
+    
+    foreach my $ring ('1st', '2nd') {
+        next unless exists $self->{'upgrades_' . $ring}{$bonus};
+        next if $self->{'upgraded_' . $ring}{$bonus} == 1;
+        
+        my $rep = $self->{'upgrade_replacements'}[$NUM_TILES_FULL - 1 - $self->{'replacement_counter'}] || 0;
+        $rep = (abs($rep)*$rep/$NUM_TILES_FULL);
+        
+        $self->{'replacement_counter'} ++;
+        $self->{'bfc_value'} += ($self->{'upgrades_' . $ring}{$bonus} - $rep);
+        $self->{'upgraded_' . $ring}{$bonus} = 1;
+        $self->{'reset'} = 0;
+    }
+}
+
 sub initialize {
     my ($self, $map) = @_;
     
     my $cx = $self->{'center'}->get('x');
     my $cy = $self->{'center'}->get('y');
     
+    # collect all the bfc tiles and bin them in 1st ring or second
+    # also collect all the resource tiles for when we need to upgrade them later
     foreach my $ddx (0..4) {
         my $dx = $ddx - 2;
         foreach my $ddy (0..4) {
@@ -162,6 +189,7 @@ sub initialize {
                 $ring = '2nd';
             }
             else {
+                # mark that this site is lighthouseable
                 $self->{'first_ring_coastal'} = 1 if ($tile->{'TerrainType'} eq 'TERRAIN_COAST') and ($self->{'center'}{'coastal'} == 1);
                 $ring = '1st';
             }
@@ -177,7 +205,7 @@ sub initialize {
                 if (exists $tile->{'up_value'}) {
                     my $v = $tile->{'up_value'}*$tile->{'up_value'}/$NUM_TILES_FULL;
                     
-                    # HACK TO MAKE THIS WORK
+                    # HACK TO MAKE JUNGLE AT IRONWORKING BULLSHIT WORK
                     if ((exists $tile->{'FeatureType'}) and ($tile->{'FeatureType'} eq 'FEATURE_JUNGLE')
                         and (($bonus =~ /horse|copper|marble|stone|fur/i)
                             or ((! exists $Civ4MapCad::Allocator::delayed{$bonus})
@@ -197,22 +225,16 @@ sub initialize {
     }
 }
 
-sub reset {
-    my ($self) = @_;
-    
-    $self->{'bfc_value'} = $self->{'original_bfc_value'};
-    $self->{'replacement_counter'} = 0;
-}
-
+# calculate a metric that describes how good a city site is if we were to
+# settle on this tile *purely* based on the tiles in its bfc
 sub calc_bfc_value {
     my ($self) = @_;
     return if ($self->{'center'}{'PlotType'} == 0) or ($self->{'center'}{'PlotType'} == 3);
     
-    # total BFC value
     # things that i want in a city in terms of pure output:
     
     # lets use half of a river plains sheep as our comparison value
-    my $base_value = 20;
+    my $base_value = $main::config{'base_tile_comparison_value'};
     my $bv2 = $base_value**2;
     
     my $avg_value = 0;
@@ -255,11 +277,11 @@ sub calc_bfc_value {
         next unless exists $tile->{'FeatureType'};
         
         # camp resources can keep their forest
-        next if (exists $tile->{'BonusType'}) and ($tile->{'BonusType'} =~ /^(?:deer|ivory|fur)$/);
+        next if (exists $tile->{'BonusType'}) and ($tile->{'BonusType'} =~ /^(?:deer|ivory|fur)$/i);
         $trees ++ if $tile->{'FeatureType'} eq 'FEATURE_FOREST';
     }
     $self->{'trees_count'} = $trees;
-    $trees = min(1, $trees/8);
+    $trees = min($main::config{'trees_max'}, $trees)*$main::config{'value_per_tree'};
     
     #   6.) lots of river nearby
     my $river = 0;
@@ -267,7 +289,7 @@ sub calc_bfc_value {
         $river ++ if $tile->is_river_adjacent();
     }
     $self->{'river_count'} = $river;
-    $river = min(0.6, $river/10); # riverage only counts half compared to other factors
+    $river = min($main::config{'river_max'}, $river)*$main::config{'value_per_river'}; # riverage only counts half compared to other factors
     
     # 7.) doesn't have bad tiles (jungle, coast w/o lighthouse, tundra, desert, snow)
     my $bad = 0;
@@ -298,15 +320,15 @@ sub calc_bfc_value {
     my $twohp = (exists $self->{'center'}{'2h_plant'}) ? 1 : 0;
     my $fresh = $self->{'center'}->is_fresh();
     
-    my $w1 = 1;
-    my $w2 = 1;
-    my $w3 = 1;
-    my $w4 = 1.5;
-    my $w5 = 0.75;
-    my $w6 = 0.5;
-    my $w7 = -1;
-    my $w8 = 0.1;
-    my $w9 = 0.15;
+    my $w1 = $main::config{'tile_value_weight'};
+    my $w2 = $main::config{'fr_value_weight'};
+    my $w3 = $main::config{'food_weight'};
+    my $w4 = $main::config{'fr_food_weight'};
+    my $w5 = $main::config{'trees_weight'};
+    my $w6 = $main::config{'river_weight'};
+    my $w7 = $main::config{'bad_weight'};
+    my $w8 = $main::config{'freshwater_weight'};
+    my $w9 = $main::config{'2h_plant_weight'};
     my $w = $w1 + $w2 + $w3 + $w4 + $w5 + $w6 + $w8 + $w9;
     
     $self->{'bfc_value'} = max(0, ($w1*$avg_value + $w2*$fr_value + $w3*$food + $w4*$frf + $w5*$trees + $w6*$river + $w7*$bad + $w8*$fresh + $w9*$twohp)/$w);
@@ -320,24 +342,6 @@ sub calc_bfc_value {
     $self->{'center'}{'trees'} = $trees;
     $self->{'center'}{'river'} = $river;
     $self->{'center'}{'bad'} = "$self->{'first_ring_coastal'} / $bad";
-}
-
-# here we upgrade a bfc's value based on a resource that just became available
-sub upgrade_via_resource {
-    my ($self, $bonus) = @_;
-    
-    foreach my $ring ('1st', '2nd') {
-        next unless exists $self->{'upgrades_' . $ring}{$bonus};
-        next if $self->{'upgraded_' . $ring}{$bonus} == 1;
-        
-        my $rep = $self->{'upgrade_replacements'}[$NUM_TILES_FULL - 1 - $self->{'replacement_counter'}] || 0;
-        $rep = (abs($rep)*$rep/$NUM_TILES_FULL);
-        
-        $self->{'replacement_counter'} ++;
-        $self->{'bfc_value'} += ($self->{'upgrades_' . $ring}{$bonus} - $rep);
-        $self->{'upgraded_' . $ring}{$bonus} = 1;
-        $self->{'reset'} = 0;
-    }
 }
 
 1;

@@ -1,0 +1,62 @@
+import_group "tutorials/t6/tutorial6_orig.CivBeyondSwordWBSave" => $t6
+
+set_player_data $t6 0 --color "Dark Blue"
+set_player_data $t6 6 --color "Dark Purple"
+
+# straight up delete every ice tile on the map
+new_mask_from_filtered_tiles $t6.t6 %any_snow => @snows
+delete_from_layer_with_mask $t6.t6 @snows 
+
+# upgrade about 40% of the tundra/desert to plains/grass
+new_weight_table >= 1.00 => tundra,
+                 >= 1.00 => desert
+                 => %select_bad
+                 
+new_weight_table >= 0.90 => grass,
+                 >= 0.60 => plains
+                 => %upgrade
+                 
+new_mask_from_filtered_tiles $t6.t6 %select_bad => @bad
+new_mask_from_shape *random 64 40 => @rand_field
+mask_intersect @bad @rand_field => @rand_bad
+modify_layer_with_mask $t6.t6 @rand_bad %upgrade --check_type
+
+# move start 4 a bit
+extract_starts $t6
+move_layer_by $t6.start4 -2 2
+
+# for player 6
+set_tile $t6.t6 47 15 plains_wheat
+set_tile $t6.t6 51 11 coast_crab
+
+# for player 4
+set_tile $t6.t6 33 24 grass_corn
+set_tile $t6.t6 32 20 grass_sheep
+
+# for player 1
+set_tile $t6.t6 31 16 grass_corn
+
+# for player 0
+set_tile $t6.t6 21 12 grass_sheep
+
+# for player 5/3 - the bridge
+set_tile $t6.t6 17 19 coast_fish
+set_tile $t6.t6 17 17 grass_forest
+set_tile $t6.t6 17 18 grass
+set_tile $t6.t6 18 17 grass
+set_tile $t6.t6 18 18 plainshill
+
+#
+# extra additions after pass 1
+
+set_tile $t6.t6 38 8 plains_wheat
+set_tile $t6.t6 26 7 coast_fish
+
+set_tile $t6.t6 23 29 grass_corn
+set_tile $t6.t6 16 16 grass_pig
+set_tile $t6.t6 14 13 grass
+
+set_tile $t6.t6 38 17 grasshill_copper
+
+flatten_group $t6 --rename_final => $t6_fixed
+debug_group $t6_fixed

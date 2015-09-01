@@ -51,9 +51,9 @@ sub new {
     return $obj;
 }
 
-sub stop_settling {
+sub get_center {
     my ($self) = @_;
-    $self->{'stop_settling'} = 1;
+    return $self->{'center'}
 }
 
 sub get_settlment_turn {
@@ -61,9 +61,39 @@ sub get_settlment_turn {
     return $self->{'settling_turn'};
 }
 
-sub get_center {
+sub can_whip {
     my ($self) = @_;
-    return $self->{'center'}
+    return 0 if $self->{'max_fpt'} < 3;
+    return ($self->{'current_size'} > $self->{'whip_threshold'}) ? 1 : 0;
+}
+
+sub ready_to_build {
+    my ($self) = @_;
+    return $self->{'ready_to_build'};
+}
+
+# start to build
+sub set_queue {
+    my ($self, $queue) = @_;
+    $self->{'current_status'} = $queue;
+    $self->choose_tiles();
+    $self->{'ready_to_build'} = 0;
+}
+
+sub has_resources {
+    my ($self, @resources) = @_;
+    
+    if ($self->{'borders_expanded'} == 0) {
+        $self->{'center'}{'bfc'}->has_resource_1st_ring(@resources);
+    }
+    else {
+        $self->{'center'}{'bfc'}->has_resource_any_ring(@resources);
+    }
+}
+
+sub stop_settling {
+    my ($self) = @_;
+    $self->{'stop_settling'} = 1;
 }
 
 # tiles at this point are just [food/hammer/commerce/pre-expanded/bonus_name]
@@ -73,7 +103,6 @@ sub initialize {
     my ($self) = @_;
     
     my $extra_help_level = log(min(100, $self->{'settling_turn'}));
-    
     # if we have a lot of trees, we can chop a monument
     my $turns_to_expand_borders;
     if ($self->{'available_trees'} >= 3) {
@@ -94,12 +123,9 @@ sub initialize {
     $self->choose_tiles();
 }
 
-sub can_whip {
-    my ($self) = @_;
-    return 0 if $self->{'max_fpt'} < 3;
-    return ($self->{'current_size'} > $self->{'whip_threshold'}) ? 1 : 0;
-}
-
+# calculate when this city should stop growing and just 
+# concentrate on producing stuff
+# TODO: this SHOULD take into account shared tiles also... 
 sub calculate_growth_target {
     my ($self) = @_;
     my @tiles = $self->{'center'}{'bfc'}->get_all_tiles();
@@ -122,6 +148,8 @@ sub calculate_growth_target {
     $self->{'growth_target'} = max(2, $self->{'current_size'}, $self->{'growth_target'});
 }
 
+# process one turn; basically, we're either growing (and producing a monument/granary along the way)
+# or we're building workers/settlers
 sub advance_turn {
     my ($self) = @_;
     my %ret;
@@ -140,6 +168,7 @@ sub advance_turn {
         $self->{'max_fpt'} = -1;
         $self->choose_tiles();
         
+        # recalculate our growth target now we can work new tiles
         if (($self->{'current_status'} eq 'growth') and ($self->{'current_size'} < $self->{'growth_target'})) {
             if ($self->{'current_fpt'} <= 2) {
                 $self->{'ready_to_build'} = 1;
@@ -182,18 +211,22 @@ sub advance_turn {
             
             $self->{'hammers_for_granary'} += $self->{'current_hpt'};
             
+            # granary done
             if ($self->{'hammers_for_granary'} >= 60) {
                 $self->{'has_granary'} = 1;
                 $self->{'hammers_for_granary'} -= 60;
                 $self->{'hammer_bin'} += $self->{'hammers_for_granary'};
                 
-                $self->calculate_growth_target(); # calculate new target with consideration for granary
+                # calculate new target with consideration for granary
+                $self->calculate_growth_target();
             }
         }
     
         # next, add food, then check to see if we grew
         $self->{'food_bin'} += $self->{'current_fpt'};
         
+        # granary is now ready; we don't actually maintain the correct food count, because I'm LAZY, but then
+        # we don't actually optimize for the granary build so whatever. can't do it all.
         my $food_needed_to_grow = (20 + 2*$self->{'current_size'})/(1+$self->{'granary_enabled'});
         if ($self->{'food_bin'} >= $food_needed_to_grow) {
             $self->{'food_bin'} -= $food_needed_to_grow;
@@ -221,7 +254,9 @@ sub advance_turn {
     }
     
     if ($self->{'current_status'} eq 'worker') {
+    
         # should we whip the worker?
+        # TODO: it would be wise to whip into a granary
         if ($self->can_whip() and ($turns_since_last_whip >= 10) and ($self->{'hammer_bin'} >= 30)) {
             $self->{'hammer_bin'} += 30;
             $self->{'current_size'} --;
@@ -247,6 +282,7 @@ sub advance_turn {
         }
     }   
     elsif ($self->{'current_status'} eq 'settler') {
+    
         # can/should we whip?
         if ($self->can_whip() and ($turns_since_last_whip >= 10) and ($self->{'hammer_bin'} >= 70)) {
             $self->{'hammer_bin'} += 30;
@@ -276,6 +312,7 @@ sub advance_turn {
     return \%ret;
 }
 
+# set all the special stuff for our capital, blah blah
 sub initialize_as_capital {
     my ($self, $turn) = @_;
     $self->{'current_size'} = 3;
@@ -320,24 +357,13 @@ sub grow_next {
     $self->{'ready_to_build'} = 1 if $self->{'current_size'} >= $self->{'growth_target'};
 }
 
-sub ready_to_build {
-    my ($self) = @_;
-    return $self->{'ready_to_build'};
-}
-
-sub set_queue {
-    my ($self, $queue) = @_;
-    $self->{'current_status'} = $queue;
-    $self->choose_tiles();
-    $self->{'ready_to_build'} = 0;
-}
-
 # put tiles in order in terms of what the city will work based on what is available
 sub choose_tiles {
     my ($self) = @_;
     
     my @tiles = ($self->{'borders_expanded'} == 1) ? $self->{'center'}{'bfc'}->get_all_tiles() : $self->{'center'}{'bfc'}->get_first_ring();
     
+    # max food for growth, but don't completely ignore the other good tiles either as that wouldn't be accurate
     if ($self->{'current_status'} eq 'growth') {
         @tiles = sort { $b->{'yld'}[0] <=> $a->{'yld'}[0] } @tiles;
         
@@ -370,6 +396,10 @@ sub choose_tiles {
     $self->{'current_hpt'} = (exists $self->{'center'}{'2h_plant'}) ? 2 : 1;
     $self->{'current_hpt'} = 2 if $self->{'is_capital'} == 1;
     
+    # handle tile sharing in a really stupid and non-realistic way
+    # basically, because i didn't want to figure out which city should claim what food tiles,
+    # we just dither the shared tiles, substituting out the next best ones every other turn
+    # because at least it doesn't double-count
     my @shared;
     my $limit = min($self->{'current_size'} - 1, $#tiles);
     foreach my $i (0 .. $limit) {
@@ -407,17 +437,6 @@ sub choose_tiles {
     }
     
     $self->{'current_fpt'} = max(0, $self->{'current_fpt'} - 2*$self->{'current_size'});
-}
-
-sub has_resources {
-    my ($self, @resources) = @_;
-    
-    if ($self->{'borders_expanded'} == 0) {
-        $self->{'center'}{'bfc'}->has_resource_1st_ring(@resources);
-    }
-    else {
-        $self->{'center'}{'bfc'}->has_resource_any_ring(@resources);
-    }
 }
 
 1;

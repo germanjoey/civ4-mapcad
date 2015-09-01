@@ -59,6 +59,36 @@ sub new_default {
     return $obj;
 }
 
+sub get_size {
+    my ($self, $size) = @_;
+    return $self->{'MapInfo'}->get('world size');
+}
+
+sub get_speed {
+    my ($self, $speed) = @_;
+    return $self->{'Game'}->get('Speed');
+}
+
+sub get_era {
+    my ($self, $era) = @_;
+    return $self->{'Game'}->get('Era');
+}
+
+sub set_size {
+    my ($self, $size) = @_;
+    $self->{'MapInfo'}->set('world size', $size);
+}
+
+sub set_speed {
+    my ($self, $speed) = @_;
+    $self->{'Game'}->set('Speed', $speed);
+}
+
+sub set_era {
+    my ($self, $era) = @_;
+    $self->{'Game'}->set('Era', $era);
+}
+
 # TODO: set up a unified interface?
 sub info {
     my ($self, $field) = @_;
@@ -71,7 +101,7 @@ sub default {
     $self->{'Game'} = Civ4MapCad::Map::Game->new_default();
     $self->{'MapInfo'} = Civ4MapCad::Map::MapInfo->new_default($width, $height);
     
-    foreach my $i (0..$main::config{'max_players'}-1) {
+    foreach my $i (0..$main::state->{'config'}{'max_players'}-1) {
         my $team = Civ4MapCad::Map::Team->new_default($i);
         $self->{'Teams'}{$i} = $team;
         
@@ -98,13 +128,14 @@ sub clear {
     
     foreach my $team ($self->get_teams()) {
         $team->clear();
-        delete $self->{'Teams'}{$team};
+        #delete $self->{'Teams'}{$team};
     }
     
-    foreach my $player ($self->get_players()) {
+    foreach my $i (0..$#{ $self->{'Players'} }) {
+        my $player = $self->{'Players'}[$i];
         $player->clear();
+        $player->set('Team', $i);
     }
-    $self->{'Players'} = [];
     
     $self->clear_map();
 }
@@ -135,7 +166,6 @@ sub expand_dim {
     $self->{'MapInfo'}->set('grid width', $width);
     $self->{'MapInfo'}->set('grid height', $height);
     $self->{'MapInfo'}->set('num plots written', $width*$height);
-    # $self->{'MapInfo'}->set('num signs written', $num_signs);
     
     foreach my $x (0..$width-1) {
         $self->{'Tiles'}[$x] = [] unless defined $self->{'Tiles'}[$x];
@@ -328,6 +358,18 @@ sub set_map_info {
     $self->{'MapInfo'}->parse($fh);
 }
 
+sub add_sign_to_coord {
+    my ($self, $x, $y, $caption) = @_;
+    
+    my $sign = Civ4MapCad::Map::Sign->new();
+    $sign->set('plotX', $x);
+    $sign->set('plotY', $y);
+    $sign->set('caption', $caption);
+    $sign->set('playerType', '-1');
+    
+    push @{$self->{'Signs'}}, $sign;
+}
+
 sub import_map {
     my ($self, $filename, $strip_nonsettlers) = @_;
     
@@ -369,14 +411,13 @@ sub import_map {
     }
     
     my $max_players = @{ $self->{'Players'} };
-    if ($max_players != $main::config{'max_players'}) {
-        $main::config{'state'}->report_warning("Converting map '$filename' from $max_players to $main::config{'max_players'} players. Set 'mod' in def/config.cfg or use the 'set_mod' command to prevent automatic conversion on import.", 1);
-        $self->set_max_num_players($main::config{'max_players'});
+    if ($max_players != $main::state->{'config'}{'max_players'}) {
+        $main::state->report_warning("Converting map '$filename' from $max_players to $main::state->{'config'}{'max_players'} players. Set 'mod' in def/config.cfg or use the 'set_mod' command to prevent automatic conversion on import.", 1);
+        $self->set_max_num_players($main::state->{'config'}{'max_players'});
     }
     
     close $fh;
     $self->{'coast_fixed'} = 0;
-    
     return '';
 }
 
@@ -396,6 +437,7 @@ sub export_map {
         $player->write($fh);
     }
     
+    $self->{'MapInfo'}->set('num signs written', @{$self->{'Signs'}}+0);
     $self->{'MapInfo'}->write($fh);
     print $fh "\n### Plot Info ###\n";
 
@@ -635,7 +677,9 @@ sub reassign_player {
     
     my $teamcount = 0;
     foreach my $i (0 .. $#{ $self->{'Players'} }) {
-        print "PLAYER $i\n";
+        warn "NO TEAM <$from i $i />" unless defined($self->{'Players'}[$i]{'Team'});
+        warn "NO TEAM <$from t $to/>" unless defined($self->{'Players'}[$to]{'Team'});
+    
         $teamcount ++ if $self->{'Players'}[$i]->get('Team') eq $self->{'Players'}[$to]->get('Team');
     }
     
@@ -668,6 +712,8 @@ sub set_player_from_other {
     my ($self, $owner_id, $player, $team) = @_;
     
     $self->{'Players'}[$owner_id] = $player;
+    $self->{'Players'}[$owner_id]->set('Team', $owner_id);
+    
     $self->{'Teams'}{$owner_id} = $team;
 }
 
@@ -796,7 +842,8 @@ sub set_player_from_civdata {
 
 sub set_player_leader {
     my ($self, $owner, $leader_data) = @_;
-    $self->{'Players'}[$owner]->set('LeaderType', $leader_data->{'Name'});
+    
+    $self->{'Players'}[$owner]->set('LeaderType', $leader_data->{'LeaderType'});
 }
 
 sub set_player_color {
@@ -1104,21 +1151,38 @@ sub rotate {
 sub fix_reveal {
     my ($self) = @_;
 
-    my $starts = $self->find_starts();
+    foreach my $x (0..$#{$self->{'Tiles'}}) {
+        foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
+            $self->{'Tiles'}[$x][$y]->clear_reveals();
+        }
+    }
     
-    my @starts;
+    my $starts = $self->find_starts();
     foreach my $start (@$starts) {
-        my ($start_x, $start_y, $player) = @_;
+        my ($start_x, $start_y, $player) = @$start;
         
-        foreach my $x (0..$#{$self->{'Tiles'}}) {
-            foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
-                $self->{'Tiles'}[$x][$y]->clear_reveals();
-                $self->{'Tiles'}[$x][$y]->add_reveals($player) if (abs($start_x-$x) <= 2) and (abs($start_y-$y) <= 2);
+        foreach my $ddx (0..4) {
+            my $dx = $ddx - 2;
+            foreach my $ddy (0..4) {
+                my $dy = $ddy - 2;
+                
+                my $tile = $self->get_tile($start_x + $dx, $start_y + $dy);
+                next unless defined $tile;
+                $tile->add_reveals($player);
             }
         }
     }
     
     return 1;
+}
+ 
+sub set_turn0 {
+    my ($self) = @_;
+    
+    if ($self->{'Game'}->get('GameTurn') != 0) {
+        $main::state->report_warning("Game turn not 0! Resetting...\n");
+        $self->{'Game'}->set('GameTurn', 0)
+    }
 }
  
 1;

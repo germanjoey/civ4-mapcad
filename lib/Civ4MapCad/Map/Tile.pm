@@ -11,6 +11,7 @@ our $DEBUG = 0;
 
 use Civ4MapCad::Map::Unit;
 use Civ4MapCad::Util qw(write_block_data);
+use Civ4MapCad::ColorConversion qw(mix_colors_by_alpha);
 
 sub new {
     my $proto = shift;
@@ -130,10 +131,28 @@ sub parse {
         }
         
         if ($line =~ /^\s*BeginCity/i) {
-            $main::config{'state'}->report_warning("Cities are not currently supported by this tool. Skipping...", 1);
+            $main::state->report_warning("Cities are not currently supported by this tool. Converting to settler...", 1);
+            
+            my $player = -1;
+            
             while (1) {
                 my $line = <$fh>;
+                if ($line =~ /CityOwner/) {
+                    ($player) = $line =~ /CityOwner\s*=\s*(\d+)/;
+                }
                 last if $line =~ /EndCity/;
+            }
+            
+            if ($player != -1) {
+                my $unit = Civ4MapCad::Map::Unit->new();
+                $unit->set('UnitType', 'UNIT_SETTLER');
+                $unit->set('UnitOwner', $player);
+                $unit->set('Damage', '0');
+                $unit->set('Level', '1');
+                $unit->set('Experience', '0');
+                $unit->set('FacingDirection', '4');
+                $unit->set('UnitAIType', 'UNITAI_SETTLE');
+                $self->add_unit($unit);
             }
             next;
         }
@@ -362,60 +381,176 @@ sub set_tile {
 }
 
 sub to_cell {
-    my ($self) = @_;
+    my ($self, $add_alloc, $alloc) = @_;
     
     my $river = '';
-    $river .= " isNOfRiver" if $self->get('isNOfRiver');
-    $river .= " isWOfRiver" if $self->get('isWOfRiver'); 
+    $river .= " iNR" if $self->get('isNOfRiver');
+    $river .= " iWR" if $self->get('isWOfRiver'); 
     my $tt = lc($self->get('TerrainType'));
     
-    $tt = 'terrain_peak' if $self->get('PlotType') eq '0';
+    $tt = 'peak' if $self->get('PlotType') eq '0';
     
     my $terrain = $tt;
     $terrain =~ s/terrain_//;
     
-    my $icon = qq[<img src="debug/icons/none.png" />];
+    my $icon = qq[<img src="i/none.png"/>];
     
     my $bonus = $self->get('BonusType');
     if ($bonus) {
         $bonus = lc($bonus);
         $bonus =~ s/bonus_//;
-        $icon = qq[<img src="debug/icons/$bonus.png" />];
+        
+        my $class = '';
+        if ($bonus =~ /corn|rice|wheat|pig|deer|sheep|cow|fish|clam|crab|corn|banana/i) {
+            $class = 'fd';
+        }
+        elsif ($bonus =~ /copper|horse|iron|stone|marble/i) {
+            $class = 'es';
+        }
+        elsif ($bonus =~ /oil|uranium|alum|coal/i) {
+            $class = 'ms';
+        }
+        elsif ($bonus =~ /fur|ivory|whale|gold|silver|gems/i) {
+            if ((exists $self->{'FeatureType'}) and ($self->{'FeatureType'} =~ /jungle/i)) {
+                if ($bonus =~ /fur|ivory/) {
+                    $class = 'al';
+                }
+                else {
+                    $class = 'cl';
+                }
+            }
+            else {
+                $class = 'al';
+            }
+        }
+        elsif ($bonus =~ /dye|silk|sugar|wine|incense|spice/i) {
+            $class = 'cl';
+        }
+        
+        $class = qq[class="$class"] if $class ne '';
+        $icon = qq[<img $class src="i/$bonus.png" />];
     }
     
     my $variety = '';
+    my $variety_tag = '';
     my $feature = $self->get('FeatureType');
+    
     if ($feature) {
         if ($feature =~ /oasis/i) {
-            $icon = qq[<img src="debug/icons/oasis.png" />];
-            $variety = ' oasis';
+            $icon = qq[<img src="i/oasis.png" />];
+            $variety_tag = ' oasis';
         }
         
         if ($feature =~ /forest/i) {
-            $variety = ($self->get('PlotType') eq '1') ? ' foresthill' : ' forest';
+            $variety_tag = ($self->get('PlotType') eq '1') ? ' foresthill' : ' forest';
+            $variety = ($self->get('PlotType') eq '1') ? ' fthl' : ' ft';
         }
         elsif ($feature =~ /jungle/i) {
-            $variety = ($self->get('PlotType') eq '1') ? ' junglehill' : ' jungle';
+            $variety_tag = ($self->get('PlotType') eq '1') ? ' junglehill' : ' jungle';
+            $variety = ($self->get('PlotType') eq '1') ? ' jlhl' : ' jl';
         }
     }
     elsif ($self->get('PlotType') eq '1') {
-        $variety = ' hill';
+        $variety_tag = ' hill';
+        $variety = ' hl';
     }
     
     $bonus = (defined $bonus) ? "$bonus, " : '';
-    my $title = " $bonus $terrain $variety";
+    my $title = " $bonus $terrain $variety_tag";
     
     if ($self->has_settler()) {
-        $icon = qq[<img src="debug/icons/razz.gif" />];
-        my @starts = map { $_->[2] } ($self->get_starts());
-        $title = " start for player " . join ("/", @starts) . ", " . $title;
+        $icon = qq[<img src="i/razz.gif" />];
+        
+        my @starts;
+        foreach my $start ($self->get_starts()) {
+            my ($start_x, $start_y, $player_number) = @$start;
+            
+            my $player_name = "player $player_number";
+            if (exists $main::state->{'current_debug'}) {
+                my ($player, $team) = $main::state->{'current_debug'}->get_player_data($player_number);
+                
+                my $leader_type = 'none';
+                if (exists $player->{'LeaderType'}) {
+                    $leader_type = "$player->{'LeaderType'}";
+                    $leader_type =~ s/^LEADER_//;
+                    $leader_type =~ s/_/ /g;
+                    $leader_type = join ' ', map { ucfirst(lc($_)) } (split ' ', $leader_type);
+                }
+                
+                my $civ_type = 'none';
+                if (exists $player->{'CivType'}) {
+                    $civ_type = "$player->{'CivType'}";
+                    $civ_type =~ s/^CIVILIZATION_//;
+                    $civ_type =~ s/_/ /g;
+                    $civ_type = join ' ', map { ucfirst(lc($_)) } (split ' ', $civ_type);
+                }
+            
+                if (exists $player->{'LeaderName'}) {
+                    $player_name = "$player->{'LeaderName'} ($player_number) ($leader_type/$civ_type)";
+                }
+                else {
+                    $player_name = "$player_name ($leader_type/$civ_type)";
+                }
+                
+                push @starts, $player_name;
+            }
+        }
+        
+        $title = " start for " . join (" and ", @starts) . ", " . $title;
     }
     
     $title =  $self->get('x') . ',' . $self->get('y') . $title;
     $title =~ s/\s+/ /g;
+    $title =~ s/\s+$//;
     
-    my $cell = qq[<a title="$title">$icon</a>];
-    return qq[<td class="tooltip"><div class="$tt$variety$river">$cell</div></td>];
+    my $title_alloc = '';
+    my $cell_alloc = '';
+    if ($add_alloc) {
+        ($title_alloc, $cell_alloc) = $self->alloc_cell($alloc);
+    }
+    
+    $tt =~ s/terrain_//;
+    my $full_title = qq[ title="$title$title_alloc"];
+    $tt = substr($tt,0,2);
+    my $cell = qq[<a$full_title>$icon</a>];
+    return qq[<td><div class="w"><div class="$tt$variety$river">$cell</div>$cell_alloc</div></td>];
+}
+
+sub alloc_cell {
+    my ($self, $alloc) = @_;
+    return ('','') unless defined $alloc;
+    
+    my $title_alloc = '';
+    my $cell_alloc = '';
+    
+    my @colors;
+    foreach my $civ (%$alloc) {
+        next unless exists $alloc->{$civ};
+        next if $alloc->{$civ} < 0.05;
+        push @colors, [$civ, $alloc->{$civ}];
+    }
+    
+    if (@colors == 0) {
+        return ('', '');
+    }
+    
+    my @mixed_colors = mix_colors_by_alpha(@colors);
+    
+    foreach my $i (0..$#mixed_colors) {
+        my ($civ, $ownership, $alpha) = @{ $mixed_colors[$i] };
+        my $z = @mixed_colors - $i;
+        
+        my $op = int(100*$ownership + 0.5);
+        my $o = int(100*$alpha + 0.5);
+        
+        $title_alloc .= "$civ: $op\%, ";
+        $cell_alloc .= qq[<div class="c$civ o$o z$z"></div>];
+    }
+    
+    $title_alloc =~ s/, $//;
+    $title_alloc = " ($title_alloc)" if $title_alloc =~ /\d/;
+    
+    return ($title_alloc, $cell_alloc);
 }
 
 sub strip_hidden_strategic {

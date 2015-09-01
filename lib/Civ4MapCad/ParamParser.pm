@@ -35,7 +35,6 @@ use List::Util qw(min);
 # the output of parse is a hash containing a value for each input to the command. a special value, _result, specifies where the output of the command should go, if there is one.
 # if an error occurred in parsing params, the error field of the result hash will be set, and the command should bail immediately.
 
-
 sub new {
     my $proto = shift;
     my $class = ref $proto || $proto;
@@ -129,6 +128,44 @@ sub new {
     return bless $processed, $class;
 }
 
+sub done {
+    my ($self) = @_;
+    return 1 if $self->{'done'};
+    return 0;
+}
+
+sub has_error {
+    my ($self) = @_;
+    return 1 if $self->{'error'};
+    return 0;
+}
+
+sub get_shape_params {
+    my ($self) = @_;
+    return $self->{'_shape_params'};
+}
+
+sub get_result_name {
+    my ($self) = @_;
+    return $self->{'_result'};
+}
+
+sub get_required {
+    my ($self) = @_;
+    return @{ $self->{'_required'} };
+}
+
+sub get_required_names {
+    my ($self) = @_;
+    return @{ $self->{'_required_names'} };
+}
+
+sub get_named {
+    my ($self, $name) = @_;
+    return $self->{$name};
+}
+
+# this is the function that produces the calling format of each command for the help tetx
 sub _report_calling_format {
     my ($state, $param_spec) = @_;
     
@@ -216,10 +253,10 @@ sub _report_calling_format {
     return @format;
 }
 
+# process the damn params
 sub _process {
     my ($state, $raw_params, $param_spec) = @_;
     
-    # TODO: universal help option
     my $calling_command = $param_spec->{'command'};
     my $optional = $param_spec->{'optional'} || {};
     my $required = $param_spec->{'required'} || [];
@@ -229,9 +266,7 @@ sub _process {
     
     my $has_result = $param_spec->{'has_result'};
     my $allow_implied_result = $param_spec->{'allow_implied_result'};
-    
     $optional->{'help'} = 'false';
-    
     my %processed_params = ('error' => 0);
     
     if (exists($param_spec->{'allow_implied_result'}) and (! exists($param_spec->{'has_result'}))) {
@@ -258,12 +293,12 @@ sub _process {
     }
     
     # massage params to allow single or double dash
-    # TODO: combine strings into a single element
     my @preproc;
     
     my $current_string = '';
     my $open_string = 0;
     
+    # recombine strings back to their original form
     foreach my $raw (@$raw_params) {
         if (($open_string == 1) or ($raw =~ /^(?:,)?\"/)) {
             $open_string = 1;
@@ -318,10 +353,12 @@ sub _process {
             # only strip from strings
             if (($optional->{$opt} !~ /^(?:true|false)$/) and ($optional->{$opt} !~ /\-?\d+\.\d+/) and ($optional->{$opt} !~ /\-?\d+/)) {
                 $processed_params{$opt} =~ s/"//g;
+                $processed_params{$opt} =~ s/\s+$//g;
             }
         }
     }
     
+    # fix up the named parameters
     if ((!$has_shape_params) and (@preproc != @$required) and ($required->[-1] !~ /^\*/)) {
         my @unknown;
         foreach my $item (@preproc) {
@@ -349,8 +386,8 @@ sub _process {
     my $i=0;
     my @shape_param_list;
     
-    # remnants of @preproc are the required params; resolve those to variables
-    
+    # remnants of @preproc are the required params; resolve those to what the command expects or else throw
+    # an error back if there's a mismatch
     while (1) {
         last if $i > $#preproc;
     
@@ -408,6 +445,7 @@ sub _process {
         
             $preproc[$i] =~ s/^"//;
             $preproc[$i] =~ s/"$//;
+            $preproc[$i] =~ s/\s+$//g;
             push @{ $processed_params{'_required_names'} }, '';
             push @{ $processed_params{'_required'} }, $preproc[$i];
             $i++;
@@ -435,6 +473,7 @@ sub _process {
         };
         my $name = $check_result->{'name'};
     
+        # now check for typos or whatever
         if (! $state->variable_exists($name, $expected_type)) {
             $processed_params{'error'} = 1;
             
@@ -523,6 +562,12 @@ sub _process {
         GetOptionsFromArray(\@shape_param_list, \%shape_args, @$shape_opts);
         $processed_params{'_shape_params'} = \%shape_args;
     }
+        
+    if ((@$required > 0) and ((! exists $processed_params{'_required'}) or (@{ $processed_params{'_required'} } < @$required))) {
+        $processed_params{'error_msg'} = "The number of given parameters does not match the number expected.";
+        $processed_params{'error'} = 1;
+        $processed_params{'help_anyways'} = 1;
+    }
     
     $processed_params{'_spec'} = {
         'command' => $calling_command,
@@ -587,43 +632,6 @@ sub _make_opt_list {
     }
     
     return \@optional_list;
-}
-
-sub done {
-    my ($self) = @_;
-    return 1 if $self->{'done'};
-    return 0;
-}
-
-sub has_error {
-    my ($self) = @_;
-    return 1 if $self->{'error'};
-    return 0;
-}
-
-sub get_shape_params {
-    my ($self) = @_;
-    return $self->{'_shape_params'};
-}
-
-sub get_result_name {
-    my ($self) = @_;
-    return $self->{'_result'};
-}
-
-sub get_required {
-    my ($self) = @_;
-    return @{ $self->{'_required'} };
-}
-
-sub get_required_names {
-    my ($self) = @_;
-    return @{ $self->{'_required_names'} };
-}
-
-sub get_named {
-    my ($self, $name) = @_;
-    return $self->{$name};
 }
 
 1;

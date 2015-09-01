@@ -6,8 +6,12 @@ use warnings;
 use Exporter::Dispatch;
 use Civ4MapCad::ParamParser;
 
+use Civ4MapCad::Commands::Balance qw(
+   balance_report
+);
+
 use Civ4MapCad::Commands::Config qw(
-   set_output_dir list_mods set_mod write_log history load_xml_data set_player_data set_difficulty ls
+   set_output_dir list_mods set_mod write_log history load_xml_data set_player_data set_difficulty ls set_settings add_sign
 );
 
 use Civ4MapCad::Commands::Weight qw(
@@ -15,7 +19,7 @@ use Civ4MapCad::Commands::Weight qw(
 );
 
 use Civ4MapCad::Commands::Debug qw(
-    dump_group dump_mask dump_layer dump_mask_to_console evaluate_weight evaluate_weight_inverse show_weights 
+    debug_group debug_mask debug_layer debug_weight debug_mask_in_console evaluate_weight evaluate_weight_inverse show_weights 
 );
 
 use Civ4MapCad::Commands::List qw(
@@ -29,7 +33,7 @@ use Civ4MapCad::Commands::Mask qw(
     generate_layer_from_mask import_mask_from_ascii export_mask_to_ascii set_mask_coord
     export_mask_to_table import_mask_from_table new_mask_from_water new_mask_from_landmass
     new_mask_from_polygon grow_mask shrink_mask count_mask_value new_mask_from_filtered_tiles
-    rotate_mask mask_eval2 mask_eval1
+    rotate_mask mask_eval2 mask_eval1 grow_mask_by_bfc count_tiles delete_from_layer_with_mask
 );
 
 use Civ4MapCad::Commands::Layer qw(
@@ -120,13 +124,15 @@ sub run_script {
         print "\n";
         print "  Command format:";
         print "\n\n";
-        print "  run_script \"string\"\ => optional_result_name\n    param 1: filename of script to run";
+        print "  run_script \"string\"\ [ --debug_result ] => optional_result_name\n    param 1: filename of script to run";
         print "\n\n";
         print "  Description:\n\n";
         print "  Loads a script and runs the commands within. A result to this command may be\n";
         print "  specified; if so, then the 'return' command may be used in the script to\n";
         print "  return a result. The result may be any type (group/layer/mask/weight) but must\n";
-        print "  match the type returned by the script.\n\n";
+        print "  match the type returned by the script. If '--debug_result' is specified, the\n";
+        print "  return value will be sent to the html view as if you used debug_group,\n";
+        print "  debug_mask, etc.\n\n";
         
         $state->register_print();
         return 1;
@@ -139,7 +145,6 @@ sub run_script {
     foreach my $part (@params) {
         if (($open_string == 1) or ($part =~ /^\"/)) {
             $open_string = 1;
-            
             $current_string .= $part;
             
             if ($part =~ /\"$/) {
@@ -164,11 +169,15 @@ sub run_script {
     }
   
     my $error = 0;
-    my $result_name = '';
+    
     my $expects_return = 0;
-    if (@proc_params == 3) {
-        if ($proc_params[1] eq '=>' and ($proc_params[2] =~ /[\*\$\@\%]?\w+(?:\.\w+)?/)) {
-            my $result_name = pop @proc_params;
+    my $result_name = '';
+    my $result_type = '';
+    my $debug_result = 0;
+    
+    if (@proc_params > 1) {
+        if (($proc_params[1] eq '=>') and ($proc_params[2] =~ /[\*\$\@\%]?\w+(?:\.\w+)?/)) {
+            $result_name = pop @proc_params;
             my $op = pop @proc_params;
             
             my $type = $state->get_variable_type_from_name($result_name);
@@ -186,13 +195,35 @@ sub run_script {
                 }
             }
             
-            my $result_type = $type->{'type'};
             $expects_return = 1;
-            $state->push_script_return($result_name, $result_type);
+            $result_type = $type->{'type'};
+        }
+    }
+    
+    if (@proc_params == 2) {
+        if ($proc_params[0] eq '--debug_result') {
+            shift @proc_params;
+            $debug_result = 1;
+            
+        }
+        elsif ($proc_params[1] eq '--debug_result') {
+            pop @proc_params;
+            $debug_result = 1;
         }
         else {
             $error = 1;
         }
+    }
+    
+    if ($expects_return and $debug_result) {
+        $state->push_script_return($result_name, $result_type, 1);
+    }
+    elsif ($expects_return) {
+        $state->push_script_return($result_name, $result_type, 0);
+    }
+    elsif ($debug_result) {
+        $expects_return = 1;
+        $state->push_script_return('', '', 1);
     }
     
     if ((@proc_params != 1) or ((@proc_params == 1) and ($proc_params[0] !~ /^"[^"]+"$/))) {
@@ -202,7 +233,7 @@ sub run_script {
     if ($error) {
         $state->report_error("run_script requires a single string argument containing the path to the script to run, and allows an optional result.");
         print "  Command format:\n\n";
-        print "  run_script \"string\"\ => optional_result_name\n    param 1: filename of script to run\n\n";
+        print "  run_script \"string\" [ --debug_result ] => optional_result_name\n    param 1: filename of script to run\n\n";
         
         return -1;
     }

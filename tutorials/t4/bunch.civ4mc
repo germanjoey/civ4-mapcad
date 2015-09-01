@@ -5,11 +5,11 @@ run_script "tutorials/t4/banana.civ4mc" => $player4
 run_script "tutorials/t4/banana.civ4mc" => $player5
 
 new_group 45 18 => $banana_bunch
-copy_layer_from_group $player1.bfc => $banana_bunch.banana1
-copy_layer_from_group $player2.bfc => $banana_bunch.banana2
-copy_layer_from_group $player3.bfc => $banana_bunch.banana3
-copy_layer_from_group $player4.bfc => $banana_bunch.banana4
-copy_layer_from_group $player5.bfc => $banana_bunch.banana5
+copy_layer_from_group $player1.the_real_banana => $banana_bunch.banana1
+copy_layer_from_group $player2.the_real_banana => $banana_bunch.banana2
+copy_layer_from_group $player3.the_real_banana => $banana_bunch.banana3
+copy_layer_from_group $player4.the_real_banana => $banana_bunch.banana4
+copy_layer_from_group $player5.the_real_banana => $banana_bunch.banana5
 
 # stack banana till the morning come!
 move_layer_to_location $banana_bunch.banana2 9 4
@@ -18,5 +18,13 @@ move_layer_to_location $banana_bunch.banana4 27 12
 move_layer_to_location $banana_bunch.banana5 36 16
 
 flatten_group $banana_bunch
-dump_group $banana_bunch
+set_settings $banana_bunch --size "small"
+set_player_data $banana_bunch 0 --player_name "Banana Bill" --leader "Montezuma" --civ "Inca"
+set_player_data $banana_bunch 1 --player_name "Banana Alex" --leader "Shaka" --civ "Arabia"
+set_player_data $banana_bunch 2 --player_name "Banana Felipe" --leader "Genghis Khan" --civ "Zulu"
+set_player_data $banana_bunch 3 --player_name "Banana Eric" --leader "Stalin" --civ "Mongol"
+set_player_data $banana_bunch 4 --player_name "Banana Ray" --leader "Ragnar" --civ "Egypt"
+
+debug_group $banana_bunch
 export_sims $banana_bunch
+return $banana_bunch

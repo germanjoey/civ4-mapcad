@@ -9,12 +9,14 @@ use Civ4MapCad::Allocator::BFC;
 use Civ4MapCad::Allocator::ModelCiv;
 use Algorithm::Line::Bresenham qw(line);
 
+# stuff that gets +1 food with freshwater
 our %irrigatable = (
     'corn' => 1,
     'rice' => 1,
     'wheat' => 1
 );
 
+# yields for all tiles 
 our %resource_yield = (
     'corn' => ['f', 2, 0, 0, 'f'],
     'rice' => ['f', 1, 0, 0, 'f'],
@@ -53,6 +55,7 @@ our %resource_yield = (
     'banana' => ['f', 2, 0, 0, 'wf']
 );
 
+# bare tile yields
 our %bare = (
     'grass' => [2, 0, 0],
     'plains' => [1, 1, 0],
@@ -63,6 +66,7 @@ our %bare = (
     'ocean' => [1, 0, 1]
 );
 
+# this is a table of turns that these resources get revealed on
 our %hidden = (
     'copper' => 35,
     'horse' => 45,
@@ -73,6 +77,7 @@ our %hidden = (
     'aluminum' => 240
 );
 
+# this is a table of turns that these resources get activated on
 our %delayed = (
     'ivory' => 45,
     'deer' => 45,
@@ -89,6 +94,7 @@ our %delayed = (
     'sugar' => 105
 );
 
+# new starts all the precalculation; see allocate for what this does
 sub new {
     my $proto = shift;
     my $class = ref $proto || $proto;
@@ -103,11 +109,11 @@ sub new {
         'resource_events' => [],
         'raycasts' => {},
         'avg_city_count' => {},
-        'avg_city_value' => {}
+        'avg_city_value' => {},
+        'island_settled' => {}
     }, $class;
     
     $obj->initialize();
-    
     return $obj;
 }
 
@@ -121,15 +127,20 @@ sub get_height {
     return $self->{'map'}->info('grid height');
 }
 
+# here we precalculate all sorts of stuff so that our algorithm
+# doesnt waste time doing it over and over and over each iteration
 sub initialize {
     my ($self) = @_;
     
     my $width = $self->get_width();
     my $height = $self->get_height();
     
+    
+    $self->{'map'}->mark_freshwater();
     $self->{'map'}->mark_freshwater();
     $self->{'map'}->mark_continents();
     
+    # collect resource tiles that upgrade their value later
     my %events;
     while ( my($k,$v) = each %hidden ) {
         $self->{'upgrade_ref'}{$k} = [];
@@ -143,12 +154,15 @@ sub initialize {
     
     foreach my $start (@{ $self->{'starts'} }) {
         my ($x, $y, $player) = @$start; 
+        $self->{'island_settled'}{$player} = [];
         $self->{'avg_city_count'}{$player} = 0;
         $self->{'avg_city_value'}{$player} = 0;
     }
     
     $self->{'resource_events'} = [sort {$a <=> $b} (keys %events)];
     
+    # precalculate distance from each tile to each capital, both in terms of tile distance and straight-line-distance
+    # (diagonals being distance 1 for tile-istance)
     foreach my $x (0 .. $width-1) {
         foreach my $y (0 .. $height-1) {
             my $tile = $self->{'map'}{'Tiles'}[$x][$y];
@@ -172,8 +186,6 @@ sub initialize {
     return;
 }
 
-
-            
 # ok so what we're going to do is to take a look at this BFC
 # and then look at the first ring.
 # there's some patterns we want to look for:
@@ -183,55 +195,77 @@ sub initialize {
 # d.) ice/regular desert cause city spacing to grow, so they contribute some
 # e.) hills are a problem too, when the city is first settled
 #
-# eventually what we'll do is project a line towards the nearest city and sum up the congestion
-# if: a.) congestion is high near this spot but not towards our nearest city, then this is a chokepoint. if contention is high her
-#     b.) if congestion is low near this city, and we're on the same continent as our nearest city, but congestion is high towards the next city, we just settled past a chokepoint. that's BAD
-#     c.) if congestion is high near this spot and near the other spot, and we're on the same continent, this this is probably the other side of a big chokepoint. we don't want this either
-#     d.) if congestion is low near this spot but high towards the prev city, and we have different continent ids, then this is just an overseas city. use overseas adjustment instead
-#     e.) medium congestion here and at previous - sites are probably just cramped
+# eventually what we'll do is project a line towards the nearest city and sum
+# up the congestion along it, making decisions on whether we're settling
+# past a chokepoint based on that
+
 sub precalculate_congestion {
     my ($self, $width, $height) = @_;
     
     foreach my $x (0 .. $width-1) {
         foreach my $y (0 .. $height-1) {
-            my $bfc = $self->{'map'}{'Tiles'}[$x][$y]{'bfc'};
+            my $spot = $self->{'map'}{'Tiles'}[$x][$y];
+            my $bfc = $spot->{'bfc'};
             
             my %count = (
-                'lake' => 0,
-                'peak' => 0,
-                'hill' => 0,
-                'dead' => 0,
+                '1st' => {
+                    'lake' => 0,
+                    'coast' => 0,
+                    'peak' => 0,
+                    'hill' => 0,
+                    'dead' => 0,
+                },
+                '2nd' => {
+                    'lake' => 0,
+                    'peak' => 0
+                }
             );
             
             foreach my $tile ($bfc->get_first_ring()) {
                 if ($tile->is_water() and ($tile->{'freshwater'} == 1)) {
-                    $count{'lake'} += 3;
+                    $count{'1st'}{'lake'} ++;
+                }
+                elsif ($tile->is_water()) {
+                    $count{'1st'}{'coast'} ++;
                 }
                 elsif ($tile->{'PlotType'} == 0) {
-                    $count{'peak'} += 3;
+                    $count{'1st'}{'peak'} ++;
                 }
                 elsif ($tile->{'PlotType'} == 1) {
-                    $count{'hill'} += 3;
+                    $count{'1st'}{'hill'} ++;
                 }
-                elsif ((!exists $tile->{'BonusType'}) and (!exists $tile->{'FeatureType'}) and ($tile->{'TerrainType'} =~ /snow|tundra|desert/)) {
-                    $count{'dead'} += 2;
+                elsif ((!exists $tile->{'BonusType'}) and (!exists $tile->{'FeatureType'}) and ($tile->{'TerrainType'} =~ /snow|tundra|desert/) and (!$tile->is_fresh())) {
+                    $count{'1st'}{'dead'} ++;
                 }
             }
             
             foreach my $tile ($bfc->get_second_ring()) {
                 if ($tile->is_water() and ($tile->{'freshwater'} == 1)) {
-                    $count{'lake'} ++;
+                    $count{'2nd'}{'lake'} ++;
                 }
                 elsif ($tile->{'PlotType'} == 0) {
-                    $count{'peak'} ++;
-                }
-                elsif ($tile->{'PlotType'} == 1) {
-                    $count{'hill'} ++;
+                    $count{'2nd'}{'peak'} ++;
                 }
             }
             
-            my $congestion = 5*$count{'peak'} + 3*$count{'lake'} + $count{'hill'} + $count{'dead'};
-            $congestion /= 100; # / (5*20)
+            my $congestion = 0;
+            if ($spot->is_water()) {
+                $congestion = 2*$count{'1st'}{'coast'} + 3*$count{'1st'}{'lake'} + 5*$count{'1st'}{'peak'};
+                
+            }
+            else {
+                $congestion = 12*$count{'1st'}{'peak'} + 4*$count{'2nd'}{'peak'} + 10*$count{'1st'}{'lake'} + 3*$count{'2nd'}{'lake'} + 3*$count{'1st'}{'hill'} + 2*$count{'1st'}{'dead'};
+            
+                # coast isn't indicitive of congestion by itself, but it is when there are other signs
+                my $impassable_1st = $count{'1st'}{'coast'} + $count{'1st'}{'lake'} + $count{'1st'}{'peak'};
+                
+                if ($impassable_1st > 3) {
+                    $congestion += 3*$count{'1st'}{'coast'};
+                    $congestion = $congestion*(1 + ($impassable_1st-2)/8);
+                }
+            }
+            
+            $congestion /= 100;
             $self->{'map'}{'Tiles'}[$x][$y]->{'congestion'} = $congestion;
         }
     }
@@ -267,6 +301,7 @@ sub precalculate_tile_access {
                     
                     next if (abs($dx) <= 2) and (abs($dy) <= 2);
                     my $other_tile = $self->{'map'}->get_tile($x+$dx, $y+$dy);
+                    next unless defined($other_tile);
                     next if exists $tile->{'access'}{$other_tile->get('x')}{$other_tile->get('y')};
                     
                     next if $other_tile->is_water();
@@ -293,16 +328,16 @@ sub precalculate_tile_access {
 sub calculate_tile_yield {
     my ($self, $tile) = @_;
     
-    my $food = 8;
-    my $hammer = 5.51;
-    my $beaker = 3;
+    my $food = $main::config{'value_per_food'};
+    my $hammer = $main::config{'value_per_hammer'};
+    my $beaker = $main::config{'value_per_beaker'};
     my $cost = $food*2 + 0.5*$beaker;
     
     $tile->{'member_of'} = [];
     
     if ($tile->{'PlotType'} == 0) {
         $tile->{'yld'} = [0, 0, 0];
-        $tile->{'value'} = -17;
+        $tile->{'value'} = int(-2*$food - 0.5*$beaker);
         return;
     }
     
@@ -353,11 +388,12 @@ sub calculate_tile_yield {
     if (exists $tile->{'BonusType'}) {
         my $bonus = lc $tile->{'BonusType'};
         $bonus =~ s/^bonus_//;
+        
         $tile->{'bonus_type'} = $resource_yield{$bonus}[4];
         my $t = ($resource_yield{$bonus}[0] eq 'f') ? 0 : (($resource_yield{$bonus}[0] eq 'h') ? 1 : 2);
         
         if ($tile->is_water()) {
-            $tile->{'yld'}[0] += 0.51;
+            $tile->{'yld'}[0] += $main::config{'seafood_adjust'};
         }
         
         if (exists $self->{'upgrade_ref'}{$bonus}) {
@@ -390,7 +426,8 @@ sub calculate_tile_yield {
         # jungled resources need to wait for iron
         elsif ((exists $tile->{'FeatureType'}) and ($tile->{'FeatureType'} eq 'FEATURE_JUNGLE')) {
             $tile->{'yld'}[$t] ++;
-            $tile->{'base_yld'} = [$tile->{'yld'}[0], $tile->{'yld'}[1], $tile->{'yld'}[2]];;
+            $tile->{'base_yld'} = [$tile->{'yld'}[0], $tile->{'yld'}[1], $tile->{'yld'}[2]];
+            $tile->{'bonus_type'} = 'cl' if $tile->{'bonus_type'} eq 'al';
             
             $tile->{'up_yld'} = [];
             $tile->{'up_yld'}[0] = $tile->{'yld'}[0] + $resource_yield{$bonus}[1];
@@ -513,45 +550,6 @@ sub reset_resources {
     }
 }
 
-sub allocate {
-    my ($self, $tuning_iterations, $iterations, $to_turn, $tiles_per_player) = @_;
-    
-    $self->{'tuning_iterations'} = $tuning_iterations;
-    $self->{'iterations'} = $iterations;
-    
-    $self->{'average_allocation'} = $self->create_blank_alloc();
-    $self->{'estimated_allocation'} = $self->create_blank_alloc();
-    
-    foreach my $it (1..$tuning_iterations) {
-        $self->reset_resources() if $it > 1;
-        warn "starting tuning iteration $it\n";
-        my $ownership = $self->allocate_single($it, $to_turn, $tiles_per_player, 0);
-        
-        $self->update_alloc('estimated_allocation', $tuning_iterations, $ownership, 0);
-    }
-    
-    $self->set_contention_estimate();
-        
-    foreach my $it (1..$iterations) {
-        $self->reset_resources();
-        warn "starting actual iteration $it\n";
-        my $ownership = $self->allocate_single($it, $to_turn, $tiles_per_player, 1);
-        
-        foreach my $civ (keys %{ $self->{'civs'} }) {
-            $self->{'avg_city_count'}{$civ} += @{ $self->{'civs'}{$civ}{'cities'} }/$iterations;
-            
-            my $value = 0;
-            foreach my $city (@{ $self->{'civs'}{$civ}{'cities'} }) {
-                $value += $city->{'center'}{'bfc_value'};
-            }
-            
-            $self->{'avg_city_value'}{$civ} += $value/$iterations;
-        }
-           
-        $self->update_alloc('average_allocation', $iterations, $ownership, 1);
-    }
-}
-
 # this is an unbiased prior of which civs will get which tiles
 sub set_contention_estimate {
     my ($self) = @_;
@@ -598,6 +596,28 @@ sub create_blank_alloc {
     return \@alloc;
 }
 
+sub finalize_alloc {
+    my ($self, $which) = @_;
+ 
+    my $width = $self->get_width();
+    my $height = $self->get_height();
+    
+    foreach my $x (0 .. $width-1) {
+        foreach my $y (0 .. $height-1) {
+            my $total = 0;
+            foreach my $player (keys %{ $self->{$which}[$x][$y] }) {
+                $total += $self->{$which}[$x][$y]{$player};
+            }
+            
+            next if ($total == 0) or ($total == 1);
+            
+            foreach my $player (keys %{ $self->{$which}[$x][$y] }) {
+                $self->{$which}[$x][$y]{$player} /= $total;
+            }
+        }
+    }
+}
+
 sub update_alloc {
     my ($self, $which, $iterations, $ownership, $update_contention) = @_;
  
@@ -628,8 +648,74 @@ sub update_alloc {
     }
 }
 
+# This here is our Markov-Chain Monte Carlo method for guessing at what players will get what land
+# essentially we have little AI-bots that go around settling cities in an Always-Peace game, and
+# then we talley up what they settle and how often, and that's our estimate.  we run the
+# simulation hundreds of times, and the more we run it the more accurate the numbers get. the
+# simulation isn't, like, perfect, but its good enough, fair, and it does incorporate a fairly
+# deep settling strategy, so hopefully it will model fairly well how real human players would
+# settle too. The goal of this is all to understand the map better so that the map designer
+# can make better decisions about how well its balanced.
+sub allocate {
+    my ($self, $tuning_iterations, $iterations, $to_turn) = @_;
+    
+    $self->{'tuning_iterations'} = $tuning_iterations;
+    $self->{'iterations'} = $iterations;
+    
+    $self->{'average_allocation'} = $self->create_blank_alloc();
+    $self->{'estimated_allocation'} = $self->create_blank_alloc();
+    
+    # tuning: running a bunch of iterations to gain an estimate of how
+    # each player will settle so we can use that in a contention estimate
+    foreach my $it (1..$tuning_iterations) {
+        $self->reset_resources() if $it > 1;
+        warn "starting tuning iteration $it\n";
+        
+        # iterating to turn 220 is a bit arbitrary here; the idea is to let it run until we
+        # pretty much run out of tiles to get a good idea what is whose
+        my $ownership = $self->allocate_single($it, 220, 0);
+        
+        $self->update_alloc('estimated_allocation', $tuning_iterations, $ownership, 0);
+    }
+    
+    $self->finalize_alloc('estimated_allocation');
+    $self->set_contention_estimate();
+        
+    # now here's the real deal
+    foreach my $it (1..$iterations) {
+        $self->reset_resources();
+        warn "starting actual iteration $it\n";
+        my $ownership = $self->allocate_single($it, $to_turn, 1);
+        
+        foreach my $civ (keys %{ $self->{'civs'} }) {
+            $self->{'avg_city_count'}{$civ} += @{ $self->{'civs'}{$civ}{'cities'} }/$iterations;
+            
+            my $value = 0;
+            foreach my $city (@{ $self->{'civs'}{$civ}{'cities'} }) {
+                $value += $city->{'center'}{'bfc_value'};
+            }
+            
+            $self->{'avg_city_value'}{$civ} += $value/$iterations;
+            
+            if (exists $self->{'civs'}{$civ}{'island_settled'}) {
+                push @{ $self->{'island_settled'}{$civ} }, $self->{'civs'}{$civ}{'island_settled'}
+            }
+            else {
+                push @{ $self->{'island_settled'}{$civ} }, []
+            }
+            
+            delete $self->{'civs'}{$civ}{'island_settled'};
+        }
+           
+        $self->update_alloc('average_allocation', $iterations, $ownership, 1);
+    }
+}
+
+# our single MC step, which is itself a big stochastic process to compute a probability each player will settle a
+# particular tile. i believe this is actually a markov chain with order m, if anyone cares, which is probably not
+# because each settling probability only depends the last m cities
 sub allocate_single {
-    my ($self, $it, $to_turn, $tiles_per_player, $consider_estimate) = @_;
+    my ($self, $it, $to_turn, $consider_estimate) = @_;
     
     # create blank allocation matrix
     my $alloc = $self->create_blank_alloc();
@@ -650,15 +736,16 @@ sub allocate_single {
     my $civs = $self->{'civs'};
     foreach my $start (@{ $self->{'starts'} }) {
         my ($x, $y, $player) = @$start;
-        $civs->{$player} = Civ4MapCad::Allocator::ModelCiv->new($x, $y, $player, $tiles_per_player, $self->{'map'}, $self->{'raycasts'}, $alloc);
+        $civs->{$player} = Civ4MapCad::Allocator::ModelCiv->new($x, $y, $player, $self->{'map'}, $self->{'raycasts'}, $alloc);
     }
     
+    my @sorted_civs = sort {$a <=> $b} (keys %$civs);
     foreach my $turn (30..$to_turn) {
         if ($turn == $self->{'resource_events'}[0]) {
             $self->upgrade_resource_event($turn);
         }
     
-        foreach my $player (keys %$civs) {
+        foreach my $player (@sorted_civs) {
             my $civ = $civs->{$player};
             next if exists $done{$player};
             
@@ -666,158 +753,58 @@ sub allocate_single {
             foreach my $settler (@settlers) {
                 my $spots = $civ->find_prospective_sites();
                 
-                if (@$spots == 0) {
-                    # print "* player $player is ending early on it $it turn $turn with ", $civ->city_count(), " cities\n";
+                next unless @$spots > 0;
                 
-                    $done{$player} = 1;
-                    last;
-                }
-                
-                my $num_to_consider = min($#$spots, 3 + $civ->city_count());
-                
+                # adjust city settling priority based on the civ's strategic desires
                 my @stat_adjust;
-                my $min = 1000000;
-                foreach my $i (0 .. $num_to_consider) {
+                foreach my $i (0 .. $#$spots) {
                     my $spot = $spots->[$i];
-                    next unless $civ->{'starting_continent'} == $spot->{'continent_id'};
                     my $adjust = $civ->strategic_adjustment($spot, $settler, $consider_estimate);
-                    $min = $adjust if $adjust < $min;
+                    next unless $adjust > (-1*$turn/150);
                     push @stat_adjust, [$adjust, $spot];
                 }
                 
-                print "\n" if @stat_adjust > 0;
+                next unless @stat_adjust > 0;
                 
+                # cut down the prospective site list into a more manageable amount
+                my $city_count = $civ->city_count();
+                my $num_to_consider = min(0+@stat_adjust, 3 + $city_count);
+                @stat_adjust = sort { $b->[0] <=> $a->[0] } @stat_adjust;
+                my @final_stat_adjust = splice @stat_adjust, 0, $num_to_consider;
+                my $min = $final_stat_adjust[$#final_stat_adjust][0];
+                
+                
+                # now normalize their priorities by subtracting out the minimum one from each
+                # (so the last one will become zero)
                 my $total = 0;
-                foreach my $s (@stat_adjust) {
+                foreach my $s (@final_stat_adjust) {
                     $s->[0] -= $min;
-                    $s->[0] = $s->[0]**3;
+                    $s->[0] = $s->[0]**2; # amplify the number
                     $total += $s->[0];
                 }
                 
+                # finally pick one and settle the damn thing
                 my $choice;
                 if ($total == 0) {
-                    if ($spots->[0]->{'continent_id'} == $civ->{'starting_continent'}) {
-                        $choice = $spots->[0];
-                    }
-                    else {
-                        $done{$player} = 1;
-                        last;
-                    }
+                    $choice = $final_stat_adjust[0][1];
+                    $civ->add_city($settler, $choice, $alloc);
                 }
                 else {
-                    # @stat_adjust = sort { $b->[0] <=> $a->[0] } @stat_adjust;
-                
                     my $r = rand(1)*$total;
-                    foreach my $i (0 .. $#stat_adjust) {
-                        $r -= $stat_adjust[$i][0];
+                    foreach my $i (0 .. $#final_stat_adjust) {
+                        $r -= $final_stat_adjust[$i][0];
                         if ($r <= 0) {
-                            $choice = $stat_adjust[$i][1];
+                            $choice = $final_stat_adjust[$i][1];
+                            $civ->add_city($settler, $choice, $alloc);
                             last;
                         }
                     }
                 }
-                
-                $civ->add_city($settler, $choice, $alloc);
             }
         }
     }
     
     return $alloc;
 }
-        
-=head1
-BFC assignment method for land allocation pseudocode:
-    (all matrices here are 2D arrays the same size as the map)
 
-    bfc_allocation (map) {
-    
-        total_allocation = new blank matrix
-        foreach tile in map
-            foreach civ
-                total_allocation.tile.civ = 0
-                tile's distance from each capital is cached
-            
-
-        # each local_allocation is one guess on what the map would look like this were an always_peace game            
-        for 1..1000 # or 100 or 10000 or whatever
-            local_allocation = bfc_allocation_single_step(map)
-            
-            foreach tile in local_allocation
-                foreach civ
-                    total_allocation.tile.civ += local_allocation.tile.civ
-                    
-        # take our 1000 guesses to get a true estimate on how likely it is a particular civ will gain a particular tile
-        # in later revisions, later passes should get weighted more highly because they should be influenced by good results from previous passes
-        foreach tile in total_allocation
-            foreach civ
-                total_allocation.tile.civ /= 1000
-            
-        return total_allocation
-    }
-    
-    bfc_allocation_single_step (map) {
-        local_allocation = new blank matrix 
-        allocate capital BFCs in map
-        
-        num_allocated = num civs
-        while (1) {
-            if num_allocated == 0
-                break 
-                
-            num_allocated = 0
-            
-            # looping through civs like this is fine for the first revision, but eventually this should be a priority queue based on
-            # "settling power", which is the result of the sum of a civ's bfc-power, which new cities get added to on a time delay
-            foreach civ
-                potential_sites = all tiles between 3 and 6 away of any of this civ's cities
-                filter potential_sites of any tiles that are less than 3 away of any other civ's cities
-                
-                foreach tile in potential_sites
-                    calculate bfc quality of a city centered on this tile based purely on tile yields
-                        - first-ring should be more valuable than second ring
-                        - seafood should be rated under equivalent yield of land-tile
-                        - should have flags for considering yields of copper/iron/horses
-                        - should have flags for considering plantations and jungle-gems
-                    
-                if potential_sites == 0
-                    continue
-                    
-                foreach bfc 
-                    now factor in strategic concerns:
-                        - copper's concern increases exponentially for each city after the first, then drops to 0 once copper is   
-                          captured
-                        - horse's concern increases exponentially for each city after the second, then drops to 0 once horse is 
-                          captured
-                        - iron's concern increases exponentially for each city after the eighth, then drops to 0 once iron is captured
-                        - marble and stone have a high but linearly increasing concern for each city after the 5t, then drop to 0 
-                          once they are captured. stone's concern drops off exponentially after the 10th city.
-                        - luxuries should be considered whether they are ancient or classical and how many cities have so far
-                          been settled
-                        - cities closer to the capital are valued more highly than those further from it
-                        - cities settled towards closer rivals are valued more highly than those settled away
-                            - do we do this based on capitals or what rivals have settled already? not sure. later way is more
-                              computationally intensive for sure.
-                        - cities on hills are valued more highly if they are closer to rivals
-                        - eventually, for later revisions, sites from previous passes that were found to be good should be weighted higher
-                        
-                # now we have a score for each potential site
-                
-                pick the top 10 sites
-                
-                total = 0
-                foreach site 
-                    total += (site's score)^2
-                
-                foreach site
-                    settling_probability = (site's score)^2 / total
-                    
-                # now we have a settling probability for each site
-                pick a random site based on their weight - our "blue circle"
-                
-                allocate that BFC for that civ onto local_allocation.
-                (if the bfc overlaps with the bfc from another civ, these overlapped tiles should be allocated to both)
-                num_allocated ++
-                
-        return local_allocation
-    }
-=cut
+1;

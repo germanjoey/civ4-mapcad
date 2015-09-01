@@ -1,18 +1,18 @@
 # import the group
 set_mod "rtr 2.0.7.4"
 import_group "tutorials/t1/tutorial1.CivBeyondSwordWBSave" => $tutorial2
-dump_group $tutorial2
+debug_group $tutorial2
 
 # crop away the left and right edges
 crop_group --help
 crop_group $tutorial2 12 0 38 23 => $t2_cropped
-dump_group $t2_cropped --add_to_existing
+debug_group $t2_cropped --add_to_existing
 
 # pull out each player's starting bfc into a new layer
 list_groups
 extract_starts $t2_cropped
 list_layers $t2_cropped
-dump_group $t2_cropped --add_to_existing
+debug_group $t2_cropped --add_to_existing
 
 # mess with players 3 and 4 a bit, by flipping their starts around sideways then upside-down
 flip_layer_tb $t2_cropped.start3
@@ -23,5 +23,5 @@ flip_layer_lr $t2_cropped.start4
 # finally, re-flatten and export
 flatten_group $t2_cropped
 export_group $t2_cropped
-dump_group $t2_cropped --add_to_existing
+debug_group $t2_cropped --add_to_existing
 list_layers $t2_cropped

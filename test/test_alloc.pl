@@ -15,8 +15,10 @@ use Civ4MapCad::Dump qw(dump_framework);
 use Civ4MapCad::Object::Mask;
 
 $Civ4MapCad::Map::Tile::DEBUG = 1;
-my $iterations = 1;
-my $tuning_iterations = 1;
+
+my $iterations = 60;
+my $tuning_iterations = 30;
+my $to_turn = 145;
 
 our $state = Civ4MapCad::State->new();
 our %config = Config::General->new('def/config.cfg')->getall();
@@ -39,7 +41,7 @@ $state->clear_log();
 
 my $map = Civ4MapCad::Map->new();
 
-my $filename = 'input/pb27/pb27_final_v2.CivBeyondSwordWBSave';
+my $filename = 'input/pb27/pb27_final_v9.CivBeyondSwordWBSave';
 
 my $ret = $map->import_map($filename);
 if ($ret ne '') {
@@ -47,9 +49,9 @@ if ($ret ne '') {
 }
 
 my $alloc = Civ4MapCad::Allocator->new($map);
-$alloc->allocate($tuning_iterations, $iterations, 185, 150);
+$alloc->allocate($tuning_iterations, $iterations, $to_turn, 150);
 
-dump_overlay($alloc);
+debug_overlay($alloc);
 report($alloc);
 
 my $width = $alloc->get_width();
@@ -65,10 +67,10 @@ foreach my $x (0..$width-1) {
 
 $state->set_variable('@bfc_value', 'mask', $mask);
 $state->process_command('import_group "' . $filename . '" => $pb27');
-$state->process_command('dump_group $pb27');
-rename('dump.html','pb27.html');
-$state->process_command('dump_mask @bfc_value');
-rename('dump.html','pb27_bfc.html');
+$state->process_command('debug_group $pb27');
+rename('debug.html','pb27.html');
+$state->process_command('debug_mask @bfc_value');
+rename('debug.html','pb27_bfc.html');
 $map->export_map("test/test.out");
 
 sub report {
@@ -144,13 +146,26 @@ sub report {
         print "  Average number of strong/weak food resources: $food_count{$civ}/$wfood_count{$civ}\n";
         print "  Expected number of owned tiles, and tiles captured: $tile_count{$civ} / $contested_count{$civ}\n";
         print "  Avgerage/std ownership per tile: $contest_average{$civ} / $std\n";
+        
+        my @dist;
+        foreach my $other_player (keys %{ $capital->{'distance'} }) {
+            my $d = $capital->{'distance'}{$other_player}[1];
+            next unless $capital->{'continent_id'} == $alloc->{'civs'}{$other_player}{'cities'}[0]{'center'}{'continent_id'};
+            my $other_name = $map->{'Players'}[$other_player]{'LeaderName'};
+            push @dist, [$d, $other_player, $other_name] if ($d != 0) and ($d < 25);
+        }
+        @dist = sort { $a->[0] <=> $b->[0] } @dist;
+        
+        print "  Distance to nearby players' capitals: \n";
+        print "    ", join("\n    ", map { "$_->[2] (player $_->[1]) is $_->[0] tiles away" } @dist );
+        print "\n\n";
     }
 }
 
-sub dump_overlay {
+sub debug_overlay {
     my ($alloc) = @_;
 
-    my $template = 'debug/dump.html.tmpl';
+    my $template = 'debug/debug.html.tmpl';
     my $set_index = 1;
     my $start_index = 0;
     

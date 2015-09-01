@@ -21,7 +21,7 @@ Not too complicated, right? Let's see an example, using the same map as the last
 
     set_mod "2.0.7.4"
     import_group "tutorials/t1/tutorial1.CivBeyondSwordWBSave" => $tutorial2
-    dump_group $t2_cropped --add_to_existing
+    debug_group $t2_cropped --add_to_existing
     
 ## Manipulating Groups and Layers
     
@@ -35,7 +35,7 @@ Now to run these commands, and Voila!
     
     crop_group --help
     crop_group $tutorial2 12 0 38 23 => $t2_cropped
-    dump_group $t2_cropped --add_to_existing
+    debug_group $t2_cropped --add_to_existing
     
 ![tutorial2-img2](t2/i2.png)
     
@@ -49,7 +49,7 @@ Anyways, let's make this group a little more interesting by extracting each of t
 
     extract_starts --help
     extract_starts $t2_cropped
-    dump_group $t2_cropped --add_to_existing
+    debug_group $t2_cropped --add_to_existing
     
 And we'll see... yikes! Our little happy guys have drowned!
 
@@ -79,7 +79,7 @@ Finally, we'll flatten $t2_cropped back into a single layer and export the map.
 
     flatten_group $t2_cropped
     export_group $t2_cropped
-    dump_group $t2_cropped --add_to_existing
+    debug_group $t2_cropped --add_to_existing
     list_layers $t2_cropped
     
 As you can see, everything's back to how it was except that player 3 and 4's starts are flipped. You can drag the "start 3" tab next to the final output (whose single layer is called "start_5" because the "start 5" layer was on top) for easy comparison.

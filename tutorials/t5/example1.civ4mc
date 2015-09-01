@@ -1,0 +1,15 @@
+run_script "tutorials/t4/bunch.civ4mc" --debug_result
+new_mask_from_landmass $banana_bunch.banana1 4 6 --choose_coast => @coast 
+debug_mask @coast --add_to_existing
+mask_intersect @coast @rand_field => @rand_coast
+debug_mask @rand_coast --add_to_existing
+
+new_weight_table >= 0.96 => coast_clam,
+                 >= 0.92 => coast_crab,
+                 >= 0.88 => coast_fish
+                 >= 0.00 => coast
+                 => %coastfood
+generate_layer_from_mask @rand_coast %coastfood => $banana_bunch.seafood
+decrease_layer_priority $banana_bunch.seafood
+flatten_group $banana_bunch --rename_final_layer
+debug_group $banana_bunch --add_to_existing

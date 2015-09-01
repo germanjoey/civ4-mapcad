@@ -5,12 +5,12 @@ use warnings;
  
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(dump_mask_to_console dump_group dump_mask dump_layer evaluate_weight evaluate_weight_inverse show_weights);
+our @EXPORT_OK = qw(debug_mask_in_console debug_group debug_mask debug_layer debug_weight evaluate_weight evaluate_weight_inverse show_weights);
 
+use List::Util qw(min max);
 use Civ4MapCad::ParamParser;
 use Civ4MapCad::Util qw(deepcopy slurp);
 use Civ4MapCad::Dump qw(dump_out dump_framework dump_single_layer);
-
 use Civ4MapCad::Commands::List qw(_describe_terrain);
 
 my $evaluate_weight_help_text = qq[
@@ -108,7 +108,6 @@ sub show_weights {
     my $flatten = $pparams->get_named('flatten');
     
     my @to_show;
-    
     if ($flatten) {
         @to_show = map { sprintf "$_->[0] %6.4f => $_->[2],", $_->[1] } ( $weight->flatten(1) );
     }
@@ -120,17 +119,74 @@ sub show_weights {
     $state->list( @to_show );
     return 1;
 }
- 
-my $dump_mask_to_console_help_text = qq[
-    Dump a mask as ascii-art for quick debugging.
+
+my $debug_weight_help_text = qq[
+    Shows the definition for a weight. The optional 'flatten' arguments determines whether nested weights are expanded or not. (off by default)
 ];
-sub dump_mask_to_console {
+sub debug_weight {
+    my ($state, @params) = @_;
+    
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'required' => ['weight'],
+        'required_descriptions' => ['weight to describe'],
+        'help_text' => $show_weights_help_text,
+        'optional' => {
+            'flatten' => 'false',
+            'add_to_existing' => 'false'
+        }
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+    
+    my ($weight) = $pparams->get_required();
+    my ($weight_name) = $pparams->get_required_names();
+    my $add_to_existing = $pparams->get_named("add_to_existing");
+    my $flatten = $pparams->get_named('flatten');
+    
+    my $template;
+    my $set_index;
+    my $start_index;
+    if ($add_to_existing) {
+        $template = 'debug.html';
+        $start_index = _find_max_tab($template)+1;
+        $set_index = _find_max_set($template)+1;
+    }
+    else {
+        $template = 'debug/debug.html.tmpl';
+        $set_index = 1;
+        $start_index = 0;
+    }
+    
+    my @to_show;
+    if ($flatten) {
+        @to_show = map { sprintf "$_->[0] %6.4f => $_->[2],", $_->[1] } ( $weight->flatten(1) );
+    }
+    else {
+        @to_show = map { sprintf "%s %6.4f => %s,", @$_ } (@{ $weight->{'pairs'} });
+    }
+    $to_show[-1] =~ s/,$//;
+    
+    my $head = qq[<li><a href="#tabs-$start_index">$set_index: $weight_name</a></li>];
+    my $body = qq[<div class="map_tab" id="tabs-$start_index"><code><pre>\n];
+    $body .= "new_weight_table ";
+    $body .= join("\n                 ", @to_show);
+    $body .= "\n                 => $weight_name";
+    $body .= '</pre></code></div>';
+    dump_out ($template, 'debug.html', $weight_name, $head, $body, 0);
+    
+    return 1;
+}
+ 
+my $debug_mask_in_console_help_text = qq[
+    Debug a mask as ascii-art in the console for quick debugging.
+];
+sub debug_mask_in_console {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['mask'],
-        'required_descriptions' => ['mask to dump'],
-        'help_text' => $dump_mask_to_console_help_text
+        'required_descriptions' => ['mask to debug'],
+        'help_text' => $debug_mask_in_console_help_text
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
@@ -156,17 +212,17 @@ sub dump_mask_to_console {
     return 1;
 }
 
-my $dump_mask_help_text = qq[
-    Displays a mask into the dump.html debugging window. Mask values closer to zero will appear blue, while those closer to 1 will appear red. If 'add_to_existing'
-    is specified, the dump will appear as a new tab in the existing dump.html.
+my $debug_mask_help_text = qq[
+    Displays a mask into the debug.html debugging window. Mask values closer to zero will appear blue, while those closer to 1 will appear red. If 'add_to_existing'
+    is specified, the debug will appear as a new tab in the existing debug.html.
 ];
-sub dump_mask {
+sub debug_mask {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['mask'],
-        'required_descriptions' => ['mask to dump'],
-        'help_text' => $dump_mask_help_text,
+        'required_descriptions' => ['mask to debug'],
+        'help_text' => $debug_mask_help_text,
         'optional' => {
             'add_to_existing' => 'false'
         }
@@ -182,12 +238,12 @@ sub dump_mask {
     my $set_index;
     my $start_index;
     if ($add_to_existing) {
-        $template = 'dump.html';
+        $template = 'debug.html';
         $start_index = _find_max_tab($template)+1;
         $set_index = _find_max_set($template)+1;
     }
     else {
-        $template = 'debug/dump.html.tmpl';
+        $template = 'debug/debug.html.tmpl';
         $set_index = 1;
         $start_index = 0;
     }
@@ -202,52 +258,81 @@ sub dump_mask {
         my @row;
         foreach my $x (0..$maxrow) {
             my $value = $canvas->[$x][$y];
-            my $c = sprintf '#%02x00%02x', $value*255, 255-$value*255;
+            my $v = min(1, max(0, $value));
+            my $c = sprintf 'p%02x%02x', 16*int($v*15)+8, 16*int(15 - $v*15)+8;
             
             my $title = "$x, $y: $value";
-            my $cell = qq[<a title="$title"><img src="debug/icons/none.png" /></a>];
-            push @row, qq[<td class="tooltip"><div style="background-color: $c;">$cell</div></td>];
+            my $cell = qq[<a title="$title"><img src="i/none.png"/></a>];
+            push @row, qq[<td><div class="$c">$cell</div></td>];
         }
         
         push @cells, \@row;
     }
     
-    dump_framework($template, 'dump.html', $mask_name, $start_index, [["$set_index: " . $mask_name, [], \@cells]]);
+    dump_framework($template, 'debug.html', $mask_name, $start_index, [["$set_index: " . $mask_name, [], \@cells]], '');
     return 1;
 }
 
-my $dump_group_help_text = qq[
-    Displays a group in the dump.html debugging window. Each layer will appear as its own tab. If 'add_to_existing' is specified, the dump will add additional tabs to the existing dump.html. If '--info_too' is specified, all per-layer map information will be specified in a table.
+my $debug_group_help_text = qq[
+    Displays a group in the debug.html debugging window. Each layer will appear as its own tab. If 'add_to_existing' is specified, the debug window will add additional tabs to the existing debug.html. 
 ];
-sub dump_group {
+sub debug_group {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['group'],
-        'required_descriptions' => ['group to dump'],
-        'help_text' => $dump_group_help_text,
+        'required_descriptions' => ['group to debug'],
+        'help_text' => $debug_group_help_text,
         'optional' => {
-            'info_too' => 'false',
-            'add_to_existing' => 'false'
+            'add_to_existing' => 'false',
+            'alloc_file' => ''
         }
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
     
     my ($group) = $pparams->get_required();
-    my $do_info = $pparams->get_named('info_too');
     my $add_to_existing = $pparams->get_named("add_to_existing");
+    my $alloc_file = $pparams->get_named("alloc_file");
+    my $alloc;
+    
+    if (($alloc_file ne '') and ($add_to_existing == 1)) {
+        $state->report_warning("It's recommended that you do not add an alloc_file to a group debug in conjunction with --add_to_existing, as it can cause errors. (and will also be really slow)");
+    }
+    
+    my $has_alloc = 0;
+    if ($alloc_file ne '') {
+        if ($group->count_layers() != 1) {
+            $state->report_error("Can only use an alloc file on flat layers.");
+            return -1;
+        }
+        
+        my $max_x = 0;
+        my $max_y = 0;
+        ($alloc, $max_x, $max_y) = _read_alloc_file($alloc_file);
+        
+        if (! defined $alloc) {
+            $state->report_error("Error reading from $alloc_file.");
+            return -1;
+        }
+        
+        if ((($max_x+1) != $group->get_width()) or (($max_y+1) != $group->get_height())) {
+            $state->report_error("Dimensions of alloc file do not match the group.");
+            return -1;
+        }
+        $has_alloc = 1;
+    }
     
     my $template;
     my $set_index;
     my $start_index;
     if ($add_to_existing) {
-        $template = 'dump.html';
+        $template = 'debug.html';
         $start_index = _find_max_tab($template) + 1;
         $set_index = _find_max_set($template) + 1;
     }
     else {
-        $template = 'debug/dump.html.tmpl';
+        $template = 'debug/debug.html.tmpl';
         $set_index = 1;
         $start_index = 0;
     }
@@ -255,58 +340,64 @@ sub dump_group {
     my $copy = deepcopy($group);
     
     my @layer_cells;
+    my $alloc_css = '';
     foreach my $layer ($copy->get_layers()) {
         $layer->fix_coast();
         my $full_name = '$' . $layer->get_group->get_name() . '.' . $layer->get_name();
-        push @layer_cells, dump_single_layer($layer, "$set_index: $full_name", $do_info);
+        
+        $state->{'current_debug'} = $layer; # so that we can get player info from the perspective of the tile
+        $alloc_css = _dump_alloc_css($state, $layer) if $has_alloc; # need to do this here so we can access the layer
+        push @layer_cells, dump_single_layer($layer, "$set_index: $full_name", $alloc);
+        delete $state->{'current_debug'};
     }
     
-    dump_framework($template, 'dump.html', '$' . $group->get_name(), $start_index, \@layer_cells);
+    dump_framework($template, 'debug.html', '$' . $group->get_name(), $start_index, \@layer_cells, $alloc_css);
     return 1;
 }
 
-my $dump_layer_help_text = qq[
-    Displays a single layer in the dump.html debugging window. If 'add_to_existing' is specified, the dump will add additional tabs to the existing dump.html. If '--info_too' is specified, all per-layer map information will be specified in a table.
+my $debug_layer_help_text = qq[
+    Displays a single layer in the debug.html debugging window. If 'add_to_existing' is specified, the debug window will add additional tabs to the existing debug.html.
 ];
-sub dump_layer {
+sub debug_layer {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['layer'],
-        'required_descriptions' => ['layer to dump'],
-        'help_text' => $dump_layer_help_text,
+        'required_descriptions' => ['layer to debug'],
+        'help_text' => $debug_layer_help_text,
         'optional' => {
-            'info_too' => 'false',
-            'add_to_existing' => 'false'
+            'add_to_existing' => 'false',
         }
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
     
     my ($layer) = $pparams->get_required();
-    my $do_info = $pparams->get_named('info_too');
     my $add_to_existing = $pparams->get_named("add_to_existing");
     
     my $template;
     my $set_index;
     my $start_index;
     if ($add_to_existing) {
-        $template = 'dump.html';
+        $template = 'debug.html';
         $start_index = _find_max_tab($template)+1;
         $set_index = _find_max_set($template)+1;
     }
     else {
-        $template = 'debug/dump.html.tmpl';
+        $template = 'debug/debug.html.tmpl';
         $set_index = 1;
         $start_index = 0;
     }
     
     my $copy = deepcopy($layer);
     $copy->fix_coast();
+    $state->{'current_debug'} = $layer; # so that we can get player info from the perspective of the tile
     
     my $full_name = '$' . $layer->get_group->get_name() . '.' . $layer->get_name();
-    my $cells = dump_single_layer($copy, "$set_index: $full_name", $do_info);
-    dump_framework($template, 'dump.html', $full_name, $start_index, [$cells]);
+    my $cells = dump_single_layer($copy, "$set_index: $full_name");
+    dump_framework($template, 'debug.html', $full_name, $start_index, [$cells], '');
+    
+    delete $state->{'current_debug'};
     return 1;
 }
 
@@ -327,4 +418,62 @@ sub _find_max_set {
     my @sets = $template =~ /a href=\"\#tabs-\d+\">(\d+):/g;
     @sets = sort {$b <=> $a} @sets;
     return $sets[0];
+}
+
+sub _read_alloc_file {
+    my ($filename) = @_;
+    return if $filename eq '';
+    
+    my %alloc;
+    open (my $ain, $filename) or return;
+    
+    my $max_x = 0;
+    my $max_y = 0;
+    while (1) {
+        my $line = <$ain>;
+        last unless defined $line;
+        next unless $line =~ /\d/;
+        next if $line =~ /\s*\#/;
+        chomp $line;
+        my ($x, $y, $civ, $v) = split ' ', $line;
+        $alloc{$x}{$y}{$civ} = $v;
+        $max_x = $x if $x > $max_x;
+        $max_y = $y if $y > $max_y;
+    }
+    
+    return (\%alloc, $max_x, $max_y);
+}
+
+sub _dump_alloc_css {
+    my ($state, $layer) = @_;
+    
+    my $alloc_css = '';
+    
+    my $tmpl = qq[
+        content: " " !important;
+        display: block !important;
+        position: absolute !important;
+        pointer-events: none !important;
+        height: 100% !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+    ];
+    
+    my $i = 0;
+    my $players = $layer->{'map'}{'Players'};
+    foreach my $player (@$players) {
+        my $player_color = $player->{'Color'};
+        next if $player_color =~ /none/i;
+        
+        $player_color =~ s/^PLAYERCOLOR_//;
+        $player_color = 'COLOR_PLAYER_' . $player_color;
+    
+        $alloc_css .= "    .c$i {\n";
+        $alloc_css .= "        background-color: $state->{'data'}{'colorcodes'}{$player_color}{'hex'} !important;$tmpl";
+        $alloc_css .= "}\n\n";
+        $i++;
+    }
+    
+    return $alloc_css;
 }

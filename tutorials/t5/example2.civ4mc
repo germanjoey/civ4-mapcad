@@ -1,0 +1,22 @@
+run_script "tutorials/t4/banana.civ4mc" --debug_result
+new_mask_from_landmass $the_real_banana.the_real_banana 4 6 --include_coast => @island
+debug_mask @island --add_to_existing
+
+# rescale maintains the mask's size as the same as the layer
+grow_mask @island 1 --rescale => @island_plus1 
+debug_mask @island_plus1 --add_to_existing
+
+mask_difference @island_plus1 @island => @island_border
+debug_mask @island_border --add_to_existing
+
+mask_intersect @island_border @rand_field => @rand_island_border
+debug_mask @rand_island_border --add_to_existing
+
+new_weight_table >= 0.92 => ocean_fish
+                 >= 0.00 => ocean
+                 => %oceanfood
+generate_layer_from_mask @rand_island_border %oceanfood => $the_real_banana.oceanfish
+decrease_layer_priority $the_real_banana.oceanfish
+flatten_group $the_real_banana --rename_final_layer
+
+debug_group $the_real_banana --add_to_existing

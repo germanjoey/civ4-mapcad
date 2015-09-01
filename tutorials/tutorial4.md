@@ -22,18 +22,23 @@ We make sure to add all modern-era resources somewhere because, like, we're *tot
 
     import_group "tutorials/t4/bfc.CivBeyondSwordWBSave" => $bfc
     extract_starts $bfc
-    dump_group $bfc
+    debug_group $bfc
     
 ![tutorial4-i3](t4/i3.png)
 
 ![tutorial4-i2](t4/i2.png)
 
-Start0 is the layer we want. Let's copy it into $the_real_banana and raise it above the background so its tiles will over-write the backgrounds'. Looking at the dump, coordinate 4,6 should be a good center for the BFC; however, we'll move it to 2,4 because we want its *center* to be at 4,6, and the move command will refer to its origin at the lower-left corner. b. Let's also crop away all that extra ocean in the background. Moving switftly now:
+Start0 is the layer we want. Let's copy it into $the_real_banana and raise it above the background so its tiles will over-write the backgrounds'. Looking at the debug window, coordinate 4,6 should be a good center for the BFC; however, we'll move it to 2,4 because we want its *center* to be at 4,6, and the move command will refer to its origin at the lower-left corner. b. Let's also crop away all that extra ocean in the background. Moving switftly now:
 
     copy_layer_from_group $bfc.start0 => $the_real_banana.bfc
     move_layer $the_real_banana.bfc 2 4
+    
+    # bring the bfc to the top
     increase_layer_priority $the_real_banana.bfc
-    flatten_group $the_real_banana
+    
+    # the --rename_final flag renames the final layer of the flat group
+    # to have the same name as the group, i.e. $the_real_banana.the_real_banana
+    flatten_group $the_real_banana --rename_final
     crop_group $the_real_banana 0 0 13 16
 
 ![tutorial4-i4](t4/i4.png)
@@ -84,13 +89,13 @@ And we can build our script like this, which I've saved at [tutorials/t4/banana.
 Only about 30 lines, including comments - not too shabby, right? Now.... to make them dance!
 
     fliplr $the_real_banana
-    dump_group $the_real_banana
+    debug_group $the_real_banana
     fliplr $the_real_banana
-    dump_group $the_real_banana --add_to_existing
+    debug_group $the_real_banana --add_to_existing
     fliplr $the_real_banana
-    dump_group $the_real_banana --add_to_existing
+    debug_group $the_real_banana --add_to_existing
     fliplr $the_real_banana
-    dump_group $the_real_banana --add_to_existing
+    debug_group $the_real_banana --add_to_existing
     ...
     
 Just kidding... you'd have to be truly B-A-N-A-N-A-S to do something like that... &#42;tugs collar&#42; ![img-sweatdrop](t4/sweatdrop.gif)
@@ -107,7 +112,11 @@ Just kidding... you'd have to be truly B-A-N-A-N-A-S to do something like that..
     run_script "tutorials/t4/banana.civ4mc" => $player4
     run_script "tutorials/t4/banana.civ4mc" => $player5
     
-We ran the script 5 times, and generated 5 bananas! That means we're in the home stretch now; we just need to combine them into one group and move them around a bit. Let's set the mood!
+We ran the script 5 times, and generated 5 bananas! As an aside, another handy thing we could do is immediately funnel the result of the script with the '--debug_result' flag.
+
+    run_script "tutorials/t4/banana.civ4mc" --debug_result
+
+Anyways, we don't need that now because we're totally home stretch; we just need to combine them into one group and move them around a bit. Let's set the mood!
 
 [![ScreenShot](t4/banana_boat.jpg)](https://www.youtube.com/watch?v=PMigXnXMhQ4)
     
@@ -132,14 +141,32 @@ We ran the script 5 times, and generated 5 bananas! That means we're in the home
 
     # --rename_final_layer renames the final layer to the same as the group name, e.g. $banana_bunch.banana_bunch
     flatten_group $banana_bunch --rename_final_layer
-    dump_group $banana_bunch
+    
+    
+    # note we can also set arbitrary colors with this set_player_data!
+    set_player_data $banana_bunch 0 --player_name "Banana Bill" --leader "Montezuma" --civ "Inca"
+    set_player_data $banana_bunch 1 --player_name "Banana Alex" --leader "Shaka" --civ "Arabia"
+    set_player_data $banana_bunch 2 --player_name "Banana Felipe" --leader "Genghis Khan" --civ "Zulu"
+    set_player_data $banana_bunch 3 --player_name "Banana Eric" --leader "Stalin" --civ "Mongol"
+    set_player_data $banana_bunch 4 --player_name "Banana Ray" --leader "Mao" --civ "Egypt"
+    
+    
+    # we can also set the speed and/or starting era with set_settings
+    set_settings $banana_bunch --size "small"
+    # wrap can be set via set_wrapX and set_wrapY, FYI
+    
+    debug_group $banana_bunch
     export_sims $banana_bunch
     
-And that's it, we're done!!!! Here's our monster, the perfect toroidal banana nightmare. I put this script at [tutorials/t4/bunch.civ4mc](t4/bunch.civ4mc), if you want to look at it.
+    
+    
+And that's it, we're done!!!! Here's our monster, the perfect toroidal banana nightmare. I put this script at [tutorials/t4/bunch.civ4mc](t4/bunch.civ4mc), if you want to look at it. Note that setting player info and the game settings are pretty easy.
 
 ![tutorial4-i5](t4/i5.png)
 
 I started by sizing the main group to 60 by 60, and spaced out the bananas 11 by 11, but then quickly realized that was way too spacey. (and way too big to post a screenshot of in this tutorial page) Because of the toroidal wrap, we could bring in everything a lot closer. Now it's the perfect size, I think - way, way too small to be acutally playable by normal people, but perfect for these goofballs, considering that they'll probably abandon the game after 40-50 turns anyways. At least this way they'll get some action! ![img-lol](t4/lol.gif)
+
+
 
 ## Lord Almighty, we are free at last...
 

@@ -41,7 +41,6 @@ sub deepcopy {
         
         }
         
-        $main::state->set_ref_id($copy);
         return $copy;
     }
     elsif (ref($v) =~ /Layer/) {
@@ -57,7 +56,6 @@ sub deepcopy {
             $copy->{$k} = deepcopy($v->{$k});
         }
         
-        $main::state->set_ref_id($copy);
         $copy->{'member_of'} = $v->{'member_of'};
         return $copy;
     }

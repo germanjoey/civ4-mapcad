@@ -1,49 +1,49 @@
 new_weight_table >= 0.75 => plainshill_forest0,
                  >= 0.50 => plainshill_forest1,
                  >= 0.25 => plainshill_forest2,
-                 >= 0.00 => plainshill_forest3
+                 >= 0.01 => plainshill_forest3
                  => %anyforest_plainshill
 
 new_weight_table >= 0.75 => plains_forest0,
                  >= 0.50 => plains_forest1,
                  >= 0.25 => plains_forest2,
-                 >= 0.00 => plains_forest3
+                 >= 0.01 => plains_forest3
                  => %anyforest_plains
 
 new_weight_table >= 0.75 => grass_forest0,
                  >= 0.50 => grass_forest1,
                  >= 0.25 => grass_forest2,
-                 >= 0.00 => grass_forest3
+                 >= 0.01 => grass_forest3
                  => %anyforest_grass
                  
 new_weight_table >= 0.75 => grasshill_forest0,
                  >= 0.50 => grasshill_forest1,
                  >= 0.25 => grasshill_forest2,
-                 >= 0.00 => grasshill_forest3
+                 >= 0.01 => grasshill_forest3
                  => %anyforest_grasshill
                  
 new_weight_table >= 0.75 => tundra_forest0,
                  >= 0.50 => tundra_forest1,
                  >= 0.25 => tundra_forest2,
-                 >= 0.00 => tundra_forest3
+                 >= 0.01 => tundra_forest3
                  => %anyforest_tundra
                  
 new_weight_table >= 0.75 => tundrahill_forest0,
                  >= 0.50 => tundrahill_forest1,
                  >= 0.25 => tundrahill_forest2,
-                 >= 0.00 => tundrahill_forest3
+                 >= 0.01 => tundrahill_forest3
                  => %anyforest_tundrahill
 
 new_weight_table >= 0.75 => snow_forest0,
                  >= 0.50 => snow_forest1,
                  >= 0.25 => snow_forest2,
-                 >= 0.00 => snow_forest3
+                 >= 0.01 => snow_forest3
                  => %anyforest_snow
                  
 new_weight_table >= 0.75 => snowhill_forest0,
                  >= 0.50 => snowhill_forest1,
                  >= 0.25 => snowhill_forest2,
-                 >= 0.00 => snowhill_forest3
+                 >= 0.01 => snowhill_forest3
                  => %anyforest_snowhill
                  
 new_weight_table >= 0.80 => %anyforest_grass,
@@ -51,13 +51,13 @@ new_weight_table >= 0.80 => %anyforest_grass,
                  >= 0.35 => %anyforest_plains,
                  >= 0.15 => %anyforest_plainshill
                  >= 0.08 => %anyforest_tundra,
-                 >= 0.00 => %anyforest_tundrahill
+                 >= 0.01 => %anyforest_tundrahill
                  => %anyforest
                  
 new_weight_table >= 0.90 => %anyforest_plains
                  >= 0.80 => %anyforest_plainshill,
                  >= 0.40 => plains,
-                 >= 0.00 => plainshill
+                 >= 0.01 => plainshill
                  => %any_plains
                  
 new_weight_table >= 0.90 => %anyforest_grass,
@@ -65,32 +65,33 @@ new_weight_table >= 0.90 => %anyforest_grass,
                  >= 0.75 => grasshill_jungle,
                  >= 0.70 => grass_jungle,
                  >= 0.35 => grass,
-                 >= 0.00 => grasshill
+                 >= 0.01 => grasshill
                  => %any_grass
                  
 new_weight_table >= 0.90 => %anyforest_tundrahill,
                  >= 0.80 => %anyforest_tundra,
                  >= 0.50 => tundra,
-                 >= 0.00 => tundrahill
+                 >= 0.01 => tundrahill
                  => %any_tundra
                  
 new_weight_table >= 0.90 => %anyforest_snow,
                  >= 0.80 => %anyforest_snowhill,
                  >= 0.50 => snow,
-                 >= 0.00 => snowhill
+                 >= 0.01 => snowhill
                  => %any_snow
                  
 new_weight_table >= 0.95 => oasis,
                  >= 0.35 => desert,
-                 >= 0.00 => deserthill
+                 >= 0.01 => deserthill
                  => %any_desert
 
 new_weight_table >= 0.40 => %any_grass,
                  >= 0.10 => %any_plains,
                  >= 0.05 => %any_tundra,
-                 >= 0.00 => %any_desert
+                 >= 0.01 => %any_desert
                  => %any_land
                  
 new_weight_table >= 1.00 => grass,
                  >= 0.00 => ocean
                  => %land
+                 

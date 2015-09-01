@@ -28,7 +28,7 @@ move_layer_to_location $the_real_banana.bfc 2 4
 increase_layer_priority $the_real_banana.bfc
 
 # and we're done!
-flatten_group $the_real_banana
+flatten_group $the_real_banana --rename_final
 crop_group $the_real_banana 0 0 13 16
 
 return $the_real_banana
