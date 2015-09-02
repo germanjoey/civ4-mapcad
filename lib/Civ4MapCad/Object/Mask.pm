@@ -260,8 +260,13 @@ sub grow_bfc {
     
     my $min_x = $width; my $max_x = 0;
     my $min_y = $height; my $max_y = 0;
-    foreach my $x (0 .. ($growing_mask->get_width() - 1)) {
-        foreach my $y (0 .. ($growing_mask->get_height() - 1)) {
+    foreach my $x (0 .. ($width-1)) {
+        foreach my $y (0 .. ($height-1)) {
+        
+            my $current = 0;
+            $current = $growing_mask->{'canvas'}[$x][$y] if defined $growing_mask->{'canvas'}[$x][$y];
+            $growing_mask->{'canvas'}[$x][$y] = max($current, $old_mask->{'canvas'}[$x][$y]);
+            
             next unless $old_mask->compare_value($x, $y, 1);
 
             foreach my $ddx (0..4) {
@@ -276,34 +281,38 @@ sub grow_bfc {
                     my $use_y = $y + $dy;
                     
                     if ($wrapX == 1) {
-                        if ($use_x > $width) {
+                        if ($use_x >= $width) {
                             $use_x -= $width;
                         }
                         elsif ($use_x < 0) {
                             $use_x += $width;
                         }
                     }
-                    elsif (($use_x > $height) or ($use_x < 0)) {
+                    elsif (($use_x >= $width) or ($use_x < 0)) {
                         next;
                     }
                     
                     if ($wrapY == 1) {
-                        if ($use_y > $height) {
+                        if ($use_y >= $height) {
                             $use_y -= $height;
                         }
                         elsif ($use_y < 0) {
                             $use_y += $height;
                         }
                     }
-                    elsif (($use_y > $height) or ($use_y < 0)) {
+                    elsif (($use_y >= $height) or ($use_y < 0)) {
                         next;
                     }
+                    
+                    die "$x $y / $dx $dy / $wrapX $wrapY / $width $height / $use_x $use_y\n" if ($use_x < 0) or ($use_x >= $width) or ($use_y < 0) or ($use_y >= $height);
                     
                     $growing_mask->{'canvas'}[$use_x][$use_y] = 1;
                 }
             }
         }        
     }
+    
+    return $growing_mask;
 }
 
 sub grow {

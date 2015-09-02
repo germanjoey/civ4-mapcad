@@ -172,7 +172,7 @@ sub debug_weight {
     $body .= join("\n                 ", @to_show);
     $body .= "\n                 => $weight_name";
     $body .= '</pre></code></div>';
-    dump_out ($template, 'debug.html', $weight_name, $head, $body, 0);
+    dump_out ($template, 'debug.html', $weight_name, $head, $body, '', '');
     
     return 1;
 }
@@ -269,7 +269,7 @@ sub debug_mask {
         push @cells, \@row;
     }
     
-    dump_framework($template, 'debug.html', $mask_name, $start_index, [["$set_index: " . $mask_name, [], \@cells]], '');
+    dump_framework($template, 'debug.html', $mask_name, $start_index, [["$set_index: " . $mask_name, [], \@cells]], '', '');
     return 1;
 }
 
@@ -301,6 +301,7 @@ sub debug_group {
     }
     
     my $has_alloc = 0;
+    my $balance_report = '';
     if ($alloc_file ne '') {
         if ($group->count_layers() != 1) {
             $state->report_error("Can only use an alloc file on flat layers.");
@@ -310,6 +311,7 @@ sub debug_group {
         my $max_x = 0;
         my $max_y = 0;
         ($alloc, $max_x, $max_y) = _read_alloc_file($alloc_file);
+        $balance_report = _read_balance_report($alloc_file);
         
         if (! defined $alloc) {
             $state->report_error("Error reading from $alloc_file.");
@@ -351,7 +353,7 @@ sub debug_group {
         delete $state->{'current_debug'};
     }
     
-    dump_framework($template, 'debug.html', '$' . $group->get_name(), $start_index, \@layer_cells, $alloc_css);
+    dump_framework($template, 'debug.html', '$' . $group->get_name(), $start_index, \@layer_cells, $alloc_css, $balance_report);
     return 1;
 }
 
@@ -395,7 +397,7 @@ sub debug_layer {
     
     my $full_name = '$' . $layer->get_group->get_name() . '.' . $layer->get_name();
     my $cells = dump_single_layer($copy, "$set_index: $full_name");
-    dump_framework($template, 'debug.html', $full_name, $start_index, [$cells], '');
+    dump_framework($template, 'debug.html', $full_name, $start_index, [$cells], '', '');
     
     delete $state->{'current_debug'};
     return 1;
@@ -442,6 +444,20 @@ sub _read_alloc_file {
     }
     
     return (\%alloc, $max_x, $max_y);
+}
+
+sub _read_balance_report {
+    my ($filename) = @_;
+    return if $filename eq '';
+    
+    $filename =~ s/\.alloc//;
+    
+    my $base_filename = "$filename";
+    $base_filename =~ s/^(?:\w+\/)+//;
+    
+    my $balance_report = slurp("$filename.balance_report.txt");
+    $balance_report = qq[<h2>Balance Report:</h2><textarea class="lined">$balance_report</textarea><a href="$base_filename.CivBeyondSwordWBSave">Save File</a>];
+    return $balance_report;
 }
 
 sub _dump_alloc_css {

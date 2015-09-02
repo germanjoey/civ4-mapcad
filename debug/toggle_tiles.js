@@ -1,3 +1,4 @@
+loaded_ok = 1;
 
 var alloc_found = 0;
 var alloc_visibility = 1;

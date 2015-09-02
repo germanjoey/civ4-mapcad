@@ -19,12 +19,12 @@ $Civ4MapCad::Map::Tile::DEBUG = 1;
 
 our $state = Civ4MapCad->new();
 
-my $iterations = 20;
-my $tuning_iterations = 10;
+my $iterations = 100;
+my $tuning_iterations = 40;
 my $to_turn = 155;
-my $input_filename = 'output/t6_fixed_v3.CivBeyondSwordWBSave';
+my $input_filename = 'tutorials/t6/t6.CivBeyondSwordWBSave';
 my $balance_config = 'def/balance.cfg';
-my @heatmaps = ('bfc_value');
+my @heatmaps = ();
 my $heatmap_options = 0;
 my $mod = 'none';
 
@@ -36,8 +36,14 @@ GetOptions ("iterations=i" => \$iterations,
             "balance_config=s" => \$balance_config,
             "heatmap=s" => \@heatmaps,
             "heatmap_options" => \$heatmap_options,
-            "mod" => \$mod
+            "mod=s" => \$mod
             ) or $state->report_error("Error in command line arguments.\n");
+@heatmaps = ('bfc_value') if @heatmaps == 0;
+
+if (! -e $balance_config) {
+    $state->report_error(qq[The balance config file "$balance_config" does not exist!]);
+    exit -1;
+}
             
 our %config = Config::General->new($balance_config)->getall();
 
@@ -95,6 +101,24 @@ $state->process_command('run_script "def/init.civ4mc"');
 $state->process_command(qq[set_mod "$mod"]);
 $state->clear_log();
 
+my $base_var = "$input_filename";
+$base_var =~ s/^(?:\w+\/)+//g;
+$base_var =~ s/(?:\.\w+)+$//g;
+
+print "\n    Starting balance report for '\$$base_var' with parameters:\n";
+print "        input_filename: $input_filename\n";
+print "        balance_config: $balance_config\n";
+print "        mod: $mod\n";
+print "        to turn: $to_turn\n";
+print "        iterations: $iterations\n";
+print "        tuning_iterations: $tuning_iterations\n";
+print "        heatmaps: @heatmaps\n\n";
+
+print "\n    Allocation algorithm parameters (see in def/balance.cfg for more details):\n";
+foreach my $k (sort keys %config) {
+    print "        $k: $config{$k}\n";
+}
+
 my $map = Civ4MapCad::Map->new();
 my $ret = $map->import_map($input_filename);
 
@@ -102,32 +126,33 @@ if ($ret ne '') {
     die $ret;
 }
 
+print "\n\n    Starting land allocator.\n\n";
+print "        Precalculating map features...\n\n";
 my $alloc = Civ4MapCad::Allocator->new($map);
 $alloc->allocate($tuning_iterations, $iterations, $to_turn);
 
-warn "analyzing output\n";
+print "\n    Done allocating.\n    Analyzing output...\n";
 report($alloc, "$base_name.balance_report.txt");
 
-warn "generating overlay view\n";
+print "    Generating map debug save: $input_filename.debug\n";
 $map->export_map("$input_filename.debug");
 
-my $base_var = "$input_filename";
-$base_var =~ s/^(?:\w+\/)+//g;
-$base_var =~ s/(?:\.\w+)+$//g;
-
+print "    Saving allocation data: $base_name.alloc\n";
 my $alloc_filename = dump_alloc($alloc, "$base_name.alloc");
+
+print "    Generating overlay view: $base_var.html\n";
 $state->process_command(qq[import_group "$input_filename" => \$$base_var]);
 $state->process_command(qq[debug_group \$$base_var --alloc_file "$base_name.alloc"]);
-rename('debug.html',"$base_name.html");
-output_heatmaps($alloc, $map, $base_name, \@heatmaps);
-warn "done\n";
+rename('debug.html',"$base_var.html");
+output_heatmaps($alloc, $map, $base_var, \@heatmaps);
+print "    All done!\n\n";
 
 sub output_heatmaps {
     my ($alloc, $map, $base_name, $heatmaps) = @_;
     
     foreach my $i (0..$#$heatmaps) {
         my $hm = $heatmaps->[$i];
-        warn "creating heatmap $hm\n";
+        print "    Creating heatmap $hm: $base_name.$hm.html\n";
         
         if ($hm =~ /contention/i) {            
             debug_overlay($alloc);
@@ -333,7 +358,7 @@ sub report {
         }
     
         $contest_land_average{$civ} = $land_tile_count{$civ}/$contested_land_count{$civ};
-        $contest_coast_average{$civ} = $coast_tile_count{$civ}/$contested_coast_count{$civ} if exists $contested_coast_count{$civ};
+        $contest_coast_average{$civ} = $coast_tile_count{$civ}/$contested_coast_count{$civ} if exists $contested_coast_count{$civ} and ($contested_coast_count{$civ} > 0);
     }
     
     my %contested_land_var;
@@ -379,7 +404,7 @@ sub report {
         # General metrics
         
         my $land_std = sqrt($contested_land_var{$civ}/$contested_land_count{$civ});
-        my $coast_std = sqrt($contested_coast_var{$civ}/$contested_coast_count{$civ});
+        my $coast_std = sqrt($contested_coast_var{$civ}/$contested_coast_count{$civ}) if exists $contested_coast_count{$civ} and ($contested_coast_count{$civ} > 0);
         my $capital = $alloc->{'civs'}{$civ}{'cities'}[0]{'center'};
         my $average_value = $alloc->{'avg_city_value'}{$civ}/$alloc->{'avg_city_count'}{$civ};
         my $name = $map->{'Players'}[$civ]{'LeaderName'};
@@ -387,7 +412,7 @@ sub report {
         my $total_tile = $land_tile_count{$civ} + $main::config{'coast_worth'}*$coast_tile_count{$civ};
         my $total_contention = $total_tile / ($contested_land_count{$civ} + $main::config{'coast_worth'}*$contested_coast_count{$civ});
         
-        print $bo "For $civ ($name):\n";
+        print $bo "For Player $civ ($name):\n";
         print $bo "    Capital at: $capital->{'x'}, $capital->{'y'}\n";
         printf $bo "    Expected number/value of cities: %5.2f / %5.3f\n", $alloc->{'avg_city_count'}{$civ}, $average_value;
         printf $bo "    Expected number of strong/weak food resources: %5.2f / %5.2f\n", $food_count{$civ}, $wfood_count{$civ};
@@ -415,7 +440,7 @@ sub report {
         print $bo "    Strategic access:\n";
         
         foreach my $bonus (keys %{ $quality_strat->{$civ} }) {
-            print $bo $quality_strat->{$civ}{$bonus}, "\n";;
+            print $bo $quality_strat->{$civ}{$bonus}, "\n";
         }
         
         print $bo "\n";
@@ -608,7 +633,7 @@ sub calculate_lux_score {
         
         $optimized_lux_score{$civ}{'score'} = 2*$score{'al'} + $score{'cl'};
         $max_lux_score = $optimized_lux_score{$civ}{'score'} if $optimized_lux_score{$civ}{'score'} > $max_lux_score;
-        $optimized_lux_score{$civ}{'full_desc'} = "    $count{'total'} luxuries obtained, of which $count{'al'} are ancient and $count{'cl'} are classical.";
+        $optimized_lux_score{$civ}{'full_desc'} = sprintf '    %5.3f luxuries obtained, of which %5.3f are ancient and %5.3f are classical.', $count{'total'}, $count{'al'}, $count{'cl'};
     }
     
     return ($max_lux_score, \%optimized_lux_score);
@@ -702,6 +727,7 @@ sub calculate_strategic_access {
                     }
                 }
                 
+                $max_value = sprintf '%5.3f', $max_value;
                 my $ring = ($found_second_ring) ? 'second' : 'first';
                 $quality_strat{$civ}{$bonus} = '        - ' . ucfirst($bonus) . " was found at a distance of $td from capital; its best site at $best_site->{'x'},$best_site->{'y'} has it in the\n"
                                               . "          $ring ring, with a relative strategic quality score of $max_value.";
@@ -748,6 +774,6 @@ sub debug_overlay {
     }
     
     my $mask_name = 'contention';
-    dump_framework($template, 'contention.html', $mask_name, $start_index, [["$set_index: " . $mask_name, [], \@cells]], 0);
+    dump_framework($template, 'contention.html', $mask_name, $start_index, [["$set_index: " . $mask_name, [], \@cells]], '', '');
     return 1;
 }

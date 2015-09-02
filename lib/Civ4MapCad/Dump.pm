@@ -10,7 +10,7 @@ our @EXPORT_OK = qw(dump_out dump_framework dump_single_layer);
 use Civ4MapCad::Util qw(slurp);
 
 sub dump_framework {
-    my ($template_filename, $dump_filename, $full_name, $start_index, $tabs, $alloc_css) = @_;
+    my ($template_filename, $dump_filename, $full_name, $start_index, $tabs, $alloc_css, $balance_report) = @_;
     
     my @tab_heads; my @tab_bodies;
     
@@ -53,11 +53,11 @@ sub dump_framework {
         $body .= $tb;
     }
     
-    dump_out($template_filename, $dump_filename, $full_name, $head, $body, $alloc_css);
+    dump_out($template_filename, $dump_filename, $full_name, $head, $body, $alloc_css, $balance_report);
 }
 
 sub dump_out {
-    my ($template_filename, $dump_filename, $name, $head, $body, $alloc_css) = @_;
+    my ($template_filename, $dump_filename, $name, $head, $body, $alloc_css, $balance_report) = @_;
     
     $head =~ s/\n/\n    /g;
     $body =~ s/\n/\n    /g;
@@ -71,6 +71,7 @@ sub dump_out {
     $template =~ s/\<!--\s+\$\$\$\$HEAD\$\$\$\$\s+\-\-\>/$head/;
     $template =~ s/\<!--\s+\$\$\$\$BODY\$\$\$\$\s+\-\-\>/$body/;
     $template =~ s/(<!--\s+\$\$\$\$TITLE\$\$\$\$\s+\-\-\>).*(?:\1)/$1$name$1/;
+    $template =~ s/\<!-- \$\$\$\$BALANCE_REPORT\$\$\$\$ -->/$balance_report/;
     
     open (my $dump, '>', $dump_filename) or die $!;
     print $dump $template;
@@ -117,7 +118,7 @@ sub dump_layer_info {
     $size =~ s/^worldsize_//i;
     $era =~ s/^era_//i;
     
-    my $info = sprintf '<p><b>Speed:</b> %s, <b>Size:</b> %s, <b>Starting Era:</b> %s</p>', ucfirst($speed), ucfirst($size), ucfirst($era);
+    my $info = sprintf '<b>Speed:</b> %s, <b>Size:</b> %s, <b>Starting Era:</b> %s', ucfirst($speed), ucfirst($size), ucfirst($era);
     
     my ($template) = slurp('debug/info.html.tmpl');
     $template =~ s/\<!--\s+\$\$\$\$INFO\$\$\$\$\s+\-\-\>/$info/;

@@ -57,6 +57,7 @@ Groups had a '$' in front of them, while now we see masks have a '@' in front of
     debug_mask @circle1
     
 ![tutorial3-i1](t3/i1.png)
+([here](http://media.rhizzone.net/civ4mc/t3.html) is a sample debug window for all code in this tutorial, although I very much encourage you to try this stuff out yourself!)
 
 Try hovering over the coordinates... you can see that each one has a value. Red in this case means 1, blue means 0; if we had any mid-range decimal values, the coordinate would be purplish.
          

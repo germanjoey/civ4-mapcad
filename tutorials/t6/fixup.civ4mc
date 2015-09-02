@@ -1,4 +1,4 @@
-import_group "tutorials/t6/tutorial6_orig.CivBeyondSwordWBSave" => $t6
+import_group "tutorials/t6/t6.CivBeyondSwordWBSave" => $t6
 
 set_player_data $t6 0 --color "Dark Blue"
 set_player_data $t6 6 --color "Dark Purple"
@@ -59,4 +59,4 @@ set_tile $t6.t6 14 13 grass
 set_tile $t6.t6 38 17 grasshill_copper
 
 flatten_group $t6 --rename_final => $t6_fixed
-debug_group $t6_fixed
+export_group $t6_fixed

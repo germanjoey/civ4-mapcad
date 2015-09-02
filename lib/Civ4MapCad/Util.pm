@@ -77,7 +77,7 @@ sub write_config {
 
 sub slurp {
     my $file = shift;
-    open my $fh, '<', $file or die;
+    open my $fh, '<', $file or die $!;
     local $/ = undef;
     my $cont = <$fh>;
     close $fh;

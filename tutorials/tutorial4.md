@@ -24,6 +24,8 @@ We make sure to add all modern-era resources somewhere because, like, we're *tot
     extract_starts $bfc
     debug_group $bfc
     
+(again, [here](http://media.rhizzone.net/civ4mc/t3.html) is a sample debug window for all code in this tutorial)
+    
 ![tutorial4-i3](t4/i3.png)
 
 ![tutorial4-i2](t4/i2.png)

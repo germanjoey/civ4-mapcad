@@ -10,8 +10,9 @@ our @EXPORT_OK = qw(balance_report);
 use Civ4MapCad::Util qw(deepcopy);
 use Civ4MapCad::ParamParser;
 
+# TODO: allow multiple heatmaps
 my $balance_report_help_text = qq[
-
+    Generates a balance report based on an MCMC land allocation algorithm.
 ];
 sub balance_report {
     my ($state, @params) = @_;
@@ -22,24 +23,40 @@ sub balance_report {
         'optional' => {
             'iterations' => 100,
             'tuning_iterations' => 40,
-            'balance_config' => 'def/balance_config.cfg',
+            'balance_config' => 'def/balance.cfg',
             'sim_to_turn' => 155,
-            'heatmap' => ['bfc_value'],
+            'heatmap' => 'bfc_value',
         },
         'optional_descriptions' => {
             'iterations' => 'Number of times to simulate',
             'tuning_iterations' => 'Number of extra times to simulate to set the estimate for contention',
             'balance_config' => 'configuration file for all the various constants used in the allocation algorithm.',
             'sim_to_turn' => 'Ending turn of each simulation. It can be a good idea to check the status of the map at various different endpoints',
-            'heatmap' => "Creates a mask from some attribute of the mask and then immediately makes an html view of it, as if 'debug_mask' was used. Can be specified multiple times to create multiple heatmaps. If a name is preceded by a '+', then the heatmap will be appended to the current debug output, as if --add_to_existing were used." 
+            'heatmap' => "Creates a mask from some attribute of the mask and then immediately makes an html view of it, as if 'debug_mask' was used. If a name is preceded by a '+', then the heatmap will be appended to the current debug output, as if --add_to_existing were used." 
         },
     });
+    
+    if ($pparams->{'help'} or $pparams->{'help_anyways'}) {
+        system ("balance.pl --heatmap_options");
+    }
+    
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
 
     my $result_name = $pparams->get_result_name();
     my ($group) = $pparams->get_required();
     my $copy = deepcopy($group);
+    
+    my $iterations = $pparams->get_named('iterations');
+    my $tuning_iterations = $pparams->get_named('tuning_iterations');
+    my $balance_config = $pparams->get_named('balance_config');
+    my $sim_to_turn = $pparams->get_named('sim_to_turn');
+    my $heatmap = $pparams->get_named('heatmap');
+    
+    if (! -e $balance_config) {
+        $state->report_error(qq[The balance config file "$balance_config" does not exist!]);
+        exit -1;
+    }
     
     my $has_duplicate_owners = $group->has_duplicate_owners();
     my $ret = $copy->merge_all(1);
@@ -54,8 +71,9 @@ sub balance_report {
     my $group_name = $group->get_name();
     my $in_filename = $output_dir . "/" . $group_name . ".CivBeyondSwordWBSave";
     
-    
-    #system("perl balance.pl $in_filename $options ");
+    my $command_opt = "--input_filename $in_filename --balance_config $balance_config --to_turn $sim_to_turn --iterations $iterations --tuning_iterations $tuning_iterations --mod $state->{'mod'}";
+    $command_opt .= " --heatmap $heatmap";
+    system("perl balance.pl $command_opt");
     
     return 1;
 }

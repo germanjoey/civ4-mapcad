@@ -1,11 +1,13 @@
 <!doctype html>
-<html lang="us">
+<html lang="en-US">
 <head>
 	<meta charset="utf-8">
 	<title>Civ4 Map Cad Debugging Window</title>
-	<link href="debug/jquery-ui-1.11.4/jquery-ui.css" rel="stylesheet">
-	<link href="debug/style.css" rel="stylesheet">
+	<link href="debug/jquery-ui-1.11.4/jquery-ui.css" rel="stylesheet" />
+	<link href="debug/style.css" rel="stylesheet" />
+	<link href="debug/jquery-linedtextarea.css" type="text/css" rel="stylesheet" />
 	<!-- $$$$CIVSTYLE$$$$ -->
+    <script>var loaded_ok = 0;</script>
 </head>
 <body>
 
@@ -17,88 +19,101 @@
         <!-- $$$$BODY$$$$ -->
 </div>
 
+<!-- $$$$BALANCE_REPORT$$$$ -->
+
 <script src="debug/jquery-ui-1.11.4/external/jquery/jquery.js"></script>
 <script src="debug/jquery-ui-1.11.4/jquery-ui.js"></script>
+<script src="debug/jquery-linedtextarea.js"></script>
 <script src="debug/toggle_tiles.js"></script>
 <script>
-    $(function() {
-        $(document).ready(function() {
-            var tabs = $( "#tabs" ).tabs({
-                activate: function (event, ui) {
-                    var $this = ui.newPanel;
-                    
-                    // resize the accordion to be the same size as the map
-                    var w = $("table", $this).first().width();
-                    var accordion = $(".info_accordion", $this).first();
-                    accordion.width(w);
-                    $('div', accordion).width(w-50.5);
-                    $('div', accordion).css('height','');
-                    
-                    // initial the tile state data for the new tab
-                    var tabID = $("#tabs").tabs("option", "active");
-                    if (! show_tiles.hasOwnProperty(tabID)) {
-                        show_tiles[tabID] = {
-                            'hl' : 1,
-                            'ft' : 1,
-                            'jl' : 1
+    if (loaded_ok == 1) {
+        $(function() {
+            $(document).ready(function() {
+                var tabs = $( "#tabs" ).tabs({
+                    activate: function (event, ui) {
+                        var $this = ui.newPanel;
+                        
+                        // resize the accordion to be the same size as the map
+                        var w = $("table", $this).first().width();
+                        var accordion = $(".info_accordion", $this).first();
+                        accordion.width(w);
+                        $('div', accordion).width(w-50.5);
+                        $('div', accordion).css('height','');
+                        
+                        // initial the tile state data for the new tab
+                        var tabID = $("#tabs").tabs("option", "active");
+                        if (! show_tiles.hasOwnProperty(tabID)) {
+                            show_tiles[tabID] = {
+                                'hl' : 1,
+                                'ft' : 1,
+                                'jl' : 1
+                            }
                         }
                     }
-                }
-            });
-            tabs.find( ".ui-tabs-nav" ).sortable({
-                axis: "x",
-                stop: function() {
-                    tabs.tabs( "refresh" );
-                }
-            });
-                
-            $( ".tooltip" ).tooltip();
+                });
+                tabs.find( ".ui-tabs-nav" ).sortable({
+                    axis: "x",
+                    stop: function() {
+                        tabs.tabs( "refresh" );
+                    }
+                });
+                    
+                $( ".tooltip" ).tooltip();
 
-            // Hover states on the static widgets
-            $( "#dialog-link, #icons li" ).hover(
-                function() {
-                    $( this ).addClass( "ui-state-hover" );
-                },
-                function() {
-                    $( this ).removeClass( "ui-state-hover" );
-                }
-            );
-            
-            $('.chk_food').change(function(){ toggle_resources(this, 'fd') });
-            $('.chk_estrat').change(function(){ toggle_resources(this, 'es') });
-            $('.chk_mstrat').change(function(){ toggle_resources(this, 'ms') });
-            $('.chk_alux').change(function(){ toggle_resources(this, 'al') });
-            $('.chk_clux').change(function(){ toggle_resources(this, 'cl') });
-            $('.chk_hill').change(function(){ toggle_hills(this) });
-            $('.chk_forest').change(function(){ toggle_trees(this, 'ft') });
-            $('.chk_jungle').change(function(){ toggle_trees(this, 'jl') });
-            
-            $( ".info_accordion" ).accordion({
-                active: false,
-                collapsible: true,
-            });
-            
-            // initialize tab0 accordion to have same size as map
-            $( ".info_accordion" ).each(function (index) {
-                var $this = $(this);
-                var w = $("table", $this.parent()).width();
-                $this.width(w);
-                $('div', $this).width(w-50.5);
-                $('div', $this).css('height','');
-            });
-            
-            var c0_alloc = $(".c0");
-            if (c0_alloc.length > 0) {
-                alloc_found = 1;
+                // Hover states on the static widgets
+                $( "#dialog-link, #icons li" ).hover(
+                    function() {
+                        $( this ).addClass( "ui-state-hover" );
+                    },
+                    function() {
+                        $( this ).removeClass( "ui-state-hover" );
+                    }
+                );
                 
-                var p = $('<p></p>');
-                var to = $('<label><input type="checkbox" class="chk_overlay" checked/>Empire Overlay</label>');
-                $('div', '.info_accordion').append(p);
-                p.append(to);
-                $('.chk_overlay').change(function(){ toggleAllocVis() });
-            }
+                $('.chk_food').change(function(){ toggle_resources(this, 'fd') });
+                $('.chk_estrat').change(function(){ toggle_resources(this, 'es') });
+                $('.chk_mstrat').change(function(){ toggle_resources(this, 'ms') });
+                $('.chk_alux').change(function(){ toggle_resources(this, 'al') });
+                $('.chk_clux').change(function(){ toggle_resources(this, 'cl') });
+                $('.chk_hill').change(function(){ toggle_hills(this) });
+                $('.chk_forest').change(function(){ toggle_trees(this, 'ft') });
+                $('.chk_jungle').change(function(){ toggle_trees(this, 'jl') });
+                
+                $( ".info_accordion" ).accordion({
+                    active: false,
+                    collapsible: true,
+                });
+                
+                // initialize tab0 accordion to have same size as map
+                $( ".info_accordion" ).each(function (index) {
+                    var $this = $(this);
+                    var w = $("table", $this.parent()).width();
+                    $this.width(w);
+                    $('div', $this).width(w-50.5);
+                    $('div', $this).css('height','');
+                });
+                
+                var c0_alloc = $(".c0");
+                if (c0_alloc.length > 0) {
+                    alloc_found = 1;
+                    
+                    var p = $('<p></p>');
+                    var to = $('<label><input type="checkbox" class="chk_overlay" checked/>Empire Overlay</label>');
+                    $('div', '.info_accordion').append(p);
+                    p.append(to);
+                    $('.chk_overlay').change(function(){ toggleAllocVis() });
+                    
+                    $(".lined").linedtextarea(
+                        {selectedLine: 1}
+                    );
+                }
+            });
         });
-    });
+    }
+    else {
+        var tabs = document.getElementById('tabs'); tabs.style.display = 'none'; 
+        document.body.insertAdjacentHTML( 'afterbegin', "<h1>The include files are missing! Don't forget to forget to upload the i/ and debug/ directories to the same directory as this .html file!</h1>" );
+    }
 </script>
 </body>
 </html>

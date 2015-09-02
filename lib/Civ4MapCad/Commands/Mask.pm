@@ -720,9 +720,11 @@ sub grow_mask_by_bfc {
     
     my $result_name = $pparams->get_result_name();
     my $threshold = $pparams->get_named('threshold');
+    my $wrapX = $pparams->get_named('wrapX');
+    my $wrapY = $pparams->get_named('wrapY');
     my ($mask, $amount) = $pparams->get_required();
     
-    my $grown = $mask->grow_bfc($threshold);
+    my $grown = $mask->grow_bfc($threshold, $wrapX, $wrapY);
     $state->set_variable($result_name, 'mask', $grown);
     
     return 1;

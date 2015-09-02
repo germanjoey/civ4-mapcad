@@ -135,7 +135,6 @@ sub initialize {
     my $width = $self->get_width();
     my $height = $self->get_height();
     
-    
     $self->{'map'}->mark_freshwater();
     $self->{'map'}->mark_freshwater();
     $self->{'map'}->mark_continents();
@@ -669,7 +668,7 @@ sub allocate {
     # each player will settle so we can use that in a contention estimate
     foreach my $it (1..$tuning_iterations) {
         $self->reset_resources() if $it > 1;
-        warn "starting tuning iteration $it\n";
+        print "        starting tuning iteration $it.\n";
         
         # iterating to turn 220 is a bit arbitrary here; the idea is to let it run until we
         # pretty much run out of tiles to get a good idea what is whose
@@ -678,13 +677,14 @@ sub allocate {
         $self->update_alloc('estimated_allocation', $tuning_iterations, $ownership, 0);
     }
     
+    print "\n";
     $self->finalize_alloc('estimated_allocation');
     $self->set_contention_estimate();
         
     # now here's the real deal
     foreach my $it (1..$iterations) {
         $self->reset_resources();
-        warn "starting actual iteration $it\n";
+        print "        starting actual iteration $it.\n";
         my $ownership = $self->allocate_single($it, $to_turn, 1);
         
         foreach my $civ (keys %{ $self->{'civs'} }) {
@@ -712,8 +712,9 @@ sub allocate {
 }
 
 # our single MC step, which is itself a big stochastic process to compute a probability each player will settle a
-# particular tile. i believe this is actually a markov chain with order m, if anyone cares, which is probably not
-# because each settling probability only depends the last m cities
+# particular tile. so, this is actually a set of w*h markov chains that we're simulating in parallel. interestingly,
+# we could consider each individual run as a markov-chain of order m for determining the shape of the civ's borders,
+# if anyone cares, which is probably not, because each settling probability only depends the last m cities
 sub allocate_single {
     my ($self, $it, $to_turn, $consider_estimate) = @_;
     
