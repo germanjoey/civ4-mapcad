@@ -1,6 +1,6 @@
 ## THE RETURN TO BANANA HELL
 
-We're back... or, should we say, we've never really left - because the banana brats have circled around you now and are still clamouring for their map. From what you can tell, they like their banana, "yay," but insist that this be a "real" game with a "real capital BFC." I mean, gimmie a break, right?
+We're back... or, should we say, we've never really left - because the banana brats have circled around you now and are clamouring for their map lounder than ever. From what you can tell, they like their banana, "yay," but insist that this be a "real" game with a "real capital BFC." I mean, gimmie a break, right?
 
 <p align="center">
     <img src="t3/dancing.gif" alt=""/> <img src="t3/dancing.gif"  alt=""/> <img src="t3/dancing.gif"  alt=""/> <img src="t3/dancing.gif"  alt=""/> <img src="t3/dancing.gif"  alt=""/> <img src="t3/dancing.gif"  alt=""/> <img src="t3/dancing.gif"  alt=""/> <img src="t3/dancing.gif"  alt=""/>
@@ -159,16 +159,12 @@ Anyways, we don't need that now because we're totally home stretch; we just need
     
     debug_group $banana_bunch
     export_sims $banana_bunch
-    
-    
-    
+     
 And that's it, we're done!!!! Here's our monster, the perfect toroidal banana nightmare. I put this script at [tutorials/t4/bunch.civ4mc](t4/bunch.civ4mc), if you want to look at it. Note that setting player info and the game settings are pretty easy.
 
 ![tutorial4-i5](t4/i5.png)
 
 I started by sizing the main group to 60 by 60, and spaced out the bananas 11 by 11, but then quickly realized that was way too spacey. (and way too big to post a screenshot of in this tutorial page) Because of the toroidal wrap, we could bring in everything a lot closer. Now it's the perfect size, I think - way, way too small to be acutally playable by normal people, but perfect for these goofballs, considering that they'll probably abandon the game after 40-50 turns anyways. At least this way they'll get some action! ![img-lol](t4/lol.gif)
-
-
 
 ## Lord Almighty, we are free at last...
 

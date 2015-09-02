@@ -328,13 +328,18 @@ sub set_tile {
     $self->{'map'}{'Tiles'}[$x][$y]->set_tile($terrain);
 }
 
+sub clear_tile {
+    my ($self, $x, $y, $terrain) = @_;
+    $self->{'map'}{'Tiles'}[$x][$y]->default($x, $y);
+}
+
 sub update_tile {
     my ($self, $x, $y, $terrain, $allowed) = @_;
     $self->{'map'}{'Tiles'}[$x][$y]->update_tile($terrain, $allowed);
 }
 
 sub apply_mask {
-    my ($self, $mask, $weight, $mask_offsetX, $mask_offsetY, $overwrite, $allowed) = @_;
+    my ($self, $mask, $weight, $mask_offsetX, $mask_offsetY, $overwrite, $allowed, $clear_matched) = @_;
     
     for my $x (0 .. $mask->get_width()-1) {
         for my $y (0 .. $mask->get_height()-1) {
@@ -348,6 +353,9 @@ sub apply_mask {
             if ($overwrite) {
                 $self->set_tile($tx, $ty, $terrain);
             }
+            elsif ($clear_matched) {
+                $self->clear_tile($tx, $ty);
+            }
             else {
                 $self->update_tile($tx, $ty, $terrain, $allowed);
             }
@@ -358,7 +366,7 @@ sub apply_mask {
 }
 
 sub apply_weight {
-    my ($self, $weight, $exact) = @_;
+    my ($self, $weight, $exact, $post_match_threshold) = @_;
     
     my $mask = Civ4MapCad::Object::Mask->new_blank($self->get_width(), $self->get_height());
     
@@ -367,7 +375,8 @@ sub apply_weight {
             my $tile = $self->{'map'}{'Tiles'}[$x][$y];
             
             my ($value) = $weight->evaluate_inverse($tile, $exact);
-            $mask->{'canvas'}[$x][$y] = (defined $value) ? $value : 0.0;
+            $mask->{'canvas'}[$x][$y] = (defined $value) ? max($post_match_threshold, $value) : 0.0;
+            
         }
     }
     

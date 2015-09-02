@@ -51,8 +51,7 @@ my $evaluate_weight_inverse_help_text = qq[
    Evaluates the inverse result of a weight table with an terrain in order to get the corresponding value, e.g. 
    as if this terrain were at the coordinates of a layer tile. 'evaluate_weight_inverse' is only intended to be
    a debugging command; please see the Mask-related commands, e.g. 'generate_layer_from_mask', 'modify_layer_from_mask',
-   for actually using weights to generate/modify tiles. If '--exact_match' is set, then all fields of the terrain
-   must match all fields of the tile (except rivers), and vice versa.
+   for actually using weights to generate/modify tiles. 
 ];
 sub evaluate_weight_inverse {
     my ($state, @params) = @_;
@@ -63,6 +62,9 @@ sub evaluate_weight_inverse {
         'help_text' => $evaluate_weight_inverse_help_text,
         'optional' => {
             'exact_match' => 'false'
+        },
+        'optional_descriptions' => {
+            'exact_match' => 'Require exact matches from tiles to terrains.'
         }
     });
     return -1 if $pparams->has_error;
@@ -78,17 +80,17 @@ sub evaluate_weight_inverse {
     
     my @full;
     if (defined($value)) {
-        $state->list( $value );
+        $state->list( 'Matched, and evaluated to: ' . $value );
     }
     else {
-        $state->list( 'Evaluated to nothing.' );
+        $state->list( 'Did not match.' );
     }
     
     return 1;
 }
 
 my $show_weights_help_text = qq[
-    Shows the definition for a weight. The optional 'flatten' arguments determines whether nested weights are expanded or not. (off by default)
+    Shows the definition for a weight in the console.
 ];
 sub show_weights {
     my ($state, @params) = @_;
@@ -99,6 +101,9 @@ sub show_weights {
         'help_text' => $show_weights_help_text,
         'optional' => {
             'flatten' => 'false'
+        },
+        'optional_descriptions' => {
+            'flatten' => 'Determines whether nested weights are expanded or not.'
         }
     });
     return -1 if $pparams->has_error;
@@ -121,7 +126,7 @@ sub show_weights {
 }
 
 my $debug_weight_help_text = qq[
-    Shows the definition for a weight. The optional 'flatten' arguments determines whether nested weights are expanded or not. (off by default)
+    Shows the definition for a weight in the console.
 ];
 sub debug_weight {
     my ($state, @params) = @_;
@@ -133,6 +138,10 @@ sub debug_weight {
         'optional' => {
             'flatten' => 'false',
             'add_to_existing' => 'false'
+        },
+        'optional_descriptions' => {
+            'flatten' => 'Determines whether nested weights are expanded or not.',
+            'add_to_existing' => 'If used, the weight definition will be appended to the most recent debug window as a new tab.'
         }
     });
     return -1 if $pparams->has_error;
@@ -213,8 +222,7 @@ sub debug_mask_in_console {
 }
 
 my $debug_mask_help_text = qq[
-    Displays a mask into the debug.html debugging window. Mask values closer to zero will appear blue, while those closer to 1 will appear red. If 'add_to_existing'
-    is specified, the debug will appear as a new tab in the existing debug.html.
+    Displays a mask into the debug.html debugging window as a visual grid. Mask values closer to zero will appear blue, while those closer to 1 will appear red. 
 ];
 sub debug_mask {
     my ($state, @params) = @_;
@@ -225,6 +233,9 @@ sub debug_mask {
         'help_text' => $debug_mask_help_text,
         'optional' => {
             'add_to_existing' => 'false'
+        },
+        'optional_descriptions' => {
+            'add_to_existing' => 'If used, the mask visualization will be appended to the most recent debug window as a new tab.'
         }
     });
     return -1 if $pparams->has_error;
@@ -274,7 +285,7 @@ sub debug_mask {
 }
 
 my $debug_group_help_text = qq[
-    Displays a group in the debug.html debugging window. Each layer will appear as its own tab. If 'add_to_existing' is specified, the debug window will add additional tabs to the existing debug.html. 
+    Displays a group in the debug.html debugging window. Each layer will appear as its own tab.
 ];
 sub debug_group {
     my ($state, @params) = @_;
@@ -286,6 +297,10 @@ sub debug_group {
         'optional' => {
             'add_to_existing' => 'false',
             'alloc_file' => ''
+        },
+        'optional_descriptions' => {
+            'alloc_file' => "Used by report_balance and balance.pl; if specified, this command will use the alloc file to generate the empire overlay visualization. You probably shouldn't this on your own.",
+            'add_to_existing' => 'If used, the group visualization will be appended to the most recent debug window as a set of new tabs.'
         }
     });
     return -1 if $pparams->has_error;
@@ -358,7 +373,7 @@ sub debug_group {
 }
 
 my $debug_layer_help_text = qq[
-    Displays a single layer in the debug.html debugging window. If 'add_to_existing' is specified, the debug window will add additional tabs to the existing debug.html.
+    Displays a single layer in the debug.html debugging window.
 ];
 sub debug_layer {
     my ($state, @params) = @_;
@@ -369,6 +384,9 @@ sub debug_layer {
         'help_text' => $debug_layer_help_text,
         'optional' => {
             'add_to_existing' => 'false',
+        },
+        'optional_descriptions' => {
+            'add_to_existing' => 'If used, the layer visualization will be appended to the most recent debug window as a set of new tab.'
         }
     });
     return -1 if $pparams->has_error;

@@ -12,10 +12,10 @@ use Civ4MapCad::Object::Weight;
 use Config::General;
 
 my $load_terrain_help_text = qq[
-    The 'load_terrain' command imports terrain definitions (in the same format as a CivBeyondSwordWBSave) into
-    as objects usable in Weight tables, that can then subsequently be used with Masks to actually create tiles.
-    Please see def/base_terrain.cfg for an example terrain definition file, and the 'import_weight_table_from_file',
-    'evaluate_weight', and 'generate_layer_from_mask' commands to better understand how terrain works with Weights and Masks.
+    Imports terrain definitions from a config file into terrain objects usable in Weight tables. Please see
+    def/base_terrain.cfg for an example terrain definition file, and its extension def/base_terrain.civ4mc.
+    Most likely, you won't ever have to use this unless you're working on a new mod as all terrain should be
+    loaded which this tool starts up.
 ];
 sub load_terrain {
     my ($state, @params) = @_;
@@ -64,10 +64,9 @@ my $new_weight_table_help_text = qq[
     new_weight_table >= float => result, [>= float => result,] => %weightname
 
   Description:
-  The 'new_weight_table' command creates a new Weight Table on the command
-  line. It's really only suited for short and simple tables with just a couple
-  choices.  For anything more complex than that, please see the
-  'import_weight_table_from_file' command.
+  Creates a new weight table, inline. This is usuable from the command line but
+  it is more likely you'll use it from a script. For very complex weight
+  tables, please see the 'import_weight_table_from_file' command.
 ];
 sub new_weight_table {
     my ($state, @params) = @_;
@@ -106,13 +105,10 @@ sub new_weight_table {
 }
 
 my $import_weight_table_from_file_help_text = qq[
-  The 'import_weight_table_from_file' command creates a new Weight Table from a definition described in
-  a file. In short, it follows a format of "operator threshold => result". The result can be either be a
-  terrain or another already-existing Weight Table, the threshold should be a floating point number,
-  and the operator should be either '==' or '>='. See the 'evaluate_weight' command for a description
-  of how Weights Tables are evaluated, 'generate_layer_from_mask' for how Weights Tables are used to
-  generate actual tiles with Masks, or the 'Masks and Filters' section of the html documentation for
-  more information on Weight Tables in general.
+    Creates a new Weight Table from a definition described in a file. In short, it follows a format of
+    "operator threshold => result". The result can be either be a terrain or another already-existing
+    Weight Table, the threshold should be a floating point number, and the operator should be either
+    '==' or '>='.
 ];
 sub import_weight_table_from_file {
     my ($state, @params) = @_;

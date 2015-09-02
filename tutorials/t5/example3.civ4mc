@@ -5,13 +5,13 @@ increase_layer_priority $banana_bunch.island0
 
 # the --autocrop feature is a bit buggy right now; pay close attention to your rotation because you still might need to do a bit of extra cropping!
 rotate_layer $banana_bunch.island0 -10 --autocrop
-list_layers $banana_bunch
 crop_layer $banana_bunch.island0 4 25 15 41
-move_layer_by $banana_bunch.island0 -3 -23
+move_layer_by $banana_bunch.island0 5 27
 crop_group $banana_bunch 0 0 44 17
 flatten_group $banana_bunch --rename_final_layer
 
-# beautiful the rotation a bit
-set_tile $banana_bunch.banana_bunch 2 11 grass
-set_tile $banana_bunch.banana_bunch 3 17 coast
-debug_group $banana_bunch --add_to_existing
+# beautify the rotation a bit
+#set_tile $banana_bunch.banana_bunch 2 11 grass
+#set_tile $banana_bunch.banana_bunch 3 17 coast
+list_layers $banana_bunch
+debug_group $banana_bunch 

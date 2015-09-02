@@ -8,16 +8,13 @@ use IO::String;
 use Symbol;
 
 use Config::General;
-use Civ4MapCad::State;
+use Civ4MapCad;
 
 # THIS SHOULD BE CALLED FROM MAIN "civ4 mapcad" directory"
 
 our %config = Config::General->new('def/config.cfg')->getall();
 
-our $state = Civ4MapCad::State->new();
-$config{'max_players'} = 0;
-$config{'state'} = $state;
-
+our $state = Civ4MapCad->new();
 $state->process_command('run_script "def/init.civ4mc"');
 $state->clear_log();
 
@@ -90,10 +87,35 @@ foreach my $i (0..$#commands) {
             if ($line =~ /^param/) {
                 print $doc "\n      $line";
             }
-            elsif (($line =~ /^Flag/i) or ($line =~ /^Speci/i)) {
-                print $doc "\n" unless $already_specified == 1;
-                print $doc "\n    $line\n";
-                $already_specified = 1;
+            elsif ($line =~ /^Flag/i) {
+                print $doc "\n";
+                print $doc "\n    $line ";
+                print $doc shift @lines;
+                print $doc " ";
+                print $doc shift @lines;
+                print $doc "\n    ";
+                
+                while (1) {
+                    my $line = shift @lines;
+                    
+                    if ($line =~ /^Description/i) {
+                        unshift @lines, $line;
+                        last;
+                    }
+                    
+                    if ($line =~ /^\-\-/) {
+                        print $doc "\n    ";
+                    }
+                    
+                    print $doc $line;
+                    print $doc " ";
+                }
+            }
+
+            elsif ($line =~ /^Speci/i) {
+                print $doc "\n";
+                print $doc "\n    $line ";
+                print $doc shift @lines;
             }
             else {
                 if ($already_specified) {

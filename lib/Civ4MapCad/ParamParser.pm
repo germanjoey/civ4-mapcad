@@ -3,8 +3,9 @@ package Civ4MapCad::ParamParser;
 use strict;
 use warnings;
 
+use List::Util qw(min max);
 use Getopt::Long qw(GetOptionsFromArray :config pass_through);
-use List::Util qw(min);
+use Civ4MapCad::Util qw(wrap_text);
 
 # processes parameters to a command into something the commands can actually work with
 # $raw_params is basically whatever came in on the command line after the command name
@@ -190,29 +191,29 @@ sub _report_calling_format {
         }
     }
     
-    my @optional_list;
+    my @optional_desc;
     my $optional = $param_spec->{'optional'};
-    foreach my $opt (keys %$optional) {
+    foreach my $opt (sort keys %$optional) {
         next if $opt eq 'help';
     
         if ($optional->{$opt} =~ /^(?:true|false)$/) {
-            push @optional_list, "--$opt";
+            push @optional_desc, wrap_text("--$opt: optional; defaults to false.  " . $param_spec->{'optional_descriptions'}{$opt}, 4, 2) . "\n";
         }
         elsif ($optional->{$opt} =~ /\-?\d+\.\d+/) {
-            push @optional_list, "--$opt $optional->{$opt}";
+            push @optional_desc, wrap_text("--$opt float: defaults to $optional->{$opt}.  " . $param_spec->{'optional_descriptions'}{$opt}, 4, 2) . "\n";
         }
         elsif ($optional->{$opt} =~ /\-?\d+/) {
-            push @optional_list, "--$opt $optional->{$opt}";
+            push @optional_desc, wrap_text("--$opt int: defaults to $optional->{$opt}.  " . $param_spec->{'optional_descriptions'}{$opt}, 4, 2) . "\n";
         }
         else {
-            push @optional_list, qq[--$opt "$optional->{$opt}"];
+            push @optional_desc, wrap_text(qq[--$opt "string": defaults to "$optional->{$opt}".  ] . $param_spec->{'optional_descriptions'}{$opt}, 4, 2) . "\n";
         }
     }
     
     my $result = '';
     if (exists $param_spec->{'has_result'}) {
         if ($param_spec->{'has_result'} eq 'layer') {
-            $result = " => \$groupname.\$layername";
+            $result = " => \$groupname.layername";
         }
         else {
             $result = " => $prefix{$param_spec->{'has_result'}}$param_spec->{'has_result'}name";
@@ -223,9 +224,9 @@ sub _report_calling_format {
     $shape = " --shape_param1 value1 --shape_param2 value2" if exists $param_spec->{'has_shape_params'};
     
     my $optional_str = '';
-    $optional_str = " [ @optional_list ]" if @optional_list > 0;
+    $optional_str = " [ --options ]" if @optional_desc > 0;
     
-    my @format = ("$command_name @required_list$optional_str$shape$result");
+    my @format = ("$command_name @required_list$optional_str$shape$result\n");
     
     if ((@required_list > 0) and exists($param_spec->{'required_descriptions'})) {
         foreach my $i (1 .. @{ $param_spec->{'required_descriptions'} }) {
@@ -234,20 +235,23 @@ sub _report_calling_format {
             push @format, "  param $i$p: $desc";
             
             if ($p eq '+') {
-                push @format, "  NOTE: this last parameter is expected to be a list.";
+                push @format, "  NOTE: this last parameter is expected to be a list of many.";
             }
         }
     }
     
-    if (@optional_list > 0) {
-        push @format, "\n    Flag arguments (e.g. --thesethings) are always optional. The";
-        push @format, "  value after the flag is the default value; flags without a ";
-        push @format, "  value are considered true/false, and default to false.";
+    if ($param_spec->{'allow_implied_result'}) {
+        push @format, "\n  Specifying a result for this command is optional;";
+        push @format, "if not specified, the original $param_spec->{'has_result'} will be overwritten.";
     }
     
-    if ($param_spec->{'allow_implied_result'}) {
-        push @format, "\n    Specifying a result is optional; if not specified, the original";
-        push @format, "  $param_spec->{'has_result'} will be overwritten.";
+    if (@optional_desc > 0) {
+        my $num = @optional_desc + 0;
+        push @format, "\n  Flag parameters (i.e. --thesethings) specify some special/alternate";
+        push @format, "behaivor of the command and are always optional.";
+        push @format, "This command has $num possible optional parameters:\n";
+        push @format, @optional_desc;
+        $format[-1] =~ s/\n$//;
     }
     
     return @format;

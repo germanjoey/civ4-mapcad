@@ -255,6 +255,7 @@ sub _process_command {
                 return 1;
             }
         
+            $params[0] =~ s/\"//g;
             @com_list = grep { $_ =~ /$params[0]/ } @com_list;
         
             if (@com_list == 0) {
@@ -265,7 +266,7 @@ sub _process_command {
         
         my $com = join ("\n    ", @com_list);
         print qq[\n  Available commands are:\n\n    $com\n\n];
-        print qq[  You can filter this list with a phrase, e.g. "help weight" to show all\n  commands with "weight" in their name.\n\n] if @params == 0;
+        print qq[  You can filter this list with a phrase, e.g. "help mask" to show all\n  commands with "mask" in their name.\n\n] if @params == 0;
         print qq[  For more info about a specific command, type its name plus --help,\n  e.g. "evaluate_weight --help"\n\n];
         
         return 1;
@@ -668,8 +669,9 @@ sub report_error {
     $self->buffer_bar();
     
     $msg =~ s/\n//g;
-    
     $Text::Wrap::columns = 76;
+    $Text::Wrap::unexpand = 0;
+    
     print "\n";
     print wrap("", "  ", "** ERROR occurred during command:");
     print "\n\n";
@@ -689,8 +691,8 @@ sub report_warning {
     $self->buffer_bar();
     
     $msg =~ s/\n//g;
-    
     $Text::Wrap::columns = 76;
+    $Text::Wrap::unexpand = 0;
     print "\n";
         
     if ($dont_print_line) {
@@ -719,6 +721,7 @@ sub report_message {
     
     $Text::Wrap::columns = 76;
     $Text::Wrap::separator="\n  ";
+    $Text::Wrap::unexpand = 0;
     
     my @parts = split "<BREAK>", $msg;
     

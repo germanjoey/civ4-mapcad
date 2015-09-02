@@ -5,11 +5,22 @@ use warnings;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(write_block_data deepcopy write_config slurp);
+our @EXPORT_OK = qw(write_block_data deepcopy write_config slurp wrap_text);
 
 use Data::Dumper;
 use Config::General qw(SaveConfig);
 use Scalar::Util qw(weaken);
+use Text::Wrap qw(wrap);
+
+sub wrap_text {
+    my ($text, $initial, $indent) = @_;
+
+    $Text::Wrap::columns = 76;
+    $Text::Wrap::unexpand = 0;
+    
+    my $lines = wrap(' ' x $indent, ' ' x ($initial + $indent), $text);
+    return $lines;
+}
 
 sub write_block_data {
     my ($obj, $fh, $indent, $name1, $name2) = @_;

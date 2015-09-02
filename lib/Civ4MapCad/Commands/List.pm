@@ -20,7 +20,8 @@ my $list_shapes_help_text = qq[
     list_shapes search_term
 
   Description:
-  The search_term is optional; if not supplied, all shapes will be listed.
+  The search_term is optional and not quoted; if not supplied, all live shapes
+  will be listed.
 ];
 sub list_shapes {
     my ($state, @params) = @_;
@@ -34,6 +35,7 @@ sub list_shapes {
     
     my @shape_names = sort keys %{$state->{'shape'}};
     if (@params == 1) {
+        $params[0] =~ s/\"//g;
         @shape_names = grep { $_ =~ /\Q$params[0]\E/ } @shape_names;
     }
     elsif (@params > 0) {
@@ -74,7 +76,8 @@ my $list_groups_help_text = qq[
     list_groups search_term
 
   Description:
-  The search_term is optional; if not supplied, all groups will be listed.
+  The search_term is optional and not quoted; if not supplied, all live groups
+  will be listed.
 ];
 sub list_groups {
     my ($state, @params) = @_;
@@ -88,6 +91,7 @@ sub list_groups {
     
     my @group_names = sort keys %{$state->{'group'}};
     if (@params == 1) {
+        $params[0] =~ s/\"//g;
         @group_names = grep { $_ =~ /\Q$params[0]\E/ } @group_names;
     }
     elsif (@params > 0) {
@@ -167,7 +171,8 @@ my $list_masks_help_text = qq[
     list_masks search_term
 
   Description:
-  The search_term is optional; if not supplied, all masks will be listed.
+  The search_term is optional and not quoted; if not supplied, all live masks
+  will be listed.
 ];
 sub list_masks {
     my ($state, @params) = @_;
@@ -181,6 +186,7 @@ sub list_masks {
     
     my @mask_names = sort keys %{$state->{'mask'}};
     if (@params == 1) {
+        $params[0] =~ s/\"//g;
         @mask_names = grep { $_ =~ /\Q$params[0]\E/ } @mask_names;
     }
     elsif (@params > 0) {
@@ -212,7 +218,8 @@ my $list_terrain_help_text = qq[
     list_terrain search_term
 
   Description:
-  The search_term is optional; if not supplied, all terrain will be listed.
+  The search_term is optional and not quoted; if not supplied, all terrain
+  will be listed.
 ];
 sub list_terrain {
     my ($state, @params) = @_;
@@ -226,6 +233,7 @@ sub list_terrain {
     
     my @terrain_names = sort keys %{$state->{'terrain'}};
     if (@params == 1) {
+        $params[0] =~ s/\"//g;
         @terrain_names = grep { $_ =~ /\Q$params[0]\E/ } @terrain_names;
         
         my @full;
@@ -277,7 +285,8 @@ my $list_weights_help_text = qq[
     list_weights search_term
 
   Description:
-  The search_term is optional; if not supplied, all weights will be listed.
+  The search_term is optional and not quoted; if not supplied, all live
+  weights will be listed.
 ];
 sub list_weights {
     my ($state, @params) = @_;
@@ -291,6 +300,7 @@ sub list_weights {
     
     my @weight_names = sort keys %{$state->{'weight'}};
     if (@params == 1) {
+        $params[0] =~ s/\"//g;
         @weight_names = grep { $_ =~ /\Q$params[0]\E/ } @weight_names;
     }
     elsif (@params > 0) {
@@ -327,7 +337,7 @@ sub list_weights {
 }   
     
 my $list_civs_help_text = qq[
-    Lists all allowed civs. Optionally, add a civ name via '--civ' to see all default data associated with that civ.
+    Lists all available civs (loaded from the XML) that can be used with the 'set_player_data' command, for the current mod.
 ];
 sub list_civs {
     my ($state, @params) = @_;
@@ -336,6 +346,9 @@ sub list_civs {
         'help_text' => $list_civs_help_text,
         'optional' => {
             'civ' => ''
+        },
+        'optional_descriptions' => {
+            'civ' => 'If specified, then instead of listing all possible civs, this command will show all config data for that particular civ.'
         }
     });
     return -1 if $pparams->has_error;
@@ -390,7 +403,7 @@ sub list_civs {
 }
 
 my $list_colors_help_text = qq[
-    List all valid color names. If '--color' is specified, only civs using that color by default will be listed.
+    Lists all available colors (loaded from the XML) that can be used with the 'set_player_data' command, for the current mod.
 ];
 sub list_colors {
     my ($state, @params) = @_;
@@ -399,6 +412,9 @@ sub list_colors {
         'help_text' => $list_colors_help_text,
         'optional' => {
             'color' => ''
+        },
+        'optional_descriptions' => {
+            'color' => 'If specified, then instead of listing all possible colors, this command will show all civs that use that color by default.'
         }
     });
     return -1 if $pparams->has_error;
@@ -429,7 +445,7 @@ sub list_colors {
 }
 
 my $list_techs_help_text = qq[
-    List all valid starting techs. If '--tech' is specified, civs having that tech as a starting tech will be listed instead.
+    Lists all valid starting techs (loaded from the XML) for the current mod.
 ];
 sub list_techs {
     my ($state, @params) = @_;
@@ -438,6 +454,9 @@ sub list_techs {
         'help_text' => $list_techs_help_text,
         'optional' => {
             'tech' => ''
+        },
+        'optional_descriptions' => {
+            'tech' => 'If specified, then instead of listing all possible techs, this command will show all civs that start with that particular tech.'
         }
     });
     return -1 if $pparams->has_error;
@@ -481,7 +500,7 @@ sub _find_other_techs_name {
 }
 
 my $list_leaders_help_text = qq[
-    List all valid leader names. If '--trait' is specified, only leaders having that trait will be listed.
+    List all valid leader names (loaded from the XML) that can be used with the 'set_player_data' command, for the current mod.
 ];
 sub list_leaders {
     my ($state, @params) = @_;
@@ -490,6 +509,9 @@ sub list_leaders {
         'help_text' => $list_leaders_help_text,
         'optional' => {
             'trait' => ''
+        },
+        'optional_descriptions' => {
+            'trait' => 'If specified, then instead of listing all possible leaders, this command will show all leaders that have that particular trait.'
         }
     });
     return -1 if $pparams->has_error;
@@ -539,7 +561,7 @@ sub list_leaders {
 }
 
 my $list_traits_help_text = qq[
-    List all valid traits. If '--trait' is specified, only leaders for that trait will be listed.
+    List all valid traits (loaded from the XML) that can be used with the 'set_player_data' command, for the current mod.
 ];
 sub list_traits {
     my ($state, @params) = @_;
@@ -548,6 +570,9 @@ sub list_traits {
         'help_text' => $list_traits_help_text,
         'optional' => {
             'trait' => ''
+        },
+        'optional_descriptions' => {
+            'trait' => 'If specified, then instead of listing all possible traits, this command will show all leaders that have that particular trait.'
         }
     });
     return -1 if $pparams->has_error;

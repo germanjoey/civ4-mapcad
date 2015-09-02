@@ -3,6 +3,10 @@ Civ4 Map Cad (Civ4MC) is a tool for making multiplayer maps for Civilization 4! 
 Features:
 * Powerful layer-based map manipulation tools that allow you to generate terrain out of arbitrary shapes and functions, cut, paste, and more!
 
+* Built-in documentation for every command, and a series of six illustrated, in-depth [tutorials](tutorials/), starting at the very basics and going all the way to rolling and balancing a map!
+
+* Generate a handy HTML view of your map! Mouse-hovering on each tile reports coordinates/resources/player info, making it very easy to collaborate with others and get lurker feedback from people browsing the forums at work! Example: [tutorial2](http://media.rhizzone.net/tutorials/tutorial2.html)
+
 * Highly sophisticated balance tools ensure that your map is fair for all players even for highly asymetrical maps!
 
 * Script-based design and a detailed HTML view of the maps allows for easy collaboration with fellow mapmakers and easy balance adjustments!

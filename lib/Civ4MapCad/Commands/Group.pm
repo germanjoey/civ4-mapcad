@@ -6,9 +6,9 @@ use warnings;
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(
-    export_sims export_group combine_groups flatten_group import_group new_group find_difference set_wrap
-    extract_starts_as_mask normalize_starts strip_nonsettlers strip_all_units add_scouts_to_settlers extract_starts
-    copy_group crop_group expand_group_canvas 
+    export_sims export_group combine_groups flatten_group import_group crop_group
+    new_group find_difference normalize_starts expand_group_canvas strip_all_units
+    strip_nonsettlers add_scouts_to_settlers extract_starts export_sims copy_group set_wrap
 );
 
 use Civ4MapCad::Util qw(deepcopy);
@@ -22,13 +22,17 @@ sub set_wrap {
     my ($state, @params) = @_;
     
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'help_text' => $set_wrap_help_text,
         'required' => ['group'],
         'required_descriptions' => ['group to set'],
         'optional' => {
             'nowrapX' => 'false',
             'nowrapY' => 'false'
         },
-        'help_text' => $set_wrap_help_text
+        'optional_descriptions' => {
+            'nowrapX' => 'If set, the group and all its layers will be set not to wrap in the X direction. If missing, the group and all its layers *will* be set to wrap in the X direction.',
+            'nowrapY' => 'If set, the group and all its layers will be set not to wrap in the Y direction. If missing, the group and all its layers *will* be set to wrap in the Y direction.'
+        }
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
@@ -44,7 +48,7 @@ sub set_wrap {
 }
 
 my $expand_group_canvas_help_text = qq[
-    Expands a group's dimensions.
+    Expands a group's dimensions by an extra amount.
 ];
 sub expand_group_canvas {
     my ($state, @params) = @_;
@@ -99,13 +103,13 @@ sub crop_group {
     my $copy = ($result_name eq $group->get_full_name()) ? $group : deepcopy($group);
     
     $copy->crop($left, $bottom, $right, $top);
-    
     $state->set_variable($result_name, 'group', $copy);
+    
     return 1;
 }
 
 my $new_group_help_text = qq[
-    Create a new group with a blank canvas with a size of width/height. The new group will have a single layer with the same name as the result group.
+    Create a new group with a blank canvas with a size of width/height. The game settings and wrap properties for this group will be set when any layer is first added to it.
 ];
 sub new_group {
     my ($state, @params) = @_;
@@ -128,7 +132,6 @@ sub new_group {
     return 1;
 }
 
-# import an existing wb save as a map object into the map object folder for this game
 my $import_group_help_text = qq[
     Create a new group by importing an existing worldbuilder file. The new group will have a single layer with the same name as the result group.
 ];
@@ -160,7 +163,7 @@ sub import_group {
 }
 
 my $copy_group_help_text = qq[
-    Copy one group into another.
+    Copy one group into duplicate with a different name.
 ];
 sub copy_group {
     my ($state, @params) = @_;
@@ -180,11 +183,12 @@ sub copy_group {
     my $copy = ($result_name eq $group->get_full_name()) ? $group : deepcopy($group);
     
     $state->set_variable($result_name, 'group', $copy);
+    return 1;
 }
 
 # TODO: allow transparent tile to be specified as an optional argument via a terrain
 my $flatten_group_help_text = qq[
-    Flattens a group by merging all layers down, starting with the highest priority. Tiles at the same coordinates in an 'upper' layer will overwrite ones on a 'lower' layer. Ocean tiles are counted as "transparent" in the upper layer. If you do not specify a result, the group will be overwritten. If the '--rename_final' flag is set, the final layer will be renamed to the same name as the group's name. Use the 'list_layers' command to see layer priorities.
+    Flattens a group by merging all layers down, starting with the highest priority. Tiles at the same coordinates in an 'upper' layer will overwrite ones on a 'lower' layer. Ocean tiles are counted as "transparent" in the upper layer. Use the 'list_layers' command to see layer priorities.
 ];
 sub flatten_group {
     my ($state, @params) = @_;
@@ -197,6 +201,9 @@ sub flatten_group {
         'help_text' => $flatten_group_help_text,
         'optional' => {
             'rename_final_layer' => 'false'
+        },
+        'optional_descriptions' => {
+            'rename_final_layer' => "If set, the final layer will be renamed to the same name as the group's name."
         }
     });
     return -1 if $pparams->has_error;
@@ -234,7 +241,7 @@ sub flatten_group {
 }
 
 my $combine_groups_help_text = qq[
-    Merges two groups A and B, into one; all layers in B will be placed under all layers in A. If a result is not specified, Group A will be overwritten.
+    Merges two groups A and B, into one; all layers in B will be placed under all layers in A. 
 ];
 sub combine_groups {
     my ($state, @params) = @_;
@@ -259,7 +266,7 @@ sub combine_groups {
 }
 
 my $export_group_help_text = qq[
-    Exports a flat version of the group as a CivBeyondSwordWBSave in addition to also doing so for each layer seperately.
+    Exports a flat version of the group as a CivBeyondSwordWBSave, in addition to also doing so for each layer seperately.
 ];
 sub export_group {
     my ($state, @params) = @_;
@@ -306,34 +313,9 @@ sub export_group {
     return 1;
 }
 
-# return a mask highlighting each start
-my $extract_starts_as_mask_help_text = qq[
-    Return a group of masks highlighting each start... not yet implemented.
-];
-sub extract_starts_as_mask {
-    my ($state, @params) = @_;
-    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
-        'required' => ['group'],
-        'required_descriptions' => ['group to extract from'],
-        'has_result' => 'mask',
-        'help_text' => $extract_starts_as_mask_help_text
-    });
-    return -1 if $pparams->has_error;
-    return 1 if $pparams->done;
-    
-    my ($group) = $pparams->get_required();
-    my $result_name = $pparams->get_result_name();
-    my $starts = $group->find_starts();
-    
-    # TODO: what do I really want to do here? we need some kind of "MaskGroup" object
-    # I think... something to think about after basic functionality is done.
-    die;
-    
-    return 1;
-}
-
 my $normalize_starts_help_text = qq[
     Reorganizes a group's settlers so that each one is tied to a unique start, useful if, say, you mirror a common BFC design for every player. This command modifies the group.
+    Note that this is always done automatically anyways when a group is exported.
 ];
 sub normalize_starts {
     my ($state, @params) = @_;
@@ -422,7 +404,7 @@ sub strip_nonsettlers {
 }
 
 my $extract_starts_help_text = qq[
-    The '\@bfc' mask is applied on each settler, and then that selected area is extracted as a new layer. If a result is not specified, this command modifies the group.
+    The '\@bfc' mask is applied on each settler, and then that selected area is extracted as a new layer. 
 ];
 sub extract_starts {
     my ($state, @params) = @_;
@@ -459,7 +441,7 @@ sub extract_starts {
 }
 
 my $export_sims_help_text = qq[
-    The '\@bfc' mask is applied on each settler, and then that selected area is extracted as a new layer. The group is then exported ala the 'export_group' command, with each layer being saved as its own CivBeyondSwordWBSave. This command does not modify the specified group.
+    The '\@bfc' mask is applied on each settler, and then that selected area is extracted as a new layer. The group is then exported ala the 'export_group' command, with each layer being saved as its own CivBeyondSwordWBSave. This command does not modify the  group.
 ];
 sub export_sims {
     my ($state, @params) = @_;
@@ -506,8 +488,8 @@ sub export_sims {
 }
 
 my $find_difference_help_text = qq[
-    Take positive difference between mapobj a and mapobj b to create a new mapobj c, such that merging c onto a creates b
-    ocean means "nothing", fallout over ocean means actual ocean. Basically, this is useful if you're creating a map in
+    Take a positive difference between mapobj a and mapobj b to create a new mapobj c, such that merging c onto a creates b
+    ocean means "nothing", and fallout over ocean means actual ocean. Basically, this is useful if you're creating a map in
     pieces and want to do hand-edits in the middle. That way, you can regenerate the map from scratch while still including
     your hand-edits. This command acts on two flat groups, so merge all layers first if you need to.
 ];

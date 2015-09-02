@@ -46,7 +46,7 @@ By default, grow_mask will increase its dimensions by 1 in every direction for e
 
 ## Example 3 - Messing with the land
 
-What if you wake up one day, feeling a bit bananish, and feel like messing with one of the players, altering their island slightly? Here's a way you can extract a single island, rotate it by 10 degrees, and then plop it back down, noone else the wiser. While a bit awkward for this map, it can be helpful if you want to mess with large landforms, like those produced from a Totestra mapscript.
+What if you wake up one day, feeling a bit bananish, and feel like messing with one of the players, altering their island slightly? Here's a way you can extract a single island, rotate it by 10 degrees, and then plop it back down, noone else the wiser. While a bit awkward for this map, it can be helpful if you want to mess with large landforms, like those produced from a Totestra mapscript or somesuch.
     
     run_script "tutorials/t4/bunch.civ4mc" --debug_result
     

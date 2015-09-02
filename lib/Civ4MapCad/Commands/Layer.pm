@@ -88,7 +88,7 @@ sub recenter {
 }
 
 my $move_layer_to_location_help_text = qq[
-    The specified layer is moved to location x,y within its group.
+    The specified layer is moved to location x,y within its group, referenced from the lower-right corner of the layer.
 ];
 sub move_layer_to_location {
     my ($state, @params) = @_;
@@ -107,7 +107,7 @@ sub move_layer_to_location {
 }
 
 my $move_layer_by_help_text = qq[
-    The specified layer is moved by offsetX, offsetY within its group.
+    The specified layer is moved by offsetX, offsetY within its group, referenced from the lower-right corner of the layer.
 ];
 sub move_layer_by {
     my ($state, @params) = @_;
@@ -194,7 +194,7 @@ sub decrease_layer_priority {
 
 # apply a mask to a layer, delete everything outside of it, then resize the layer
 my $crop_layer_help_text = qq[
-    This layer's dimensions are trimmed to left/bottom/right/top, from the nominal dimensions of 0 / 0 / width-1 / height-1, in reference to the layer.
+    This layer's dimensions are trimmed to left/bottom/right/top, from the nominal dimensions of 0 / 0 / width-1 / height-1, in reference to the layer. After the crop, the layer is then moved by -left, -bottom, so that tiles are essentially in the exact same place they started.
 ];
 sub crop_layer {
     my ($state, @params) = @_;
@@ -226,14 +226,14 @@ sub crop_layer {
     my $copy = ($result_name eq $layer->get_full_name()) ? $layer : deepcopy($layer);
     
     $copy->crop($left, $bottom, $right, $top);
-    $copy->move_by($left, $bottom);
+    $copy->move_by(-$left, -$bottom);
     $state->set_variable($result_name, 'layer', $copy);
         
     return 1;
 }
 
 my $flip_layer_lr_help_text = qq[
-    Flip a layer horizontally.
+    Flip a layer horizontally. Rivers' direction in the layer are also flipped to match the new orientation.
 ];
 sub flip_layer_lr {
     my ($state, @params) = @_;
@@ -258,7 +258,7 @@ sub flip_layer_lr {
 }
 
 my $flip_layer_tb_help_text = qq[
-    Flip a layer horizontally.
+    Flip a layer horizontally. Rivers' direction in the layer are also flipped to match the new orientation.
 ];
 sub flip_layer_tb {
     my ($state, @params) = @_;
@@ -283,7 +283,7 @@ sub flip_layer_tb {
 }
 
 my $copy_layer_from_group_help_text = qq[
-    Copy a layer from one group to another (or the same) group. If '--place_on_top' is set, then the copied layer is set to max priority in the new group.
+    Copy a layer from one group to another (or the same) group. 
 ];
 sub copy_layer_from_group {
     my ($state, @params) = @_;
@@ -295,6 +295,9 @@ sub copy_layer_from_group {
         'help_text' => $copy_layer_from_group_help_text,
         'optional' => {
             'place_on_top' => 'false'
+        },
+        'optional_descriptions' => {
+            'place_on_top' => 'If set, then the copied layer is set to top priority in the new group.'
         }
     });
     return -1 if $pparams->has_error;
@@ -438,6 +441,10 @@ sub rotate_layer {
         'optional' => {
             'iterations' => 1,
             'autocrop' => 'false'
+        },
+        'optional_descriptions' => {
+            'iterations' => 'Set to a higher value to rotate the object in this many small steps, which may give a different-looking result.',
+            'autocrop' => 'Rather than massively expanding/moving the layer to fit the actual tile rotation (e.g. both width and height would be doubled for a rotation of 180 degrees), that step is skipped. Dead space, including water, is trimmed away from the edges of the object.'
         }
     });
     return -1 if $pparams->has_error;

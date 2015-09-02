@@ -1,32 +1,42 @@
 ## You're beginning to feel a bit unbalanced...
 
-Ah, what a fine Monday morning! The sun is shining, the birds are chirping. Of in the distance, you see your good friend, Bill, a fellow Civ4 afficiando, walking toward you. You wave hello. "Mornin', Bill! Excited for the new game to start?"
+Ah, what a fine Monday morning! The sun is shining, the birds are chirping. Off in the distance, you see your good friend, Ray, a fellow Civ4 afficiando, walking toward you. You wave hello. "Mornin', Ray! Excited for the new game to start?"
 
-Bill slows to a halt. Instead of returning your wave, you see his face scrunge up for a stuttred moment in what you can only understand as bewildered disgust.
+Ray slows to a halt, and looks around nervously, as if in a panic. Instead of returning your wave, you see his face scrunge up for a stuttred moment in what you can only understand as bewildered disgust.
 
-"Uh... what the hell you do you mean, dude? You sent the map out over a week ago, and the map is just terrible, absolutely terrible dude. We can't understand why you're messing with us so bad. Bananas? What the hell is with the bananas?"
+"Uh... what the hell you do you mean, dude? You sent the map out over a week ago, and the damn thing is just terrible, absolutely terrible dude. We can't understand why you're messing with us so bad. Bananas? What the hell is with the all bananas?"
 
 You're taken aback... "Huh? What are you talking about? I haven't even rolled the map yet, much less sent it out. You just asked me to make it on Friday."
 
-"Uh, right, have you lost your mind? I asked for it Friday and you sent it out on Friday night at like 5am. We played through a blitz the next evening, excited to get started, and already we're not sure if we even want to continue with this disasterpiece. I mean, we already need a sub. Felipe had a huge fight with his wife on Sunday morning over it... she surprised him with what she was a nice treat, a plate of banana pancakes for breakfast in bed on his birthday, and he just couldn't help himself - he involuntarily puked all over them the moment they were under his nose. When he tried to explain it was because of a "video game", his wief was boxing his ears all the way to the bathroom."
+"Uh, right, and you sent it out on Friday night at like 5am. Have you been popping Ambien again?"
 
-"Uh, wha..."
+"Not that I'm aware of..."
 
-"It was all the bananas on your damn map, dude! What's with the damn bananas!??!"
+"We played through a blitz on Saturday, excited to get started, and we're already pretty sure that we don't want any more part of this disasterpiece. I mean, hell, we already need a sub. Bill had a huge fight with his wife on Sunday morning over it..."
 
-"I don't know what you're talking about, I didn't do anything with banan-"
+"What?!?"
+
+"Yeah dude, she surprised him with what she thought was a nice treat, a plate of banana pancakes for breakfast in bed on his birthday, and he just couldn't help himself - he involuntarily puked all over the tray the moment it was under his nose.
+
+You don't know how to respond... this is starting to make you feel nervous...
+
+"It was the bananas, dude! The goddamn bananas! When he tried to explain it was because of a "video game", his wife boxed his ears all the way to the bathroom and then made him eat the damn things anyways. He'll be out all week because of your damn banana map dude!"
+
+"I don't know what you're talking about, I don't know anything about banan-"
 
 "STOP!!! THEY WERE TOTALLY FREAKING EVERYWHERE!!!!"
 
 Time slows, and... in the distance...? you hear a voice whispering over to you, perhaps from over the horizon... i-is that Leonard Nimoy?  <i>hello darkness my old friend...</i> he says. <i>i've come to talk to you ag-</i>
 
-"-tMMM, nope, pretty sure I haven't rolled it yet."
+"-sMMM, nope, pretty sure I haven't rolled any map yet and I haven't even heard of bananas before in my whole life. But, I can't wait to get started, I can give you these so-called bananas if you want." You smile. :)
 
 [![Hello Darkness](t6/hello_darkness.jpg)](https://www.youtube.com/watch?v=CfpjPywX0W0)
 
-Bill tenses. He looks nervous for some reason. What's his problem? "Uh...... um, ok man," he says, "I'm not sure what your deal is, or this weird denial is all about, but I guess you're feeling bad about the map? Uh, its not a big deal. Maybe it was some weird experimental thing? I don't know. But let's try again. Roll and balance us, uh, a seven player Pangaea map. No funny stuff - we want some balance, sure, ok, but this  better look and feel like any ole standard Pangaea map. And it better not have a single. god. damn. banana. Anywhere in sight. So help me God dude..."
+Ray tenses. What's his problem? "Uh...... um, ok man," he says, "I'm not sure what your deal is, or this weird denial is all about, but I guess you're feeling bad about the map? Uh, its not a big deal. Maybe it was some weird experimental thing? I don't know. But sure, ok... let's try again. Roll and balance us, uh, a seven player Pangaea map. No funny stuff - we want some balance, sure, ok, but this  better look and feel like any ole standard Pangaea map. And it better not have a single. god. damn. banana. Anywhere in sight. So help me God dude..."
 
 And with that, he marches away a huff, nervously glancing over his shoulder until he clears the corner some yards away. I wonder what that was all about?
+
+## Getting Started
 
 So, you boot up Civ4, and you roll the stupid Pangaea map. Damn fascists, stifling your creativity. Blegh.
 
@@ -34,9 +44,9 @@ So, you boot up Civ4, and you roll the stupid Pangaea map. Damn fascists, stifli
 
 ![original start zoomed](t6/original_start2.png)
 
-God, this thing looks like a real mess. Huge swathes of ice, tundra, and desert, enormous foodless regions, massive unbalanced capitals, some players boxed in and others with huge amounts of land to settle. It's not very easy to balance either; tight tiles-per-player and long, contested borders make it very hard to predict whose land is whose.
+God, this thing looks like a real mess. Huge swathes of ice, tundra, and desert, enormous foodless regions, massive unbalanced capitals, some players boxed in and others with huge amounts of land to settle. It's not very easy to balance either; tight tiles-per-player (tighter maps are more delicate to balance because players will have fewer "rings" of cities and come into contact sooner) and long, contested borders that make it very hard to predict whose land is more likely whose.
 
-Well, pretty typical stuff, really.  Open worldbuilder -> "Save Worldbuilder file." At the same time, with the WB still up, you load up Civ4MC in another window, and you import the map:
+This is pretty typical stuff for a standard mapscript, really.  Open worldbuilder -> "Save Worldbuilder file." At the same time, with the WB still up, you load up Civ4MC in another window, and you import the map:
 
     import_group "tutorials/t6/t6.CivBeyondSwordWBSave" => $t6
     
@@ -52,19 +62,19 @@ So, that's it, right? You're all done, map is balanced? NO! You wish! ![shakehea
 
 ## Balancing a map
 
-That's right, this tool doesn't the balance a map at all! I once thought an automatic-balancer tool was a good idea, but eventually realized that there's so many different strategic aspects to balance and different ways the map could play out that the task is essentially impossible to automate except on very specific, very-mirrored maps. For example, simply balancing out tiles per player and resources isn't fair if one player has just one neighbor, through a chokepoint, and another has 4 long, contested borders. It's also very difficult to judge how players will actually settle. If someone's scout gets eaten by a bear on T10, they might not see that good site they were supposed to get for their second city until much later, and so then they might not get the second-ring city beyond it that had what was supposed to be their iron and ivory.
+That's right, this tool doesn't the balance a map at all! I once thought an automatic-balancer tool was what I wanted, but eventually realized that there's so many different strategic aspects to balance and different ways the map could play out that the task is essentially impossible to automate except on very specific, very-mirrored maps. Or, at the very least, any balancer I could conceptualize wouldn't actually do what I really wanted. For example, simply balancing out tiles per player and resources isn't fair if one player has just one neighbor, through a chokepoint, and another has 4 long, contested borders. It's also very difficult to judge how players will actually settle. If someone's scout gets eaten by a bear on T10, they might not see that good site they were supposed to get for their second city until much later, and so then they might not get the second-ring city beyond it that had what was supposed to be their iron and ivory.
 
-Thus, only a human judgement can truly judge here. Instead, the *balance_report* command simply tells you things about the map that help *you*, the mapmaker, determine whether or not your map is balanced! Things like:
+Thus, only a human judgement can truly judge the final product. Instead, the *balance_report* command simply tells you hard-to-count things about the map that help *you*, the mapmaker, determine whether or not your map is balanced! Things like:
 
-* Based on the land, which tiles will each player likely obtain before getting embroiled in war? What will the layout of the map look like?
+* Based on the land, which tiles will each player likely obtain before getting embroiled in war? What will the layout of the map look like depending on different early settling patterns for each player?
 * How many neighbors does each player have, and how tense will their borders be?
 * Does each player have equal access to strategic resources? What about luxuries? What is the likelihood that they'll screw themselves with a bad dotamap? Remember, resources placed near borders may not necessarily go towards the player they were "supposed" to go to!
 
-And, its important, I think, to take this stuff in consideration. Remember that these games last a very long time - anywhere from 7-8 months to over a year for a full game - and that we can't just go back to main menu and roll a new game, as if this were a single player session, if we're annoyed with this one. The only thing that keeps these games going is the duty and honor of all players involved, and so it is a terrible and very demotivating feeling to discover that a game was essentially lost on T0 simply due to the map after you've already spent many, many hours on a pitboss game, because all you've got to look forward to is many more months of misery. Suddenly, what was originally a fun competition becomes an unhappy chore. While some players can deal with this situation, many others will simply stop reporting... and then stop trying... and then semi-disappear... until finally the game needs a pause every other day, and may even go on permanent hiatus. What was one player's problem turns out to ruin the game for everybody. Others players, like myself (XD), will try harder, attempting to struggle against the impossible while getting increasingly more stressed and angry, until they finally start lashing out like a huge asshole. (see myself, RBPB25 ;p). And again, this can have a terrible effect on the game that other people may have been enjoying. Of course, players can abandon the game for other reasons, such as playing badly and losing a war, i.e. "IRL Issues", or even for legitimate IRL issues, but in general it seems to be easier to find a sub to provide hospice care for a dying civ for a couple weeks, for the former case, or to take over completely for a healthy civ, for the later, than it is to find someone willing to deal with managing a crummy civ for a long time. And besides, while there's nothing as a mapmaker you can do about those latter two cases, you can at least try to balance the map out so that the game feels fair from the beginning. And, of course, you can try to figure out this stuff by hand, although it can be a very mind-numbing and mistaken-prone process.
+It is important, I feel, to take this stuff in consideration. Remember that our multiplayer civ games last a very long time - anywhere from 7-8 months to over a year for a full game - and that we can't just go back to main menu and roll a new game, as if this were a single player session, if we're annoyed with this one. The only thing that keeps these games going is the duty and honor of all players involved, and so it is a terrible and very demotivating feeling to discover that a game was essentially lost on T0 simply due to the map after you've already spent many, many hours on a pitboss game. All you've got to look forward to is many more months of misery and many more hours down the drain. Suddenly, what was originally a fun competition becomes an unhappy chore. While some players can deal with this situation, many others will simply stop reporting... and then stop trying... and then semi-regularly disappear... until finally the game needs a pause every other day, and may even go on a permanent hiatus. What was one player's problem turns out to ruin the game for everybody. Others players, like myself (XD), will try harder, attempting to struggle against the impossible while getting increasingly more stressed and angry, until they finally start lashing out like a huge asshole. (e.g. see myself, RBPB25 ;p). And again, this can have a terrible effect on the game that other people may have been enjoying. Of course, players abandon the game for other reasons, such as playing badly and losing a war, i.e. "IRL Issues", or even for legitimate IRL issues, but in general it seems to be easier and less disruptive to find a sub to provide hospice care for a dying civ for a couple weeks, for the former case, or to take over completely for a healthy civ, for the later, than it is to find someone willing to deal with managing a crummy civ for a long time. And besides, while there's nothing as a mapmaker you can do about those latter two cases, you can at least try to balance the map out so that the game feels fair from the beginning. And, the tool hopes to help you do that, by automatically counting up stuff that would be a very mind-numbing and mistaken-prone process to by hand.
 
 "But Joey," you ask. "That's all well and good, but how can we know who gets how much of what, when, and how if the game hasn't actually been played yet?" Good question! The answer: We guess!
 
-*record-scratch*
+<b><i>record-scratch</i></b>
 
 No, I'm serious! We guess! We just try to guess really well. What we do is create a bunch of mini-AI bots and then have them settle the land according to how a human player might try to do it. If the land is really high quality, with lots of food, these bots will claim a lot of it; likewise, if the land is poor, they won't gain as much. We take note of what they settled, and then reset the map and make them do it again. We introduce a little bit of randomness into the algorithm, so that instead of always settling the "best" spot everytime, sometimes they'll settle the 2nd best site instead, so that we can also think about what will happen if players don't settle the way we expect. Once the second run is done, we... reset and do it again! And again. And then... we reset and make them do it again, and again and again and again! Hundreds of times! The more we iterations we do this, the more accurate our guess will be. 
 
@@ -76,9 +86,9 @@ Let's take a look at how the tool guessed our map would play out, based on the d
 
 Well, things looks pretty bad. First of all, the custom game roller has totally trolled us on player colors; gotta fix those first. Next, Players 4 and 5 are squashed with almost no land, and Player 3 has way too much. Player 3, starting in the top corner behind some desert, also has very little neighbor tension. Players 0, 1, and 2 should probably have a bit more/better land than the others, considering they're in the middle of it all, but really only player 2 looks ok. However, their spacing doesn't look too bad. So what's the deal here? A look at the food resource distrubtion is enlightening:
 
-![food](t6/upgrade_food.png)
+![food](t6/original_food.png.png)
 
-Indeed, players 0, 1, and 4 have almost no food! Player 0 and 1 are also a bit land-poor because much of their supposed-land is ice and tundra, which the balance reporter doesn't actually count. We should delete that. Player 6 isn't so great either. Player 4's capital in particular is terrible, with only a plains cow as "food." We'll need to give them a bit more to work with. The balance report tells us this explicitly:
+Indeed, players 0, 1, and 4 have almost no food! Player 0 and 1 are also a bit land-poor because much of their supposed-land is flatland ice, tundra, and desert, impossible-to-improve tiles that the reporter doesn't consider worth counting towards a player's total land. We should delete that junk. Player 6 isn't so great either. Player 4's capital in particular is terrible, with only a plains cow as "food." We'll need to give them a bit more to work with. The balance report tells us this explicitly:
 
     For Player 0 (GermanJoey):
         Expected number of strong/weak food resources:  1.74 /  1.60
@@ -104,7 +114,7 @@ Indeed, players 0, 1, and 4 have almost no food! Player 0 and 1 are also a bit l
         
 If, for example, a player gets a particular tile in 80% of simulation iterations, then we count that as 0.8 tiles for that player and 0.2 tiles for the other. Likewise, if that tile is a corn, then we count that as 0.8 food for the one player, and 0.2 food for the other.  Based on this, it looks like Player 3, Ramses, gets twice the land and 3x the food resources as his neighbor Asoka! Yikes! Considering their situation on the map, they should actually be about equal. In addition to the overlay view, the balance algorithm also generates a heatmap of the raw BFC-value per tile, which is a relative measure of "how good would a city planted on this tile be if we only consider the yields of the tiles?" and takes into consideration things like number of trees, number of rivers, available food, food in the first ring, number of bad tiles and number of very good tiles (using SevenSpirits' tile value system), etc. Later on, the algorithm will adjust this for strategic concerns, such has how far a city is from the capital, whether we have copper yet, etc. In this case, the bfc value heatmap looks very, very blue, indicating that the land quality is very poor overall:
 
-![original value](original_qual.png)
+![original value](t6/original_qual.png)
 [http://media.rhizzone.net/civ4mc/t6.bfc_value.html](http://media.rhizzone.net/civ4mc/t6.bfc_value.html)
 
 While this doesn't necessarily indicate a problem by itself (although I personally feel that lusher maps are more interesting because they offer players more choices), it is more difficult to balance a sparser map because small differences in land quality end up having a much bigger effect on how fast players snowball relative to each other. The difference between whether somehow has a pig in their second city while someone else has a plains sheep becomes huge when each player has only 2 food resources a piece in their whole empire!
@@ -231,19 +241,19 @@ Now, lets look at the rest of the file. The other two main things the balance ch
             
 Likewise, the reporter also checks strategic resources. For the most part, it simply goes down a checklist for each resource, but it also checks the "quality" of the player's copper and horse. If a player has to settle a foodless site for their strategic resources, they'll end up gimping themselves. In this case, player 2 and 3 have very poor access to their horse and copper because there's no freaking food nearby. We should move them a bit closer to a food source.
 
-For Player 3 (TXT_KEY_LEADER_RAMESSES):
-    Strategic access:
-        - Horse was found at a distance of 2 from capital; its best site at 18,24 has it in the
-          first ring, with a relative strategic quality score of 0.112
-        - Copper was found at a distance of 3 from capital; its best site at 17,24 has it in the
-          second ring, with a relative strategic quality score of 0.046
+    For Player 3 (TXT_KEY_LEADER_RAMESSES):
+        Strategic access:
+            - Horse was found at a distance of 2 from capital; its best site at 18,24 has it in the
+              first ring, with a relative strategic quality score of 0.112
+            - Copper was found at a distance of 3 from capital; its best site at 17,24 has it in the
+              second ring, with a relative strategic quality score of 0.046
 
-For Player 4 (TXT_KEY_LEADER_ASOKA):
-    Strategic access:
-        - Horse was found at a distance of 2 from capital; its best site at 18,24 has it in the
-          first ring, with a relative strategic quality score of 0.112
-        - Copper was found at a distance of 3 from capital; its best site at 17,24 has it in the
-          second ring, with a relative strategic quality score of 0.046
+    For Player 4 (TXT_KEY_LEADER_ASOKA):
+        Strategic access:
+            - Horse was found at a distance of 2 from capital; its best site at 18,24 has it in the
+              first ring, with a relative strategic quality score of 0.112
+            - Copper was found at a distance of 3 from capital; its best site at 17,24 has it in the
+              second ring, with a relative strategic quality score of 0.046
 
 And, so on, and so on. We can keep iterating and improving as much as we want to. However, always remember that **YOUR** judgement is what's important here. *balance_report* is only here to help you get a better feeling for the map and to count stuff up so that you don't have to squint at the map for hours counting stuff on your fingers. And, finally, remember not to overtune your map to the numbers too much, especially since there will be some small variation in the results from run to run due to the randomness of the algorithm. Obsessively trying to get numbers to land where you want them is not only very tedious, but can lead you to lose sight of the big pictures issues.
         

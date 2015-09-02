@@ -13,7 +13,7 @@ use XML::Simple qw(:strict);
 use Civ4MapCad::ParamParser;
 
 my $ls_help_text = qq[
-    List directory.
+    List directory. Like the unix command, except there's no corresponding 'cd'. Sorry.
 ];
 sub ls {
     my ($state, @params) = @_;
@@ -46,15 +46,11 @@ sub set_output_dir {
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['str'],
         'required_descriptions' => ['directory path'],
-        'help_text' => $set_output_dir_help_text,
-        'optional' => {
-            'delete_existing' => 'false'
-        }
+        'help_text' => $set_output_dir_help_text
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
     
-    my $delete_existing = $pparams->get_named('delete_existing');
     my ($directory) = $pparams->get_required();
     
     $state->{'config'}{'output_dir'} = $directory;
@@ -85,7 +81,7 @@ sub list_mods {
 }
 
 my $set_mod_help_text = qq[
-    'set_mod' sets the current mod to a.) reloads all xml data, b.) clears and reloads all terrain definitions, and c.) set the maximum number of players recognized by the savefile. All existing groups in memory will be converted to assume this mod's format and any newly created/imported groups will be automatically converted as well.
+    Sets the current mod, and thus a.) reloads all xml data, b.) clears and reloads all terrain definitions, and c.) set the maximum number of players recognized by the savefile. All existing groups in memory will be converted to assume this mod's format and any newly created/imported groups will be automatically converted as well, although keep in mind converting a group from a high number of players (e.g. an RtR mod save) to a low number (e.g. if the current mod is "none") and then back again (e.g. using set_mod "RtR 2.0.7.4" after the save is already imported) will end up clearing those players that couldn't fit in the low number.
 ];
 sub set_mod {
     my ($state, @params) = @_;
@@ -177,6 +173,9 @@ sub write_log {
         'help_text' => $write_log_help_text,
         'optional' => {
             'filename' => 'log.civ4mc'
+        },
+        'optional_descriptions' => {
+            'filename' => 'Specify a different filename.'
         }
     });
     return -1 if $pparams->has_error;
@@ -367,6 +366,7 @@ sub load_xml_data {
     return 1;
 }
 
+# note: the difficulty list gets outputted inside the command!
 my $set_difficulty_help_text = qq[
     Sets difficulty level for all players of all civs. Acceptable values are:
 ];
@@ -409,6 +409,7 @@ sub set_difficulty {
         return -1;
     }
 
+    # loop through all groups in memory and set the difficulty level of all players in each one
     my @groups = sort keys %{ $state->{'group'} };
     if (@groups > 0) {
         my @modified;
@@ -431,7 +432,7 @@ sub set_difficulty {
 }
 
 my $set_player_data_help_text = qq[
-    Sets a particular player's data. You can pick and choose from any or all four options (civ/leader/color/player_name), although a map will not be playable unless civ is set either with this command or from importing an already-built map. Setting '--civ' (see 'list_civs' for possible values) will load all values for that civ, including a default leader, leader name, color, and techs. If '--leader' is set (see list_leaders for possible values) will override the default leader value for '--civ'; similiar deal for '--color'. If '--leader' is set but '--civ' is not, the matching restricted civ for that leader will be used. If '--player_name' is set, the default name from a player's leader is overwritten. See 'list_civs', 'list_leaders', 'list_traits', 'list_techs', and 'list_colors' for more info.
+    Sets a particular player's data. You can pick and choose from any or all four options (civ/leader/color/player_name), although a map will not be playable unless civ is set either with this command or from importing an already-built map. 
 ];
 sub set_player_data {
     my ($state, @params) = @_;
@@ -445,6 +446,12 @@ sub set_player_data {
             'color' => '',
             'leader' => '',
             'player_name' => ''
+        },
+        'optional_descriptions' => {
+            'civ' => "Setting set (see 'list_civs' for possible values), will load all values for that civ, including a default leader, leader name, color, and techs.",
+            'leader' => "If set (see 'list_leaders' for possible values), will override the default leader value from '--civ' If '--leader' is set but '--civ' is not, the matching restricted civ for that leader will be used.",
+            'color' => "If set (see 'list_colors' for possible values), will override the default color value from '--civ'",
+            'player_name' => "If set (see 'http://pr0nname.com/' for possible values), the default name of a player's leader is overwritten.",
         }
     });
     return -1 if $pparams->has_error;
@@ -528,8 +535,7 @@ sub set_player_data {
 }
 
 my $set_settings_help_text = qq[
-    Sets settings data for a group and all of its layers. Available options are era (ancient, classical, medieval, renaissance, industrial, modern, and future),
-    speed (quick, normal, epic, and marathon), and size (duel, tiny, small, standard, large, and huge). Options that aren't set will be ignored.
+    Sets settings data for a group and all of its layers. Options that aren't set will be ignored.
 ];
 sub set_settings {
     my ($state, @params) = @_;
@@ -542,6 +548,11 @@ sub set_settings {
             'size' => '',
             'speed' => '',
             'era' => '',
+        },
+        'optional_descriptions' => {
+            'size' => "Sets the game's world size. Possible values are: duel, tiny, small, standard, large, and huge.",
+            'speed' => "Sets the game speed. Possible values are: quick, normal, epic, and marathon.",
+            'era' => "Sets the game's starting tech era. Possible values are: ancient, classical, medieval, renaissance, industrial, modern, and future.",
         }
     });
     return -1 if $pparams->has_error;

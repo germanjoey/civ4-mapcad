@@ -7,11 +7,21 @@ Big Ticket TODO:
     - P: code examples directory
     - P: "map_library" directory
         - have both wb files, dump files, and a readme.md with descriptions of each map in that directory
-    - P: handle how cities share tiles better, because the current way punishes cities that need shared food
-         as their only food. also i think we're double-counting trees still...
 
 Medium Ticket TODO:
 
+    - P: handle how cities share tiles better, because the current way punishes cities that need shared food
+         as their only food. also i think we're double-counting trees still...
+            - this may not as difficult as I thought; we just need to keep a list of blocked tiles per-city,
+              and then recompute choose_tiles and the growth targets whenever a new city is added or expands
+              borders. we already return an expanded-borders event so thats already there, and then the
+              choose_tiles just needs to ignore the blocked tiles. finally, in the algorithm that chooses which
+              tiles are blocked, we just: a.) try to balance food tiles (give to those in need), b.) weight
+              how other tiles are split based on the settling turn and the size of the safe zone (to detect
+              "fillers")
+            - as for trees, cities should keep full count of their trees and then when trees are shared we
+              should subract from one and give to the other
+              
     - B: search_helptexts command
         - via Commands.md
     - B: organize module methods
@@ -41,30 +51,4 @@ Small Ticket TODO:
         - deletes objects
     - N: balance subroutine for determining the strength of a capital move
     - B: new mask from layer commands should return a minimum of 0.01
-    
-Balance TODO: (all B)
-    - write Command
-    
-SEVEN tutorials (4/7 done):
-    - B: basic guide to what a command is
-    - B: enhancing your banana / intermediate commands
-        - setting leader/civ player names
-        - adding seafood
-    - B: balance
-    
-    
-Final TODO before beta launch:
-    0.) Finish writing tutorials
-    1.) Write balance_report command
-    2.) test grow_bfc
-    3.) Screenshots for tutorials
-    4.) new mask from layer commands should return a minimum of 0.01
-        - and then revert weights back to a minimum of 0.00
-    5.) add note about uploading image folder in debug.html
-    6.) Go through help text once more
-    7.) Regenerate Command.md
-    8.) Upload example .html for each tutorial
- +  9.) Fix starting sim size
-   10.) Spruce up index readmes
-    
     

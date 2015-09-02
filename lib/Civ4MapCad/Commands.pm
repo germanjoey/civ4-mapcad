@@ -43,18 +43,16 @@ use Civ4MapCad::Commands::Layer qw(
 );
 
 use Civ4MapCad::Commands::Group qw(
-    export_sims  export_group combine_groups flatten_group import_group crop_group
-    new_group find_difference extract_starts_as_mask normalize_starts expand_group_canvas
-    strip_nonsettlers add_scouts_to_settlers extract_starts export_sims copy_group set_wrap
-    strip_all_units
+    export_sims export_group combine_groups flatten_group import_group crop_group
+    new_group find_difference normalize_starts expand_group_canvas strip_all_units
+    strip_nonsettlers add_scouts_to_settlers extract_starts copy_group set_wrap
+    
 );
-
-# use Civ4MapCad::Commands::Balance qw();
 
 our $global_state;
 
 my $import_shape_help_text = qq[
-    TODO
+    Imports a shape module from the shapes/ directory, probably during the Civ4MC bootup phase. 
 ];
 sub import_shape {
     my ($state, @params) = @_;
@@ -126,12 +124,12 @@ sub run_script {
         print "\n\n";
         print "  run_script \"string\"\ [ --debug_result ] => optional_result_name\n    param 1: filename of script to run";
         print "\n\n";
-        print "  Description:\n\n";
+        print "  Description:\n";
         print "  Loads a script and runs the commands within. A result to this command may be\n";
         print "  specified; if so, then the 'return' command may be used in the script to\n";
-        print "  return a result. The result may be any type (group/layer/mask/weight) but must\n";
-        print "  match the type returned by the script. If '--debug_result' is specified, the\n";
-        print "  return value will be sent to the html view as if you used debug_group,\n";
+        print "  return a result. The result may be any type (group/layer/mask/weight) but\n";
+        print "  must match the type returned by the script. If '--debug_result' is specified,\n";
+        print "  the return value will be sent to the html view as if you used debug_group,\n";
         print "  debug_mask, etc.\n\n";
         
         $state->register_print();

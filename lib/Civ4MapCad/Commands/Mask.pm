@@ -12,6 +12,7 @@ our @EXPORT_OK = qw(import_mask_from_ascii new_mask_from_shape mask_difference m
                     new_mask_from_polygon grow_mask shrink_mask count_mask_value new_mask_from_filtered_tiles 
                     rotate_mask mask_eval2 mask_eval1 grow_mask_by_bfc count_tiles delete_from_layer_with_mask);
 
+use List::Util qw(min max);
 use Math::Geometry::Planar qw(IsInsidePolygon IsSimplePolygon);
 
 use Civ4MapCad::Util qw(deepcopy);
@@ -19,10 +20,8 @@ use Civ4MapCad::ParamParser;
 use Civ4MapCad::Object::Mask;
 use Civ4MapCad::Ascii qw(clean_ascii import_ascii_mapping_file);
 
-
 my $new_mask_from_shape_help_text = qq[
-    The 'new_mask_from_shape' command generates a mask by applying a shape function to a blank canvas of size width/height.
-    (the two required integer paramaters). See the 'Shapes and Masks' section of the html documentation for more details.
+    Generates a mask by applying a shape function to a blank canvas of size width/height.
 ];
 sub new_mask_from_shape {
     my ($state, @params) = @_;
@@ -55,8 +54,7 @@ sub new_mask_from_shape {
 }
 
 my $new_mask_from_polygon_help_text = qq[
-    The 'new_mask_from_shape' command generates a mask by applying a shape function to a blank canvas of size width/height.
-    (the two required integer paramaters). See the 'Shapes and Masks' section of the html documentation for more details.
+    The 'new_mask_from_shape' command generates a mask by applying a shape function to a blank canvas of size width/height. The polygon must be a closed, simple (non-internally intersecting) shape, or else an error will be thrown.
 ];
 sub new_mask_from_polygon {
     my ($state, @params) = @_;
@@ -127,7 +125,8 @@ sub new_mask_from_polygon {
 my $import_mask_from_ascii_help_text = qq[
     The 'import_mask_from_ascii' command generates a mask by reading in an ascii art shape and translating the characters
     into 1's and zeroes, if, for examples, you wanted to create a landmass that looked like some kind of defined shape. By
-    default, a '*' equals a value of 1.0, while a ' ' equals a 0.0.
+    default, a '*' equals a value of 1.0, while a ' ' equals a 0.0; intermediate values map to letters of the alphabet,
+    according to def/standard_ascii.mapping.
 ];
 sub import_mask_from_ascii {
     my ($state, @params) = @_;
@@ -139,6 +138,9 @@ sub import_mask_from_ascii {
         'required_descriptions' => ['input filename'],
         'optional' => {
             'mapping_file' => 'def/standard_ascii.mapping'
+        },
+        'optional_descriptions' => {
+            'mapping_file' => 'Specify a custom mapping file. See def/standard_ascii.mapping for an example.'
         }
     });
     return -1 if $pparams->has_error;
@@ -215,10 +217,7 @@ sub export_mask_to_table {
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'required' => ['mask', 'str'],
         'help_text' => $export_mask_to_table_help_text,
-        'required_descriptions' => ['mask to export', 'output filename'],
-        'optional' => {
-            'mapping_file' => 'def/standard_ascii.mapping'
-        }
+        'required_descriptions' => ['mask to export', 'output filename']
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
@@ -243,6 +242,9 @@ sub export_mask_to_ascii {
         'required_descriptions' => ['output filename'],
         'optional' => {
             'mapping_file' => 'def/standard_ascii.mapping'
+        },
+        'optional_descriptions' => {
+            'mapping_file' => 'Specify a custom mapping file. See def/standard_ascii.mapping for an example.'
         }
     });
     return -1 if $pparams->has_error;
@@ -288,7 +290,7 @@ sub clean_ascii_mask {
 }
 
 my $mask_difference_help_text = qq[
-    Finds the difference between two masks; if mask A has value '1' at coordinate X,Y while mask B has value '0' at the same coordinate (after applying the offset), then the result will have value '1', and otherwise '0'. For masks with decimal values, then the result is max(0, A-B). '--offsetX' and '--offsetY' specify how much to move B before the difference is taken; at any rate, the resulting mask will be stretched to encompass both A and B, including the offset.
+    Finds the difference between two masks; if mask A has value '1' at coordinate X,Y while mask B has value '0' at the same coordinate (after applying the offset), then the result will have value '1', and otherwise '0'. For masks with decimal values, the result is max(0, A-B). 
 ];
 sub mask_difference {
     my ($state, @params) = @_;
@@ -296,7 +298,7 @@ sub mask_difference {
 }
 
 my $mask_union_help_text = qq[
-    Finds the union between two masks; if mask A has value '1' at coordinate X,Y while mask B has value '0' at the same coordinate (after applying the offset), then the result will have value '0', and otherwise '0'. For masks with decimal values, then the result is min(1, A+B). '--offsetX' and '--offsetY' specify how much to move B before the difference is taken; at any rate, the resulting mask will be stretched to encompass both A and B, including the offset.
+    Finds the union between two masks; if mask A has value '1' at coordinate X,Y while mask B has value '0' at the same coordinate (after applying the offset), then the result will have value '0', and otherwise '0'. For masks with decimal values, the result is min(1, A+B). 
 ];
 sub mask_union {
     my ($state, @params) = @_;
@@ -304,7 +306,7 @@ sub mask_union {
 }
 
 my $mask_intersect_help_text = qq[
-    Finds the intersection between two masks; if mask A has value '1' at coordinate X,Y and mask B has value '1', the result will have value '1'; otherwise, if either value is '0', then the result will also be '0'. For masks with decimal values, then the result is A*B. offsetX and offsetY specify how much to move B before the difference is taken, while wrapX and wrapY determine whether B wraps. '--offsetX' and '--offsetY' specify how much to move B before the difference is taken; at any rate, the resulting mask will be stretched to encompass both A and B, including the offset.
+    Finds the intersection between two masks; if mask A has value '1' at coordinate X,Y and mask B has value '1', the result will have value '1'; otherwise, if either value is '0', then the result will also be '0'. For masks with decimal values, the result is A*B. 
 ];
 sub mask_intersect {
     my ($state, @params) = @_;
@@ -312,7 +314,7 @@ sub mask_intersect {
 }
 
 my $mask_eval2_help_text = qq[
-    todo
+    Applies an arbitrary function of perl code to the values of each individual pair of coordinates from masks A and B. A's cells can be referred to as \$a, while B's are \$b. The current x,y coordinate is available as \$x and \$y. 
 ];
 sub mask_eval2 {
     my ($state, @params) = @_;
@@ -325,7 +327,11 @@ sub mask_eval2 {
         'optional' => {
             'offsetX' => 0,
             'offsetY' => 0
-        }
+        },
+        'optional_descriptions' => {
+            'offsetX' => 'The x-offset of Mask B compared to A, i.e. Mask B is moved this many columns before the operation.',
+            'offsetY' => 'y-offset of Mask B compared to A, i.e. Mask B is moved this many rows before the operation.'
+        },
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
@@ -356,7 +362,7 @@ sub mask_eval2 {
 }
 
 my $mask_eval1_help_text = qq[
-    todo
+    Applies an arbitrary function of perl code to the value of each individual cell of the mask. The mask value is available, as \$a,  while he current x,y coordinate is available as \$x and \$y. 
 ];
 sub mask_eval1 {
     my ($state, @params) = @_;
@@ -372,14 +378,14 @@ sub mask_eval1 {
     
     my ($target, $evalstr) = $pparams->get_required();
     
-    $evalstr =~ s/\b([abxy])\b/\$$1/g;
+    $evalstr =~ s/\b([axy])\b/\$$1/g;
     
     my $opt = sub {
-        my ($a, $b, $x, $y) = @_;
+        my ($a, $x, $y) = @_;
         return eval $evalstr;
     };
     
-    my $test = $opt->(1, 1, 0, 0);
+    my $test = $opt->(1, 1, 0);
     if ($@) {
         print "$@";
         $state->report_error('Problem with eval string "$evalstr".');
@@ -402,7 +408,7 @@ sub mask_invert {
 }
 
 my $mask_threshold_help_text = qq[
-    Swings values to either a '1' or a '0' depending on the threshold value, which is the second parameter to this command. Mask values below this value become a '0', and values above or equal become a '1'.
+    Swings cell values to either a '1' or a '0' depending on the threshold value, which is the second parameter to this command. Mask cells below this value become a '0', and values above or equal become a '1'.
 ];
 sub mask_threshold {
     my ($state, @params) = @_;
@@ -440,7 +446,11 @@ sub _two_op {
         'optional' => {
             'offsetX' => 0,
             'offsetY' => 0
-        }
+        },
+        'optional_descriptions' => {
+            'offsetX' => 'The X-offset of Mask B compared to A, i.e. Mask B is moved this many columns before the operation.',
+            'offsetY' => 'Y-offset of Mask B compared to A, i.e. Mask B is moved this many rows before the operation.'
+        },
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
@@ -469,7 +479,11 @@ sub count_mask_value {
         'optional' => {
             'threshold' => 'false',
             'threshold_value' => '0.5'
-        }
+        },
+        'optional_descriptions' => {
+            'threshold' => 'If set, then the mask will be thresholded first, and then counted.',
+            'threshold_value' => 'Threshold level for --threshold.'
+        },
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
@@ -491,8 +505,8 @@ sub count_mask_value {
 }
     
 my $generate_layer_from_mask_help_text = qq[
-    Create a layer by applying a weight table to a mask. The value at each mask coordinate is evaluated according to the weight table, which is used to generate a new tile. For example, if the mask's value at coordinate 3,2 is equal to 0.45, and the weight table specifies that values
-    between 0.4 and 1 map to an ordinary grassland tile, then the output layer will have a grassland tile at 3,2.
+    Create a layer by applying a weight table to a mask. The value at each mask coordinate is evaluated according to the weight table, which is used to generate a new tile. For example, if the mask's value at
+    coordinate 3,2 is equal to 0.45, and the weight table specifies that values between 0.4 and 1 map to an ordinary grassland tile, then the output layer will have a grassland tile at 3,2.
 ];
 sub generate_layer_from_mask {
     my ($state, @params) = @_;
@@ -505,7 +519,11 @@ sub generate_layer_from_mask {
         'optional' => {
             'offsetX' => '0',
             'offsetY' => '0'
-        }
+        },
+        'optional_descriptions' => {
+            'offsetX' => 'The X-offset of the mask compared to the layer tile at 0,0, i.e. the mask is moved this many columns before the tile generation occurs.',
+            'offsetY' => 'The Y-offset of the mask compared to the layer tile at 0,0, i.e. the mask is moved this many rows before the tile generation occurs.',
+        },
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
@@ -518,7 +536,7 @@ sub generate_layer_from_mask {
     my $offsetY = $pparams->get_named('offsetY');
     
     my ($layer) = Civ4MapCad::Object::Layer->new_default("new", $width + abs($offsetX), $height + abs($offsetY));
-    $layer->apply_mask($mask, $weight, $offsetX, $offsetY, 1);
+    $layer->apply_mask($mask, $weight, $offsetX, $offsetY, 1, {}, 0);
     
     $state->set_variable($result_name, 'layer', $layer);
     return 1;
@@ -541,12 +559,23 @@ sub modify_layer_with_mask {
         'optional' => {
             'offsetX' => '0',
             'offsetY' => '0',
+            'clear_all_matched' => 'false',
             'check_bonus' => 'false',
             'check_feature' => 'false',
             'check_type' => 'false',
             'check_height' => 'false',
             'check_variety' => 'false'
-        }
+        },
+        'optional_descriptions' => {
+            'offsetX' => 'The X-offset of the mask compared to the layer tile at 0,0, i.e. the mask is moved this many columns before the tile modification occurs.',
+            'offsetY' => 'The Y-offset of the mask compared to the layer tile at 0,0, i.e. the mask is moved this many rows before the tile modification occurs.',
+            'clear_all_matched' => 'If set, clears any matched tile regardless of what terrain the weight table matches.',
+            'check_bonus' => 'If set, the tile needs to have the same BonusType presense/absense and value to successfully match in the weight table.',
+            'check_feature' => 'If set, the tile needs to have the same FeatureType presense/absense and value to successfully match in the weight table. FeatureVariety is ignored unless --check_variety is specified.',
+            'check_type' => 'If set, the tile needs to have the same TerrainType to successfully match in the weight table.',
+            'check_height' => 'If set, the tile needs to have the same PlotType to successfully match in the weight table.',
+            'check_variety' => 'If set, the tile needs to have the same FeatureVariety presense/absense and value to successfully match in the weight table.'
+        },
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
@@ -554,6 +583,7 @@ sub modify_layer_with_mask {
     my ($layer, $mask, $weight) = $pparams->get_required();
     my $offsetX = $pparams->get_named('offsetX');
     my $offsetY = $pparams->get_named('offsetY');
+    my $clear_all_matched = $pparams->get_named('clear_all_matched');
     
     my ($result_name) = $pparams->get_result_name();
     my $copy = ($result_name eq $layer->get_full_name()) ? $layer : deepcopy($layer);
@@ -566,7 +596,7 @@ sub modify_layer_with_mask {
         'FeatureVariety' => $pparams->get_named('check_feature') && $pparams->get_named('check_variety')
     );
     
-    $copy->apply_mask($mask, $weight, $offsetX, $offsetY, 0, \%allowed);
+    $copy->apply_mask($mask, $weight, $offsetX, $offsetY, 0, \%allowed, $clear_all_matched);
     $state->set_variable($result_name, 'layer', $copy);
     return 1;
 }
@@ -585,7 +615,11 @@ sub delete_from_layer_with_mask {
         'optional' => {
             'offsetX' => '0',
             'offsetY' => '0'
-        }
+        },
+        'optional_descriptions' => {
+            'offsetX' => 'The X-offset of the mask compared to the layer tile at 0,0, i.e. the mask is moved this many columns before the tile deletion occurs.',
+            'offsetY' => 'The Y-offset of the mask compared to the layer tile at 0,0, i.e. the mask is moved this many rows before the tile deletion occurs.',
+        },
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
@@ -602,7 +636,7 @@ sub delete_from_layer_with_mask {
 }
 
 my $cutout_layer_with_mask_help_text = qq[
-    Cuts tiles out of a layer with a mask into a new layer, as if the mask were a cookie-cutter and the original layer was dough. Tiles in the original layer are deleted. (replaced with blank tiles (ocean)). If '--copy_tiles' is set, then the tiles in the original layer aren't deleted. 
+    Cuts tiles out of a layer with a mask into a new layer, as if the mask were a cookie-cutter and the original layer was dough. Tiles in the original layer are deleted. (replaced with blank tiles (ocean)). 
 ];
 sub cutout_layer_with_mask {
     my ($state, @params) = @_;
@@ -616,7 +650,12 @@ sub cutout_layer_with_mask {
             'copy_tiles' => 'false',
             'offsetX' => '0',
             'offsetY' => '0'
-        }
+        },
+        'optional_descriptions' => {
+            'copy_tiles' => 'If set, then the tiles in the original layer will not be deleted.',
+            'offsetX' => 'The X-offset of the mask compared to the layer tile at 0,0, i.e. the mask is moved this many columns before the cutout occurs.',
+            'offsetY' => 'The Y-offset of the mask compared to the layer tile at 0,0, i.e. the mask is moved this many rows before the cutout occurs.',
+        },
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
@@ -660,9 +699,8 @@ sub apply_shape_to_mask {
 }
 
 my $grow_mask_help_text = qq[ 
-    Expands the mask a certain number of tiles. Only values of '1' are considered; thus, before the actual grow operation occurs, the mask is first thresholded. Use '--threshold' to set a custom threshold.
-    The mask produced by this command will be larger in the input mask; all four directions will be stretched by the number of tiles that the mask is grown. If '--rescale' is set, the command attempts to
-    keep the same size mask as long as there is empty space to chop away.
+    Expands the mask a certain number of tiles. Only values of '1' are considered; thus, before the actual grow operation occurs, the mask is first thresholded. 
+    The mask produced by this command will be larger in the input mask; all four directions will be stretched by the number of tiles that the mask is grown. 
 ];
 sub grow_mask {
     my ($state, @params) = @_;
@@ -676,7 +714,11 @@ sub grow_mask {
         'optional' => {
             'threshold' => 0.5,
             'rescale' => 'false'
-        }
+        },
+        'optional_descriptions' => {
+            'threshold' => 'Set a custom threshold level for the mask before the grow operation occurs.',
+            'rescale' => 'If set, the command attempts to keep the same size mask as long as there is empty space to chop away.',
+        },
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
@@ -697,7 +739,7 @@ sub grow_mask {
 }
 
 my $grow_mask_by_bfc_help_text = qq[ 
-    Expands the mask as if you put a city's BFC on each value with a 1.0. Only values of '1' are considered; thus, before the actual grow operation occurs, the mask is first thresholded. Use '--threshold' to set a custom threshold.
+    Expands the mask as if you put a city's BFC on each value with a 1.0. Only values of '1' are considered; thus, before the actual grow operation occurs, the mask is first thresholded. 
     Unlike 'grow_mask', this command does not increase the size of the output mask, since you're probably only going to use this to check something on a map. Instead, you're given the option to specify x/y wrap, both of which are off by default.
 ];
 sub grow_mask_by_bfc {
@@ -713,7 +755,12 @@ sub grow_mask_by_bfc {
             'threshold' => 0.5,
             'wrapX' => 'false',
             'wrapY' => 'false'
-        }
+        },
+        'optional_descriptions' => {
+            'threshold' => 'Set a custom threshold level for the mask before the grow operation occurs.',
+            'wrapX' => 'If set, the command attempts grow the mask across the edges, wrapping from left to right.',
+            'wrapY' => 'If set, the command attempts grow the mask across the edges, wrapping from top to bottom.',
+        },
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
@@ -744,7 +791,10 @@ sub shrink_mask {
         'required_descriptions' => ['mask to shrink', 'number of tiles to shrink by'],
         'optional' => {
             'threshold' => 0.5,
-        }
+        },
+        'optional_descriptions' => {
+            'threshold' => 'Set a custom threshold level for the mask before the shrink operation occurs.',
+        },
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
@@ -786,7 +836,7 @@ sub set_mask_coord {
 }
 
 my $new_mask_from_landmass_help_text = qq[
-    Generate a mask based on a landmass. The starting tile must be a land tile; otherwise an error will be thrown. If '--choose_coast' is set, the mask will select be all water tiles adjacent to the landmass (i.e. its coast). If '--include_coast' is set, instead both the landmass and its coast will be selected. Finally, if '--include_ocean_resources' is set in addition to '--include_coast' or '--choose_coast', then all tiles containing ocean resources that are *adjacent* to a coast tile will be included.
+    Generate a mask based on a landmass. Sort of like a selection command. The starting tile must be a land tile; otherwise an error will be thrown.
 ];
 sub new_mask_from_landmass {
     my ($state, @params) = @_;
@@ -800,7 +850,12 @@ sub new_mask_from_landmass {
             'choose_coast' => 'false',
             'include_coast' => 'false',
             'include_ocean_resources' => 'false'
-        }
+        },
+        'optional_descriptions' => {
+            'choose_coast' => 'If set, the mask will select all water tiles adjacent to the landmass (i.e. its coast) instead of the actual landmass itself.',
+            'include_coast' => 'If set, both the landmass AND its coast will be selected.',
+            'include_ocean_resources' => 'If set along with either --choose_coast or --include_coast, then all ocean tiles that are both containing a resource and are adjacent to a coast tile that is adjacent to this landmass will be selected.',
+        },
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
@@ -852,7 +907,7 @@ sub new_mask_from_landmass {
 }
 
 my $new_mask_from_water_help_text = qq[
-    Generate a mask based on a body of water. The starting tile must be a water tile; otherwise an error will be thrown. If '--only_coast' is set, the mask will only select tiles adjacent to land (i.e. the coast). If '--choose_land' is set, only land tiles adjacent to the body of water will be selected. '--only_coast' and '--choose_land' cannot both be 1 at the same time.
+    Generate a mask based on a body of water. The starting tile must be a water tile; otherwise an error will be thrown. 
 ];
 sub new_mask_from_water {
     my ($state, @params) = @_;
@@ -865,7 +920,11 @@ sub new_mask_from_water {
         'optional' => {
             'only_coast' => 'false',
             'choose_land' => 'false',
-        }
+        },
+        'optional_descriptions' => {
+            'only_coast' => 'If set, the mask will only select tiles adjacent to any land tile. (i.e. the coast). Cannot be used with --choose_land.',
+            'choose_land' => 'If set, only land tiles adjacent to this body of water will be selected. Cannot be used with --include_coast.',
+        },
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
@@ -909,7 +968,7 @@ sub new_mask_from_water {
 }
 
 my $new_mask_from_magic_wand_help_text = qq[
-    Creates a mask by applying a weight to a region, starting with a single tile. If this tile matches to a result greater than 0, then the tiles surrounding it will be tested, and so on, until the weight stops matching tiles or it runs out of tiles to match. (This command similar in concept to the "magic wand" selection tool in Photopshop). Matches by default are not exact; e.g. a 'bare_hill' would match both a grassland hill or a plains hill with a forest and a fur on it. Use --exact_match to require exact matches from tiles to terrains. 
+    Creates a mask by applying a weight to a region, starting with a single tile. If this tile matches to a result greater than 0, then the tiles surrounding it will be tested, and so on, until the weight stops matching tiles or it runs out of tiles to match. (This command similar in concept to the "magic wand" selection tool in Photopshop). Matches by default are not exact; e.g. a 'bare_hill' would match both a grassland hill or a plains hill with a forest and a fur on it. 
 ];
 sub new_mask_from_magic_wand {
     my ($state, @params) = @_;
@@ -921,13 +980,19 @@ sub new_mask_from_magic_wand {
         'required_descriptions' => ['layer to select from', 'inverse weight to match to tiles', 'start coordinate X', 'start coordinate Y'],
         'help_text' => $new_mask_from_magic_wand_help_text,
         'optional' => {
-            'exact_match' => 'false'
+            'exact_match' => 'false',
+            'post_match_threshold' => 0
+        },
+        'optional_descriptions' => {
+            'exact_match' => 'Require exact matches from tiles to terrains.',
+            'post_match_threshold' => 'If the weight matched but evaluates to 0, it will instead be boosted to this value to differentiate it from non-matches.',
         }
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
     
     my $exact_match = $pparams->get_named('exact_match');
+    my $post_match_threshold = $pparams->get_named('post_match_threshold');
     my $result_name = $pparams->get_result_name();
     my ($layer, $weight, $start_x, $start_y) = $pparams->get_required();
     my $copy = deepcopy($layer);
@@ -965,8 +1030,9 @@ sub new_mask_from_magic_wand {
         $mark_as_checked->($x, $y, $tile);
         
         my $value = $weight->evaluate_inverse($tile, $exact_match);
+        
         if (defined($value)) {
-            $mask->{'canvas'}[$x][$y] = $value;
+            $mask->{'canvas'}[$x][$y] = max($post_match_threshold, $value);
             return 1;
         }
         
@@ -981,7 +1047,7 @@ sub new_mask_from_magic_wand {
 }
 
 my $new_mask_from_filtered_tiles_help_text = qq[
-    Creates a mask by applying a weight to every single tile of a layer, i.e. a full scan. Matches by default are not exact; e.g. a 'bare_hill' would match both a grassland hill or a plains hill. Use --exact_match to require exact from tiles to terrains. 
+    Creates a mask by applying a weight to every single tile of a layer, i.e. a full scan. Matches by default are not exact; e.g. a 'bare_hill' would match both a grassland hill or a plains hill. 
 ];
 sub new_mask_from_filtered_tiles {
     my ($state, @params) = @_;
@@ -992,25 +1058,31 @@ sub new_mask_from_filtered_tiles {
         'required' => ['layer', 'weight'],
         'required_descriptions' => ['the layer to find tiles in', 'the weight to filter the layer with'],
         'optional' => {
-            'exact_match' => 'false'
+            'exact_match' => 'false',
+            'post_match_threshold' => 0
+        },
+        'optional_descriptions' => {
+            'exact_match' => 'Require exact matches from tiles to terrains.',
+            'post_match_threshold' => 'If the weight matched but evaluates to 0, it will instead be boosted to this value to differentiate it from non-matches.',
         }
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
     
     my $exact_match = $pparams->get_named('exact_match');
+    my $post_match_threshold = $pparams->get_named('post_match_threshold');
     my $result_name = $pparams->get_result_name();
     my ($layer, $weight) = $pparams->get_required();
     my $copy = deepcopy($layer);
     
     $copy->fix_coast();
-    my $mask = $copy->apply_weight($weight, $exact_match);
+    my $mask = $copy->apply_weight($weight, $exact_match, $post_match_threshold);
     $state->set_variable($result_name, 'mask', $mask);
     return 1;
 }
 
 my $count_tiles_help_text = qq[
-    Filters tiles in a layer based on a weight, and then counts the ones that match a value. Matches by default are not exact; e.g. a 'bare_hill' would match both a grassland hill or a plains hill. Use --exact_match to require exact from tiles to terrains. 
+    Filters tiles in a layer based on a weight, and then counts the ones that match a value. Matches by default are not exact; e.g. a 'bare_hill' would match both a grassland hill or a plains hill. 
 ];
 sub count_tiles {
     my ($state, @params) = @_;
@@ -1021,23 +1093,31 @@ sub count_tiles {
         'required_descriptions' => ['the layer to find tiles in', 'the weight to filter the layer with'],
         'optional' => {
             'exact_match' => 'false',
-            'threshold' => 'false',
-            'threshold_value' => '0.0001'
+            'pre_count_threshold' => 'false',
+            'pre_count_threshold_value' => '0.0001',
+            'post_match_threshold' => 0
+        },
+        'optional_descriptions' => {
+            'exact_match' => 'Require exact matches from tiles to terrains.',
+            'pre_count_threshold' => 'Run a threshold operation on the mask before the count is performed.',
+            'pre_count_threshold_value' => 'if --pre_count_threshold is set, then any value greater or equal to this will be raised to 1',
+            'post_match_threshold' => 'If the weight matched but evaluates to 0, it will instead be boosted to this value to differentiate it from non-matches.',
         }
     });
     return -1 if $pparams->has_error;
     return 1 if $pparams->done;
     
     my $exact_match = $pparams->get_named('exact_match');
-    my $threshold_first = $pparams->get_named('threshold');
-    my $threshold_value = $pparams->get_named('threshold_value');
+    my $pre_count_threshold = $pparams->get_named('pre_count_threshold');
+    my $pre_count_threshold_value = $pparams->get_named('pre_count_threshold_value');
+    my $post_match_threshold = $pparams->get_named('post_match_threshold');
     my ($layer, $weight, $value) = $pparams->get_required();
     my $copy = deepcopy($layer);
     $copy->fix_coast();
     
-    my $mask = $copy->apply_weight($weight, $exact_match);
-    if ($threshold_first) {
-        $mask = $mask->threshold($threshold_value);
+    my $mask = $copy->apply_weight($weight, $exact_match, $post_match_threshold);
+    if ($pre_count_threshold) {
+        $mask = $mask->threshold($pre_count_threshold_value);
     }
     
     my $count = $mask->count_matches($value);
@@ -1050,7 +1130,7 @@ sub count_tiles {
 
 # TODO: allow arbitrary rotation origins by shifting the tiles before/after the rotation
 my $rotate_mask_help_text = qq[
-    todo
+    Rotates a mask around its origin. See the rotate_layer command for a full description of rotation weirdness.
 ];
 sub rotate_mask {
     my ($state, @params) = @_;
@@ -1063,6 +1143,9 @@ sub rotate_mask {
         'help_text' => $rotate_mask_help_text,
         'optional' => {
             'iterations' => 1,
+        },
+        'optional_descriptions' => {
+            'iterations' => 'Set to a higher value to rotate the object in this many small steps, which may give a different-looking result.',
         }
     });
     return -1 if $pparams->has_error;
