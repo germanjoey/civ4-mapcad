@@ -5,7 +5,7 @@ Features:
 
 * Built-in documentation for every command, and a series of six illustrated, in-depth [tutorials](tutorials/), starting at the very basics and going all the way to rolling and balancing a map!
 
-* Generate a handy HTML view of your map! Mouse-hovering on each tile reports coordinates/resources/player info, making it very easy to collaborate with others and get lurker feedback from people browsing the forums at work! Example: [tutorial2](http://media.rhizzone.net/civ4mc/t2.html)
+* Generate a handy HTML view of your map! Mouse-hovering on each tile reports coordinates/resources/player info, making it very easy to collaborate with others and get lurker feedback from people browsing the forums at work! Example: [tutorial2 map](http://media.rhizzone.net/civ4mc/t2.html).
 
 * Highly sophisticated balance tools ensure that your map is fair for all players even for highly asymetrical maps!
 
