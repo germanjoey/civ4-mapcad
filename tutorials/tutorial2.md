@@ -21,7 +21,7 @@ Not too complicated, right? Let's see an example, using the same map as the last
 
     set_mod "2.0.7.4"
     import_group "tutorials/t1/tutorial1.CivBeyondSwordWBSave" => $tutorial2
-    debug_group $t2_cropped --add_to_existing
+    debug_group $tutorial2 --add_to_existing
     
 ## Manipulating Groups and Layers
     
