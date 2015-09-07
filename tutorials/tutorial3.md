@@ -10,7 +10,7 @@ Obviously, these fools will insist on a banana map, and they ain't lettin' you l
 
 ## Masks
 
-Ok, the first thing we'll need to do is figure out how draw a banana. We'll need one banana island per player at the very least. We could just click this out in the worldbuilder and import it with *import_group*, but where's the fun in that? Besides, it might be the case that we need to make some changes later, so instead let's try creating one using Civ4 MC's special terrain generation tools: Masks, Weights, and Shapes.
+Ok, the first thing we'll need to do is figure out how draw a banana. We'll need one banana island per player at the very least. We could just click this out in the worldbuilder and import it with **import_group**, but where's the fun in that? Besides, it might be the case that we need to make some changes later, so instead let's try creating one using Civ4 MC's special terrain generation tools: Masks, Weights, and Shapes.
 
 Before we continue, let me explain what these things are and what they do. The first, Masks, are kind of like a stencil that sits on top of the map. The mask is essentially a 2d plane, just like a map, and can be of any size. Instead of tiles, a mask is made up of values between "1" and "0". Thinking about the most simple case, where values are *only* 1 and 0, a Mask is like a cookie cutter. The cookie dough is the background, and the shape of the cutter itself (if it were solid inside) would be a bunch of 1's.
 
@@ -28,7 +28,7 @@ If we think of it like ascii art, it might look like this, where the '*' have a 
           **** ****  
          ****   ****  
 
-Civ4 MC has a way to turn ascii art like this directly into a mask object. We just need to put it into a file and then load it with the *import_mask_from_ascii* command. Unfortunately, a gingerbread man won't help us make a banana... we need something else. Now, we could just make a big banana ascii art (using an image-to-ascii service (e.g. [http://www.text-image.com/convert/](http://www.text-image.com/convert/)) and the *cleanup_ascii* command might help here) but instead we're going to do things in a little bit more fancy of a way to show off some other Civ4 MC commands.
+Civ4 MC has a way to turn ascii art like this directly into a mask object. We just need to put it into a file and then load it with the **import_mask_from_ascii** command. Unfortunately, a gingerbread man won't help us make a banana... we need something else. Now, we could just make a big banana ascii art (using an image-to-ascii service (e.g. [http://www.text-image.com/convert/](http://www.text-image.com/convert/)) and the **cleanup_ascii** command might help here) but instead we're going to do things in a little bit more fancy of a way to show off some other Civ4 MC commands.
 
 First, let's import a circle ascii art. Our circle looks like this:
                  
@@ -48,11 +48,11 @@ First, let's import a circle ascii art. Our circle looks like this:
          *******     
             *        
                  
-And then we invoke the *import_mask_from_ascii* command like so:
+And then we invoke the **import_mask_from_ascii** command like so:
 
     import_mask_from_ascii "tutorials/t3/circle.txt" => @circle1
     
-Groups had a '$' in front of them, while now we see masks have a '@' in front of them to distinguish them. (these sigils help the commands do type checking and give better error reporting without needing to declare these objects beforehand).  We can debug a mask with the *debug_mask* command, like so:
+Groups had a '$' in front of them, while now we see masks have a '@' in front of them to distinguish them. (these sigils help the commands do type checking and give better error reporting without needing to declare these objects beforehand).  We can debug a mask with the **debug_mask** command, like so:
 
     debug_mask @circle1
     
@@ -85,7 +85,7 @@ So, with Masks we have a way to describe a shape. How do we then turn that into 
     
     ... (and a few dozen terrains with "grass" in their name)
     
-Weights work like a ladder; the evaluation starts at the top, and then we work down through each one until we find a condition that fits. For example, we were to apply the %land weight to the @circle1 mask via the *generate_layer_from_mask* command (we'll see more on this later), coordinates where the mask had a value of 1.0 would become grass, while coordinates where the value was greater than or equal to 0 (so, everything not a 1) will become ocean. Another example, using the %any_land mask:
+Weights work like a ladder; the evaluation starts at the top, and then we work down through each one until we find a condition that fits. For example, we were to apply the %land weight to the @circle1 mask via the **generate_layer_from_mask** command (we'll see more on this later), coordinates where the mask had a value of 1.0 would become grass, while coordinates where the value was greater than or equal to 0 (so, everything not a 1) will become ocean. Another example, using the %any_land mask:
 
     > show_weights %any_land
     
@@ -116,7 +116,7 @@ In this case, values from 1.0 to 0.4 become %any_grass, values from 0.1 to 0.399
       >= 0.0175 => desert,
       >= 0.0000 => deserthill
       
-The *evaluate_weight* command exists as a handy debugging tool and lets us see this explicitly:
+The **evaluate_weight** command exists as a handy debugging tool and lets us see this explicitly:
       
     > evaluate_weight %any_land 0.3526
     
@@ -130,17 +130,17 @@ The plainshill_forest terrain was picked because our value, 0.3526, is above its
 
 ## Shapes
 
-Now that we have masks and weights, we can build our banana. However, let's take a look at the last new object type, shapes, as they're another way to make mask in a much more fancy way. Shapes are essentially functions that describe a geometric shape, and use the * sigil. For example, we know that the equation of a circle is x^2 + y^2 = r^2.  Our circle shape thus says that if our x,y coordinate is inside the circle of this equation, our mask value at that coordinate will be a '1.0', otherwise it is a '0.0' Unlike the rest of Civ4 MC, you do need to know a bit of programming to create a new shape type, but I've already provided a bunch for you, loaded when Civ4MC first boots up (try the *list_shapes* command). 
+Now that we have masks and weights, we can build our banana. However, let's take a look at the last new object type, shapes, as they're another way to make mask in a much more fancy way. Shapes are essentially functions that describe a geometric shape, and use the * sigil. For example, we know that the equation of a circle is x^2 + y^2 = r^2.  Our circle shape thus says that if our x,y coordinate is inside the circle of this equation, our mask value at that coordinate will be a '1.0', otherwise it is a '0.0' Unlike the rest of Civ4 MC, you do need to know a bit of programming to create a new shape type, but I've already provided a bunch for you, loaded when Civ4MC first boots up (try the **list_shapes** command). 
 
 Try entering the following on the command line:
 
     > new_mask_from_shape *circle 17 17 --centerX 8 --centerY 8 --radius 7 => @mask
     
-This command is a bit more complicated than the stuff we've seen previously, so I'll go through it step-by-step. *new_mask_from_shape* is the command name of course, while "*circle" is the shape and 17 x 17 is the size of the mask. The flags here (--centerX, --centerY, and ---radius) are actually specific to the "*circle* shape in particular. Finally, the result is stored in @circle2 mask. You can look at it with the *debug_mask* command:
+This command is a bit more complicated than the stuff we've seen previously, so I'll go through it step-by-step. **new_mask_from_shape** is the command name of course, while "*circle" is the shape and 17 x 17 is the size of the mask. The flags here (--centerX, --centerY, and ---radius) are actually specific to the *circle shape in particular. Finally, the result is stored in @circle2 mask. You can look at it with the **debug_mask** command:
 
     > debug_mask @circle2 --add_to_existing
     
-Refresh debug.html and take a look. As you can see, both circle1 and circle2 look exactly the same... if you ask if they want ice cream, they both say yes. In fact, it might not surprise you that I actually generated the circle with *new_mask_from_shape* to begin with and then saved it to circle.txt with the *export_mask_to_ascii* command. (*import_mask_to_ascii*/ *export_mask_to_table* is another option, by the way, which could be very useful if you want to generate a very complicated mask in some other way (e.g. matlab or python) and bring it into the tool). 
+Refresh debug.html and take a look. As you can see, both circle1 and circle2 look exactly the same... if you ask if they want ice cream, they both say yes. In fact, it might not surprise you that I actually generated the circle with **new_mask_from_shape** to begin with and then saved it to circle.txt with the **export_mask_to_ascii** command. (**import_mask_to_ascii**/**export_mask_to_table** is another option, by the way, which could be very useful if you want to generate a very complicated mask in some other way (e.g. matlab or python) and bring it into the tool). 
 
 ![tutorial3-i2](t3/i2.png)
 
@@ -173,7 +173,7 @@ Ok, so how do we do random? We'll use the *random shape, of course. This isn't s
     
 ![tutorial3-i4](t3/i5.png)
 
-Now that's more like it!  Now if there was only a way to combine this with our @banana_mask... but oh wait, there is! We can do another move out of our Venn diagram playbook and use the *mask_intersect* command to get their overlap. Since @banana_mask has values of only 1 or 0, it will act like another cookie-cutter and punch out a banana-shaped field of random values from @rand_field.
+Now that's more like it!  Now if there was only a way to combine this with our @banana_mask... but oh wait, there is! We can do another move out of our Venn diagram playbook and use the **mask_intersect** command to get their overlap. Since @banana_mask has values of only 1 or 0, it will act like another cookie-cutter and punch out a banana-shaped field of random values from @rand_field.
     
     mask_intersect @banana_mask @rand_field => @random_banana
     debug_mask @random_banana --add_to_existing
@@ -199,7 +199,7 @@ We've got a lot of bananas, a mix of resources, a few lakes, and the rest is lan
 
 ![tutorial3-i6](t3/i7.png)
 
-The nice thing about this is that if we want (or they insist) on making the banana bigger, we just need to modify the sizes in our *new_shape_from_mask* commands and the banana will be resized, just like Magic!
+The nice thing about this is that if we want (or they insist) on making the banana bigger, we just need to modify the sizes in our **new_shape_from_mask** commands and the banana will be resized, just like Magic!
 
 Alright, we've got our banana - now to put on the finishing touches. In the next tutorial, we'll look at how to rivet on a custom-built BFC for the banana capitals and how to neatly tie up our design using scripts.
 

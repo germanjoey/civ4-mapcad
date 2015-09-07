@@ -4,7 +4,7 @@ Rather than a full step-by-step tutorial, this time I'll just you some examples 
 
 ## Example 1 - Adding seafood
 
-In the last tutorial, we added no seafood around the banana island. But, what if player 0 slipped us a fiver and asked for a few clams around his land, just before the game goes live. We can't modify the base script, so we need a way to select his landmass. The *new_mask_from_landmass* command does what we need. We give it a layer and a starting tile - 4,6 in this case - and it will select all contiguous land nearby. In addition, rather than returning the land itself, we use the "--choose_coast" option to grab the coast around the landmass rather than the land itself. From there, its a very simple matter to add the seafood.  then returns the coast *around* it rather than the land itself:
+In the last tutorial, we added no seafood around the banana island. But, what if player 0 slipped us a fiver and asked for a few clams around his land, just before the game goes live. We can't modify the base script, so we need a way to select his landmass. The **new_mask_from_landmass** command does what we need. We give it a layer and a starting tile - 4,6 in this case - and it will select all contiguous land nearby. In addition, rather than returning the land itself, we use the "--choose_coast" option to grab the coast around the landmass rather than the land itself. From there, its a very simple matter to add the seafood.  then returns the coast *around* it rather than the land itself:
     
     new_mask_from_landmass $banana_bunch.banana1 4 6 --choose_coast => @coast 
     mask_intersect @coast @rand_field => @rand_coast
@@ -17,14 +17,14 @@ In the last tutorial, we added no seafood around the banana island. But, what if
     decrease_layer_priority $banana_bunch.seafood
     flatten_group $banana_bunch --rename_final_layer
     
-Alternatively, if we wanted to be "fair," we could use the *new_mask_from_water* command, starting from any coast tile, to select all contiguous coast.
+Alternatively, if we wanted to be "fair," we could use the **new_mask_from_water** command, starting from any coast tile, to select all contiguous coast.
     
 ![ex1](t5/ex1.png)
 [http://media.rhizzone.net/civ4mc/example1.html](http://media.rhizzone.net/civ4mc/example1.html)
 
 ## Example 2 - Ocean Fish
 
-What about ocean fish? They're not on coast. Going back to the base banana, for simplicity's sake, we use the *grow_mask* command to make it happen:
+What about ocean fish? They're not on coast. Going back to the base banana, for simplicity's sake, we use the **grow_mask** command to make it happen:
 
     new_mask_from_landmass $the_real_banana.the_real_banana 4 6 --include_coast => @island
     grow_mask @island 1 --rescale => @island_plus1 
@@ -40,7 +40,7 @@ What about ocean fish? They're not on coast. Going back to the base banana, for 
     
 ![ex2](t5/ex2.png)
 
-By default, grow_mask will increase its dimensions by 1 in every direction for every tile it grows by, but we use --rescale here to prevent that because there's no ocean above and below the banana anyways. By the way, there's also a *shrink_mask* and a *grow_mask_by_bfc* commands.
+By default, grow_mask will increase its dimensions by 1 in every direction for every tile it grows by, but we use --rescale here to prevent that because there's no ocean above and below the banana anyways. By the way, there's also a **shrink_mask** and a **grow_mask_by_bfc** commands.
 
 [http://media.rhizzone.net/civ4mc/example2.html](http://media.rhizzone.net/civ4mc/example2.html)
 
@@ -64,7 +64,7 @@ What if you wake up one day, feeling a bit bananish, and feel like messing with 
     
 ## Example 4 - Other Selection Tools
     
-Finally, here's two other ways to select stuff. In the first, we select tiles based on a polygon shape. In the next, we use a super version of "new_mask_from_landmass" that works kind of like the magic wand tool in photoshop to select all contiguous tiles that match a weight - in this case, all contiguous grassland tiles.
+Finally, here's two other ways to select stuff. In the first, we select tiles based on a polygon shape. In the next, we use a super version of **new_mask_from_landmass** that works kind of like the magic wand tool in photoshop to select all contiguous tiles that match a weight - in this case, all contiguous grassland tiles.
     
     # parameters are: width, height, then a list of points
     new_mask_from_polygon 14 17 "8,1" "1,8" "8,15" "12,3" "8,1" => @sharp_banana

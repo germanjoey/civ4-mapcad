@@ -15,6 +15,7 @@ use Civ4MapCad::Map::Tile;
 use Civ4MapCad::Dump qw(dump_framework); 
 use Civ4MapCad::Object::Mask;
 
+our $DEBUG = 1;
 $Civ4MapCad::Map::Tile::DEBUG = 1;
 
 our $state = Civ4MapCad->new();
@@ -22,11 +23,11 @@ our $state = Civ4MapCad->new();
 my $iterations = 100;
 my $tuning_iterations = 40;
 my $to_turn = 155;
-my $input_filename = 'tutorials/t6/t6.CivBeyondSwordWBSave';
+my $input_filename = 'input/pb27/pb27_final_v9.CivBeyondSwordWBSave';
 my $balance_config = 'def/balance.cfg';
 my @heatmaps = ();
 my $heatmap_options = 0;
-my $mod = 'none';
+my $mod = 'rtr 2.0.7.4';
 
 GetOptions ("iterations=i" => \$iterations,
             "tuning_iterations=i" => \$tuning_iterations,
@@ -134,7 +135,7 @@ $alloc->allocate($tuning_iterations, $iterations, $to_turn);
 print "\n    Done allocating.\n    Analyzing output...\n";
 report($alloc, "$base_name.balance_report.txt");
 
-print "    Generating map debug save: $input_filename.debug\n";
+print "    Generating debug save: $input_filename.debug\n";
 $map->export_map("$input_filename.debug");
 
 print "    Saving allocation data: $base_name.alloc\n";
@@ -209,6 +210,7 @@ sub report {
     my ($alloc, $output_filename) = @_;
     
     my %riverage;
+    my %food_score;
     my %food_count;
     my %wfood_count;
     
@@ -229,7 +231,10 @@ sub report {
         $land_tile_count{$civ} = 0;
         $wfood_count{$civ} = 0;
         $food_count{$civ} = 0;
+        $food_score{$civ} = 0;
         $riverage{$civ} = 0;
+        $coast_tile_count{$civ} = 0;
+        $contested_coast_count{$civ} = 0;
         
         foreach my $other_civ (keys %{$alloc->{'avg_city_count'}}) {
             next if $other_civ == $civ;
@@ -280,11 +285,12 @@ sub report {
                 my $v = $alloc->{'average_allocation'}[$x][$y]{$civ};
                 next unless $v > 0;
                 
+                $food_score{$civ} += $v*$v*($tile->{'yld'}[0]-2)*($tile->{'yld'}[0]-2) if ($food+$wfood) > 0;
+                
                 $food_count{$civ} += $v*$food;
                 $wfood_count{$civ} += $v*$wfood;
                 
                 my $is_land = find_tile_category($tile);
-                #next if $is_land == -1;
                 
                 if($is_land == 0) {
                     $coast_tile_count{$civ} += $v;
@@ -387,6 +393,15 @@ sub report {
     my ($max_lux_score, $total_lux_score) = calculate_lux_score(\%luxes);
     my ($strat, $quality_strat) = calculate_strategic_access($alloc, \%access_to, \%quality_access_to);
     
+    my $max_food_score = 0;
+    foreach my $civ (keys %food_score) {
+        my $total_tile = $land_tile_count{$civ} + $main::config{'coast_worth'}*$coast_tile_count{$civ};
+        $food_score{$civ} = sqrt($food_score{$civ})/$total_tile;
+        $max_food_score = $food_score{$civ} if $food_score{$civ} > $max_food_score;
+    }
+    $food_score{$_} /= $max_food_score foreach (keys %food_score);
+    
+    
     #########################################################################
     # Final report!
     
@@ -395,16 +410,17 @@ sub report {
     print $bo "*** Balance report for $input_filename ***\n\n";
     print $bo "Simulated land up to turn $to_turn with $tuning_iterations tuning iterations and $iterations actual iterations.\n\n";
     print $bo "\n";
-    print $bo "Note: relative luxury scores, and relative strategic quality scores do not mean much by themselves, but\n";
-    print $bo "only in comparison to the other players. For example, if one player has a luxury score of 1.0 and another\n";
-    print $bo " has one of 0.2, that is something that means that there's a big luxury difference between the two of them.\n\n\n";
+    print $bo "Note: relative food density scores, relative luxury scores, and relative strategic quality scores do not mean\n";
+    print $bo "much by themselves, but only in comparison to the other players. For example, if one player has a luxury score of 1.0\n";
+    print $bo "and another has one of 0.2, that is something that means that there's a big luxury difference between the two of them.\n\n\n";
     
     foreach my $civ (sort {$a <=> $b} (keys %{$alloc->{'avg_city_count'}})) {
         ##########################
         # General metrics
         
         my $land_std = sqrt($contested_land_var{$civ}/$contested_land_count{$civ});
-        my $coast_std = sqrt($contested_coast_var{$civ}/$contested_coast_count{$civ}) if exists $contested_coast_count{$civ} and ($contested_coast_count{$civ} > 0);
+        my $coast_std = 0;
+        $coast_std = sqrt($contested_coast_var{$civ}/$contested_coast_count{$civ}) if $contested_coast_count{$civ} > 0;
         my $capital = $alloc->{'civs'}{$civ}{'cities'}[0]{'center'};
         my $average_value = $alloc->{'avg_city_value'}{$civ}/$alloc->{'avg_city_count'}{$civ};
         my $name = $map->{'Players'}[$civ]{'LeaderName'};
@@ -416,12 +432,13 @@ sub report {
         print $bo "    Capital at: $capital->{'x'}, $capital->{'y'}\n";
         printf $bo "    Expected number/value of cities: %5.2f / %5.3f\n", $alloc->{'avg_city_count'}{$civ}, $average_value;
         printf $bo "    Expected number of strong/weak food resources: %5.2f / %5.2f\n", $food_count{$civ}, $wfood_count{$civ};
-        printf $bo "    Expected number of river-adjacent land tiles: %5.2f", $riverage{$civ}; 
+        printf $bo "    Relative food density score: %5.3f\n", $food_score{$civ};
         print $bo "\n";
         printf $bo "    Expected number of owned live land tiles, and live land tiles touched: %6.2f / %d\n", $land_tile_count{$civ},  $contested_land_count{$civ};
         printf $bo "    Average/Stddev ownership per live land tile: %5.3f / %6.4f\n", $contest_land_average{$civ}, $land_std;
         printf $bo "    Expected number of owned coast tiles, and coast tiles touched: %6.2f / %d\n", $coast_tile_count{$civ},  $contested_coast_count{$civ};
         printf $bo "    Average/Stddev ownership per coast tile: %5.3f / %6.4f\n", $contest_coast_average{$civ}, $coast_std;
+        printf $bo "    Expected number of river-adjacent land tiles: %5.2f", $riverage{$civ}; 
         print $bo "\n";
         printf $bo "    Overall tile score and contention: %6.2f / %5.3f\n", $total_tile, $total_contention;
         
@@ -472,6 +489,13 @@ sub report {
         ##########################
         # Luxuries
         
+        if (! exists $total_lux_score->{$civ}) {
+            $total_lux_score->{$civ} = {
+                'score' => 0,
+                'full_desc' => "SEVERE WARNING: THIS CIV HAS NO ACCESS TO LUXURIES!!"
+            };
+        }
+        
         print $bo "\n";
         printf $bo "  Relative lux score: %5.3f\n", $total_lux_score->{$civ}{'score'}/$max_lux_score;
         print $bo $total_lux_score->{$civ}{'full_desc'}, "\n";
@@ -505,6 +529,19 @@ sub report {
         
         print $bo join("\n", @neighbor_descs );
         print $bo "\n\n\n";
+    }
+    
+    if ($DEBUG == 1) {
+        foreach my $civ (sort {$a <=> $b} (keys %{$alloc->{'civs'}})) {
+            print $bo "\n\n*********************************\n\n";
+            print $bo "DEBUG FOR $civ\n";
+            print $bo "\n\n";
+            $alloc->{'civs'}{$civ}->debug($bo);
+            print $bo "\nCITIES for $civ\n";
+            foreach my $city (@{ $alloc->{'civs'}{$civ}{'cities'} }) {
+                $city->debug($bo);
+            }
+        }
     }
     
     close $bo;

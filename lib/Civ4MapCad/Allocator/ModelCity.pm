@@ -8,14 +8,16 @@ use List::Util qw(min max);
 sub new {
     my $proto = shift;
     my $class = ref $proto || $proto;
-    my ($player, $center, $turn, $order, $initial_delay) = @_;
+    my ($player, $center, $turn, $order, $initial_delay, $prob, $settler) = @_;
     
     my $obj = bless {
+        'prob' => $prob,
+        'settler_from' => $settler,
         'player' => $player,
         'center' => $center,
         'settlement_order' => $order,
         'settling_turn' => ($turn + $initial_delay),
-        'current_turn' => $turn,
+        'current_turn' => ($turn + $initial_delay),
         'last_chop' => ($turn + $initial_delay),
         'last_whip' => ($turn + $initial_delay), 
         'is_capital' => 0,
@@ -23,7 +25,6 @@ sub new {
         'available_trees' => int($center->{'bfc'}->count_trees()/2 + 0.5),
         'initial_delay' => $initial_delay,
         'max_fpt' => -1,
-        'growth_delay' => 0,
         'growth_target' => 1,
         'final_target' => 1,
         'whip_threshold' => 0,
@@ -37,6 +38,9 @@ sub new {
         'stop_settling' => 0,
         'times_grown' => 0,
         'times_whipped' => 0,
+        'blocked_tiles' => {},
+        'aborting_growth' => 0,
+        'currently_worked' => [],
         
         'hammers_for_granary' => 0,
         'has_granary' => 0,
@@ -51,19 +55,120 @@ sub new {
     return $obj;
 }
 
+sub debug {
+    my ($self, $bo) = @_;
+    
+    print $bo "CITY INDEX: $self->{'settlement_order'}, settling_turn:$self->{'settling_turn'}, current_turn:$self->{'current_turn'}\n";
+    print $bo "  center: $self->{'center'}{'x'} $self->{'center'}{'y'}, bfc value: ", sprintf('%6.4f', $self->{'center'}{'bfc_value'}), "\n";
+    print $bo "  settler from: $self->{'settler_from'}{'x'} $self->{'settler_from'}{'y'}\n";
+    print $bo "  settling probability: $self->{'prob'}\n";
+    print $bo "  borders: $self->{'borders_expanded'}, turns_for_expansion: $self->{'turns_for_expansion'}, is_capital: $self->{'is_capital'}\n";
+    print $bo "  size: $self->{'current_size'}, growth_target: $self->{'growth_target'}, final_target: $self->{'final_target'} \n";
+    print $bo "  food_bin: $self->{'food_bin'}, current_fpt: $self->{'current_fpt'}, max_fpt: $self->{'max_fpt'} \n";
+    print $bo "  hammer_bin: $self->{'hammer_bin'}, current_hpt: $self->{'current_hpt'}\n";
+    print $bo "  has_granary: $self->{'has_granary'}, granary_enabled: $self->{'granary_enabled'}, hammers_for_granary: $self->{'hammers_for_granary'}\n";
+    print $bo "  current_status: $self->{'current_status'}, ready_to_build: $self->{'ready_to_build'}, stop_settling: $self->{'stop_settling'}, aborting_growth: $self->{'aborting_growth'}\n";
+    print $bo "  last_whip: $self->{'last_whip'}, times_whipped: $self->{'times_whipped'}, times_grown: $self->{'times_grown'}\n";
+    print $bo "  last_chop: $self->{'last_chop'}, available_trees: $self->{'available_trees'}\n";
+    print $bo "  blocked_tiles: ";
+    
+    foreach my $x (keys %{ $self->{'blocked_tiles'} }) {
+        foreach my $y (keys %{ $self->{'blocked_tiles'}{$x} }) {
+            print $bo "$x,$y ";
+        }
+    }
+    
+    print $bo "\n";
+    
+    if ($self->{'initial_delay'} > 0) {
+        print $bo "  this city is not yet working tiles.\n\n\n";
+        return;
+    }
+    
+    print $bo "  best tiles:\n";
+    my $i = 0;
+    my @tiles = $self->get_real_yield_tiles();
+    foreach my $tile (sort {$b->{'real_value'} <=> $a->{'real_value'}} @tiles) {
+        no warnings;
+        my $cell = $tile->to_cell();
+        my ($title) = $cell =~ /title\s*=\s*"([^"]+)\"/;
+        print $bo "    $title, current yld: $tile->{'real_yld'}[0]/$tile->{'real_yld'}[1]/$tile->{'real_yld'}[2], metric value: $tile->{'value'}, used value: $tile->{'real_value'} ";
+        
+        if (exists $self->{'blocked_tiles'}{$tile->{'x'}}{$tile->{'y'}}) {
+            print $bo "BLOCKED\n";
+            next;
+        }
+        
+        $i++;
+        last if $i > $self->{'current_size'};
+        print $bo "\n";
+    }
+    
+    print $bo "\n";
+    print $bo "  currently worked tiles:\n";
+    foreach my $tile (@{ $self->{'currently_worked'} }) {
+        my $cell = $tile->to_cell();
+        my ($title) = $cell =~ /title\s*=\s*"([^"]+)\"/;
+        print $bo "    $title, current yld: $tile->{'real_yld'}[0]/$tile->{'real_yld'}[1]/$tile->{'real_yld'}[2], metric value: $tile->{'value'}, used value: $tile->{'real_value'}\n";
+    }
+    
+    print $bo "\n\n";
+}
+
 sub get_center {
     my ($self) = @_;
     return $self->{'center'}
 }
 
-sub get_settlment_turn {
+sub get_settlement_turn {
     my ($self) = @_;
     return $self->{'settling_turn'};
+}
+
+sub set_blockage {
+    my ($self, $blocked, $claimed) = @_;
+    
+    my $different = 0;
+    foreach my $x (keys %{ $self->{'blocked_tiles'} }) {
+        foreach my $y (keys %{ $self->{'blocked_tiles'}{$x} }) {
+            $different = 1 if exists $claimed->{$x}{$y};
+        }
+    }
+    
+    foreach my $x (keys %$blocked) {
+        foreach my $y (keys %{ $blocked->{$x} }) {
+            $different = 1 if ! exists $self->{'blocked_tiles'}{$x}{$y};
+        }
+    }
+    
+    if ($different == 1) {
+        $self->{'blocked_tiles'} = $blocked;
+        $self->calculate_growth_target();
+        $self->choose_tiles();
+        
+        if (($self->{'current_status'} eq 'growth') and ($self->{'current_fpt'} <= 2) and ($self->{'borders_expanded'} == 1) and ($self->{'current_size'} >= 2)) {
+            $self->{'ready_to_build'} = 1;
+            $self->{'growth_target'} = $self->{'current_size'};
+            $self->{'final_target'} = $self->{'current_size'};
+            $self->{'aborting_growth'} = 1;
+        }
+    }
+}
+
+sub has_stopped_settling {
+    my ($self) = @_;
+    return $self->{'stop_settling'};
+}
+
+sub has_expanded_borders {
+    my ($self) = @_;
+    return $self->{'borders_expanded'};
 }
 
 sub can_whip {
     my ($self) = @_;
     return 0 if $self->{'max_fpt'} < 3;
+    return 0 if $self->{'last_whip'} < 10;
     return ($self->{'current_size'} > $self->{'whip_threshold'}) ? 1 : 0;
 }
 
@@ -77,6 +182,14 @@ sub set_queue {
     my ($self, $queue) = @_;
     $self->{'current_status'} = $queue;
     $self->choose_tiles();
+    
+    if ($self->{'aborting_growth'} == 1) {
+        $self->{'aborting_growth'} = 0;
+        $self->{'turn'} --;
+        $self->advance_turn();
+        
+    }
+    
     $self->{'ready_to_build'} = 0;
 }
 
@@ -105,7 +218,7 @@ sub initialize {
     my $extra_help_level = log(min(100, $self->{'settling_turn'}));
     # if we have a lot of trees, we can chop a monument
     my $turns_to_expand_borders;
-    if ($self->{'available_trees'} >= 3) {
+    if ($self->{'available_trees'} >= 2) {
         my ($turns_to_chop) = max(3, int(10 - $extra_help_level));
         $turns_to_expand_borders = 10 + $turns_to_chop;
         $self->{'last_chop'} = $self->{'last_chop'} + $turns_to_chop;
@@ -115,7 +228,7 @@ sub initialize {
         $turns_to_expand_borders = int(20 - $extra_help_level);
     }
     
-    $self->{'turns_for_expansion'} = $turns_to_expand_borders + $self->{'initial_delay'};
+    $self->{'turns_for_expansion'} = $turns_to_expand_borders;
 
     $self->calculate_growth_target();
     $self->{'growth_target'} = 2 if $self->{'settlement_order'} == 2;
@@ -123,15 +236,36 @@ sub initialize {
     $self->choose_tiles();
 }
 
-# calculate when this city should stop growing and just 
-# concentrate on producing stuff
-# TODO: this SHOULD take into account shared tiles also... 
+# set all the special stuff for our capital, blah blah
+sub initialize_as_capital {
+    my ($self, $turn) = @_;
+    $self->{'current_size'} = 3;
+    $self->{'initial_delay'} = 0;
+    $self->{'current_status'} = 'settler';
+    $self->{'borders_expanded'} = 1;
+    $self->{'turns_for_expansion'} = 0;
+    $self->{'is_capital'} = 1;
+    $self->{'last_whip'} = $turn + 4;
+    $self->{'last_chop'} = $turn + 4;
+    
+    $self->choose_tiles();
+    $self->{'hammer_bin'} = 100 - $self->{'current_fpt'} - $self->{'current_hpt'};
+}
+
+# calculate when this city should stop growing and just concentrate on producing stuff
 sub calculate_growth_target {
     my ($self) = @_;
+    
+    $self->calculate_max_fpt();
+    
     my @tiles = $self->{'center'}{'bfc'}->get_all_tiles();
     @tiles = sort { $b->{'value'} <=> $a->{'value'} } @tiles;
+    @tiles = grep {! exists $self->{'blocked_tiles'}{$_->{'x'}}{$_->{'y'}} } @tiles;
 
-    my $tile_threshold = ($self->{'has_granary'}) ? 8 : 4;
+    # these are tile values
+    # the first is the least valueable tile we want to grow up to
+    # the second is what value of tiles we're allowed to "whip away"
+    my $tile_threshold = ($self->{'has_granary'}) ? 3 : 6;
     my $whip_threshold = ($self->{'has_granary'}) ? 5 : 10;
     
     my $i = 0;
@@ -139,56 +273,212 @@ sub calculate_growth_target {
     while (1) {
         $w = $i if $tiles[$i]{'value'} > $whip_threshold;
         last if $tiles[$i]{'value'} < $tile_threshold;
-        last if $i == $#tiles;
+        last if $i >= $#tiles;
         $i ++;
     }
     
     $self->{'whip_threshold'} = $w + 1;
-    $self->{'final_target'} = max(2, $i+1);
-    $self->{'growth_target'} = max(2, $self->{'current_size'}, $self->{'growth_target'});
+    $self->{'final_target'} = min(8, max(2, $i+1));
+    $self->{'growth_target'} = min(8, max(2, $self->{'current_size'}, $i));
+}
+
+# this is called whenever we a.) hit a growth target or b.) finish producing something
+sub grow_next {
+    my ($self) = @_;
+    $self->{'current_status'} = 'growth';
+    
+    # if we stopped settling, once we can finished our last build we never go back to producing workers/settlers, just growing forever
+    if ($self->{'stop_settling'}) {
+        $self->{'ready_to_build'} = 0;
+        $self->{'growth_target'} = $self->{'current_size'} + 1;
+        return;
+    }
+    
+    # if we still have good tiles left to grow on, we keep growing
+    if ($self->{'current_size'} < $self->{'growth_target'}) {
+        $self->{'ready_to_build'} = 0;
+        $self->choose_tiles();
+        
+        # catch problem where our current_fpt drops too low to make it to our growth target
+        # thus we force ourselves to stop growing forever, unless something recalculates our growth target
+        if ($self->{'current_fpt'} <= 2) {
+            $self->{'ready_to_build'} = 1;
+            $self->{'growth_target'} = $self->{'current_size'};
+            $self->{'final_target'} = $self->{'current_size'};
+        }
+        
+        return;
+    }
+    
+    elsif ($self->{'growth_target'} < $self->{'final_target'}) {
+        $self->{'growth_target'} = $self->{'current_size'} + 1 if $self->{'current_size'} == $self->{'growth_target'}
+    }
+    
+    $self->{'ready_to_build'} = 1 if $self->{'current_size'} >= $self->{'growth_target'};
+}
+
+sub calculate_max_fpt {
+    my ($self) = @_;
+    
+    my @tiles = ($self->{'borders_expanded'} == 1) ? $self->{'center'}{'bfc'}->get_all_tiles() : $self->{'center'}{'bfc'}->get_first_ring();
+    @tiles = sort { $b->{'yld'}[0] <=> $a->{'yld'}[0] } @tiles;
+    
+    my $max_fpt = 2;
+    foreach my $tile (@tiles) {
+        next if exists $self->{'blocked_tiles'}{$tile->{'x'}}{$tile->{'y'}}; 
+        if ($tile->{'yld'}[0] <= 2) {
+            last;
+        }
+        
+        $max_fpt += ($tile->{'yld'}[0] - 2);
+    }
+    
+    $self->{'max_fpt'} = $max_fpt;
+}
+
+sub get_real_yield_tiles {
+    my ($self) = @_;
+    
+    my @tiles = ($self->{'borders_expanded'} == 1) ? $self->{'center'}{'bfc'}->get_all_tiles() : $self->{'center'}{'bfc'}->get_first_ring();
+    my $turndiff = $self->{'current_turn'} - $self->{'settling_turn'};
+    
+    # upgrade water and wooded tiles
+    foreach my $tile (@tiles) {
+        $tile->{'real_yld'} = [$tile->{'yld'}[0], $tile->{'yld'}[1], $tile->{'yld'}[2]];
+        
+        if ($tile->is_water()) {
+        # give water tiles their full food bonus
+            if (exists $tile->{'BonusType'}) {
+                $tile->{'real_yld'}[0] = int($tile->{'real_yld'}[0] + 0.5);
+            }
+            
+            # activate a lighthouse
+            if (($self->{'center'}{'bfc'}{'first_ring_coastal'} == 1) and ($turndiff >= $main::config{'free_lighthouse'})) {
+                $tile->{'real_yld'}[0] ++;
+            }
+            
+            $tile->{'real_value'} = $main::config{'value_per_food'}*$tile->{'real_yld'}[0] + $main::config{'value_per_hammer'}*$tile->{'real_yld'}[1] + $main::config{'value_per_beaker'}*$tile->{'real_yld'}[2];
+            $tile->{'real_value'} -= (2*$main::config{'value_per_food'} + 0.5*$main::config{'value_per_beaker'});
+        }
+        elsif ((! exists $tile->{'BonusType'}) and (exists $tile->{'FeatureType'})) {
+            if (($tile->{'FeatureType'} eq 'FEATURE_JUNGLE') and ($self->{'current_turn'} >= ($Civ4MapCad::Allocator::hidden{'iron'} + 10))) {
+                if ($tile->{'PlotType'} == 1) {
+                    $tile->{'real_yld'}[0] += 1;
+                    $tile->{'real_yld'}[1] += 2;
+                }
+                elsif ($tile->{'PlotType'} == 2) {
+                    $tile->{'real_yld'}[0] += ($tile->is_fresh() ? 2 : 1);
+                }
+            }
+            elsif (($tile->{'FeatureType'} eq 'FEATURE_FOREST') and ($turndiff > 10)) {
+                $tile->{'real_yld'}[1] --;
+                    
+                if ($tile->{'PlotType'} == 1) {
+                    $tile->{'real_yld'}[1] += 2;
+                }
+                elsif ($tile->{'PlotType'} == 2) {
+                    $tile->{'real_yld'}[0] ++ if $tile->is_fresh();
+                }
+            }
+            elsif (($tile->{'FeatureType'} eq 'FEATURE_FLOOD_PLAINS') and ($turndiff > 5)) {
+                $tile->{'real_yld'}[0] ++;
+            }
+            
+            $tile->{'real_value'} = $main::config{'value_per_food'}*$tile->{'real_yld'}[0] + $main::config{'value_per_hammer'}*$tile->{'real_yld'}[1] + $main::config{'value_per_beaker'}*$tile->{'real_yld'}[2];
+            $tile->{'real_value'} -= (2*$main::config{'value_per_food'} + 0.5*$main::config{'value_per_beaker'});
+        }
+        else {
+            $tile->{'real_value'} = $tile->{'value'};
+        }
+    }
+    
+    return @tiles;
+}
+
+# put tiles in order in terms of what the city will work based on what is available
+sub choose_tiles {
+    my ($self, $recalc_fpt) = @_;
+    
+    my @tiles = $self->get_real_yield_tiles();
+    
+    # max food for growth, but don't completely ignore the other good tiles either as that wouldn't be accurate
+    if ($self->{'current_status'} eq 'growth') {
+        $self->calculate_max_fpt() if $self->{'max_fpt'} < 0;
+        
+        @tiles = sort { $b->{'real_yld'}[0] <=> $a->{'real_yld'}[0] }
+                 grep { ! exists $self->{'blocked_tiles'}{$_->{'x'}}{$_->{'y'}} }
+                 @tiles;
+        
+        my @chosen;
+        while (1) {
+            last if @tiles == 0;
+            last if $tiles[0]{'real_yld'}[0] < 3;
+            push @chosen, (shift @tiles);
+        }
+    
+        @tiles = (@chosen, (sort { $b->{'real_value'} <=> $a->{'real_value'} } @tiles));
+    }
+    else {
+        @tiles = sort { ($b->{'real_yld'}[0]+$b->{'real_yld'}[1]) <=> ($a->{'real_yld'}[0]+$a->{'real_yld'}[1]) }
+                 grep { ! exists $self->{'blocked_tiles'}{$_->{'x'}}{$_->{'y'}} }
+                 @tiles;
+    }
+    
+    $self->{'current_fpt'} = ((exists $self->{'center'}{'bonus_type'}) and ($self->{'center'}{'bonus_type'} =~ /f/)) ? 3  : 2;
+    $self->{'current_hpt'} = (exists $self->{'center'}{'2h_plant'}) ? 2 : 1;
+    $self->{'current_hpt'} = 2 if ($self->{'is_capital'} == 1) and ($main::config{'2h_capital'} == 1);
+    
+    $self->{'currently_worked'} = [];
+    my $limit = min($self->{'current_size'} - 1, $#tiles);
+    foreach my $i (0 .. $limit) {
+        my $tile = $tiles[$i];
+        next if exists $self->{'blocked_tiles'}{$tile->get('x')}{$tile->get('y')}; 
+        
+        $self->{'current_fpt'} += int($tile->{'real_yld'}[0]);
+        $self->{'current_hpt'} += int($tile->{'real_yld'}[1]);
+        push @{ $self->{'currently_worked'} }, $tile;
+    }
+    
+    # TODO: if current_fpt is negative, the algorithm should probably backtrack tiles until fpt is equal to 0
+    $self->{'real_fpt'} = $self->{'current_fpt'} - 2*$self->{'current_size'};
+    $self->{'current_fpt'} = max(0, $self->{'real_fpt'});
+}
+
+sub advance_borders {
+    my ($self) = @_;
+    
+    
+    if ($self->{'initial_delay'} > 1) {
+        $self->{'initial_delay'} --;
+        return 0;
+    }
+    elsif ($self->{'initial_delay'} == 1) {
+        $self->{'initial_delay'} --;
+         return 1;
+    }
+
+    # first, we find out if we need to expand borders
+    if (($self->{'borders_expanded'} == 0) and ($self->{'turns_for_expansion'} <= 0)) {
+        $self->{'borders_expanded'} = 1;
+        return 1
+    }
+    elsif ($self->{'borders_expanded'} == 0) {
+        $self->{'turns_for_expansion'} --;
+    }
+    
+    return 0;
 }
 
 # process one turn; basically, we're either growing (and producing a monument/granary along the way)
 # or we're building workers/settlers
 sub advance_turn {
     my ($self) = @_;
+    
+    return {} if $self->{'initial_delay'} > 0;
+    return {} if $self->{'aborting_growth'} == 1;
+    
     my %ret;
-    
-    if ($self->{'initial_delay'} > 0) {
-        $self->{'initial_delay'} --;
-        return \%ret;
-    }
-    
-    # up here, this is the start of the turn where the player can control
-    
-    # first, we find out if we need to expand borders
-    if (($self->{'borders_expanded'} == 0) and ($self->{'turns_for_expansion'} <= 0)) {
-        $ret{'borders_expanded'} = 1;
-        $self->{'borders_expanded'} = 1;
-        $self->{'max_fpt'} = -1;
-        $self->choose_tiles();
-        
-        # recalculate our growth target now we can work new tiles
-        if (($self->{'current_status'} eq 'growth') and ($self->{'current_size'} < $self->{'growth_target'})) {
-            if ($self->{'current_fpt'} <= 2) {
-                $self->{'ready_to_build'} = 1;
-                $self->{'growth_target'} = $self->{'current_size'};
-                $self->{'final_target'} = $self->{'current_size'};
-                $self->{'current_turn'} ++;
-                
-                $ret{'finished_growing'} = 1;
-                return \%ret;
-            }
-        }
-    }
-    elsif ($self->{'borders_expanded'} == 0) {
-        $self->{'turns_for_expansion'} --;
-    }
-    
-    # --- here is where the turn ends, and the buckets fill
-    
     my $turns_since_last_chop = $self->{'current_turn'} - $self->{'last_chop'};
-    my $turns_since_last_whip = $self->{'current_turn'} - $self->{'last_whip'};
     
     # next, are we growing or building?
     if ($self->{'current_status'} eq 'growth') {
@@ -201,7 +491,7 @@ sub advance_turn {
             }
             
             # or do we whip for granary?
-            elsif ($self->can_whip() and ($turns_since_last_whip >= 10) and ($self->{'hammers_for_granary'} >= 30)) {
+            elsif ($self->can_whip() and ($self->{'hammers_for_granary'} >= 30)) {
                 $self->{'last_whip'} = $self->{'current_turn'};
                 $self->{'hammers_for_granary'} += 30;
                 $self->{'current_size'} --;
@@ -257,9 +547,8 @@ sub advance_turn {
     
         # should we whip the worker?
         # TODO: it would be wise to whip into a granary
-        if ($self->can_whip() and ($turns_since_last_whip >= 10) and ($self->{'hammer_bin'} >= 30)) {
+        if ($self->can_whip() and ($self->{'hammer_bin'} >= 30)) {
             $self->{'hammer_bin'} += 30;
-            $self->{'current_size'} --;
             $self->{'last_whip'} = $self->{'current_turn'};
             $self->{'current_size'} --;
             $self->{'times_whipped'} ++;
@@ -284,7 +573,7 @@ sub advance_turn {
     elsif ($self->{'current_status'} eq 'settler') {
     
         # can/should we whip?
-        if ($self->can_whip() and ($turns_since_last_whip >= 10) and ($self->{'hammer_bin'} >= 70)) {
+        if ($self->can_whip() and ($self->{'hammer_bin'} >= 70)) {
             $self->{'hammer_bin'} += 30;
             $self->{'last_whip'} = $self->{'current_turn'};
             $self->{'current_size'} --;
@@ -310,133 +599,6 @@ sub advance_turn {
     
     $self->{'current_turn'} ++;
     return \%ret;
-}
-
-# set all the special stuff for our capital, blah blah
-sub initialize_as_capital {
-    my ($self, $turn) = @_;
-    $self->{'current_size'} = 3;
-    $self->{'current_status'} = 'settler';
-    $self->{'borders_expanded'} = 1;
-    $self->{'turns_for_expansion'} = 0;
-    $self->{'is_capital'} = 1;
-    $self->{'last_whip'} = $turn;
-    
-    $self->choose_tiles();
-    $self->{'hammer_bin'} = 100 - $self->{'current_fpt'} - $self->{'current_hpt'};
-}
-
-# decide what the next size this city will grow to... which might be the same size we were now
-sub grow_next {
-    my ($self) = @_;
-    $self->{'current_status'} = 'growth';
-    
-    if ($self->{'stop_settling'}) {
-        $self->{'ready_to_build'} = 0;
-        $self->{'growth_target'} = $self->{'current_size'} + 1;
-        return;
-    }
-    
-    if ($self->{'current_size'} < $self->{'growth_target'}) {
-        $self->{'ready_to_build'} = 0;
-        $self->choose_tiles();
-        
-        if ($self->{'current_fpt'} <= 2) {
-            $self->{'ready_to_build'} = 1;
-            $self->{'growth_target'} = $self->{'current_size'};
-            $self->{'final_target'} = $self->{'current_size'};
-        }
-        
-        return;
-    }
-    
-    elsif ($self->{'growth_target'} < $self->{'final_target'}) {
-        $self->{'growth_target'} = $self->{'current_size'} + 1 if $self->{'current_size'} == $self->{'growth_target'}
-    }
-    
-    $self->{'ready_to_build'} = 1 if $self->{'current_size'} >= $self->{'growth_target'};
-}
-
-# put tiles in order in terms of what the city will work based on what is available
-sub choose_tiles {
-    my ($self) = @_;
-    
-    my @tiles = ($self->{'borders_expanded'} == 1) ? $self->{'center'}{'bfc'}->get_all_tiles() : $self->{'center'}{'bfc'}->get_first_ring();
-    
-    # max food for growth, but don't completely ignore the other good tiles either as that wouldn't be accurate
-    if ($self->{'current_status'} eq 'growth') {
-        @tiles = sort { $b->{'yld'}[0] <=> $a->{'yld'}[0] } @tiles;
-        
-        if ($self->{'max_fpt'} == -1) {
-            my $max_fpt = 2;
-            foreach my $tile (@tiles) {
-                if ($tile->{'yld'}[0] == 2) {
-                    last;
-                }
-                
-                $max_fpt += $tile->{'yld'}[0];
-            }
-            $self->{'max_fpt'} = $max_fpt;
-        }
-        
-        my @chosen;
-        while (1) {
-            last if @tiles == 0;
-            last if $tiles[0]{'yld'}[0] < 3;
-            push @chosen, (shift @tiles);
-        }
-    
-        @tiles = (@chosen, (sort { $b->{'value'} <=> $a->{'value'} } @tiles));
-    }
-    else {
-        @tiles = sort { ($b->{'yld'}[0]+$b->{'yld'}[1]) <=> ($a->{'yld'}[0]+$a->{'yld'}[1]) } @tiles;
-    }
-    
-    $self->{'current_fpt'} = 2;
-    $self->{'current_hpt'} = (exists $self->{'center'}{'2h_plant'}) ? 2 : 1;
-    $self->{'current_hpt'} = 2 if $self->{'is_capital'} == 1;
-    
-    # handle tile sharing in a really stupid and non-realistic way
-    # basically, because i didn't want to figure out which city should claim what food tiles,
-    # we just dither the shared tiles, substituting out the next best ones every other turn
-    # because at least it doesn't double-count
-    my @shared;
-    my $limit = min($self->{'current_size'} - 1, $#tiles);
-    foreach my $i (0 .. $limit) {
-        my $tile = $tiles[$i];
-        
-        if ($tile->{'shared_with'}{$self->{'player'}} > 1) {
-            push @shared, $tile;
-            next;
-        }
-        
-        $self->{'current_fpt'} += int($tile->{'yld'}[0]);
-        $self->{'current_hpt'} += int($tile->{'yld'}[1]);
-    }
-    
-    if (@shared > 0) {
-        foreach my $i (0..$#shared) {
-            my $share_f = $shared[$i]{'yld'}[0];
-            my $share_h = $shared[$i]{'yld'}[1];
-            my $alt_f = 0;
-            my $alt_h = 2;
-            
-            if (($i+$limit+1) <= $#tiles) {
-                $alt_f = $tiles[$i+$limit+1]{'yld'}[0];
-                $alt_h = $tiles[$i+$limit+1]{'yld'}[1];
-            }
-            
-            my $factor = 1/$shared[$i]{'shared_with'}{$self->{'player'}};
-            
-            my $fd = $factor*$share_f + (1-$factor)*$alt_f;
-            my $hd = $factor*$share_h + (1-$factor)*$alt_h;
-        
-            $self->{'current_fpt'} += $fd;
-            $self->{'current_hpt'} += $hd;
-        }
-    }
-    
-    $self->{'current_fpt'} = max(0, $self->{'current_fpt'} - 2*$self->{'current_size'});
 }
 
 1;

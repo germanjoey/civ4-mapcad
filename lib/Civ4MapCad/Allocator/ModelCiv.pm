@@ -26,20 +26,68 @@ sub new {
         'settlers_produced' => 0,
         'resource_access' => {},
         'city_search_widening_turn' => 115,
+        'shareable_tiles' => {},
+        'shared_by_city' => {},
+        'food_network' => {},
         
         # we build 4 workers for every 3 settlers to make expansion pace more realistic, and its assumed our little guys 
         # are enough to chop and improve tiles as cities grow into them
         # the capital is finishing a settler when we initialize on turn 30, so really that last settler is first
+        
         'current_queue' => ['worker', 'worker', 'settler', 'worker', 'settler', 'worker', 'settler']
     }, $class;
     
     my $capital_center = $map->get_tile($x, $y);
     
     # initialize capital
-    $obj->add_city(undef, $capital_center, $alloc);
+    $obj->add_city($capital_center, $capital_center, 1, $alloc);
     $obj->{'starting_continent'} = $capital_center->{'continent_id'};
     
     return $obj;
+}
+
+sub debug {
+    my ($self, $bo) = @_;
+    
+    print $bo "TURN: ", $self->{'turn'}, "\n";
+    print $bo "CITIES: ", $self->city_count(), "\n";
+    print $bo "RESOURCES: <", join(" ", sort keys %{ $self->{'resource_access'} }), ">\n\n";
+    print $bo "FOOD_NETWORK: \n";
+    foreach my $c (sort {$a <=> $b} keys %{ $self->{'food_network'} }) {
+        my @o = sort {$a <=> $b} (keys $self->{'food_network'}{$c});
+        print $bo "    $c: @o\n";
+    }
+    
+    print $bo "\n";
+    print $bo "SHAREABLE_TILES: \n";
+    foreach my $x (sort {$a <=> $b} keys %{ $self->{'shareable_tiles'} }) {
+        foreach my $y (sort {$a <=> $b} keys %{ $self->{'shareable_tiles'}{$x} }) {
+            my @c = sort {$a <=> $b} @{ $self->{'shareable_tiles'}{$x}{$y} };
+            
+            foreach my $city (@c) {
+                $city .= '*' if exists $self->{'cities'}[$city]{'blocked_tiles'}{$x}{$y};
+                $city .= ' ';
+            }
+            
+            print $bo "    $x,$y: @c\n";
+        }
+    }
+    
+    print $bo "\n";
+    print $bo "SHARED_BY_CITY: \n";
+    foreach my $c (sort {$a <=> $b} keys %{ $self->{'shared_by_city'} }) {
+        print $bo "    $c:  ";
+        foreach my $x (sort {$a <=> $b} keys %{ $self->{'shared_by_city'}{$c} }) {
+            foreach my $y (sort {$a <=> $b} keys %{ $self->{'shared_by_city'}{$c}{$x} }) {
+                print $bo "$x,$y";
+                print $bo '*' if exists $self->{'cities'}[$c]{'blocked_tiles'}{$x}{$y};
+                print $bo '  ';
+            }
+        }
+        print $bo "\n";
+    }
+    
+    print $bo "\n";
 }
 
 sub city_count {
@@ -47,28 +95,240 @@ sub city_count {
     return @{ $self->{'cities'} } + 0;
 }
 
-sub add_city {
-    my ($self, $settler, $center, $alloc) = @_;
+# hooooweee, ok, what this function is try to allocate food tiles that are shared between cities
+# the inputs to this function are a list of tiles that now have to be shared when they weren't before,
+# or else shared with an additional city. this function is only called when a.) cities are planted (after
+# initial delay) or borders expand, and then only for a sub-graph of all cities connected via other shared
+# food. building that subgraph is the first thing we do in this function. in building this graph, all food
+# tiles that aren't actually shared are assigned to their nearby city.  then, we have a loop that has two
+# parts: first prune nodes from this graph, of cities that are out of food to share or don't need any more
+# food, and then find the city in the network with the lowest assigned food tiles and assign them the highest
+# valued shared food tile in its bfc. any other cities that share this tile will be blocked off. 
+
+sub allocate_shared_food {
+    my ($self, @new_shares) = @_;
+    return if @new_shares == 0;
     
-    # TODO: SHARED TILES DEALT WITH HERE
+    # first, initialize the outer ring of our food network with the new shareable tiles
+    my %unseen;
+    
+    foreach my $tile (@new_shares) {
+        my @c = @{ $self->{'shareable_tiles'}{$tile->get('x')}{$tile->get('y')} };
+        $unseen{$_} = 1 foreach @c;
+    }
+    
+    my %food_score;
+    my %total_tiles;
+    my %total_available;
+    my %total_shared;
+    
+    my %cities_to_handle;
+    my %tiles_to_distribute;
+    my %tile_share_index;
+    my %claimed_tiles;
+    my %blocked_tiles;
+    
+    # now find all cities these cities are "connected" to
+    while (1) {
+        my @us = keys %unseen;
+        foreach my $c (@us) {
+            delete $unseen{$c};
+            $cities_to_handle{$c} = 1;
+            $food_score{$c} = 0;
+            $total_shared{$c} = 0;
+            $total_available{$c} = 0;
+            $claimed_tiles{$c} = {};
+            $blocked_tiles{$c} = {};
+            
+            foreach my $o (keys %{ $self->{'food_network'}{$c} }) {
+                if (! exists $cities_to_handle{$o}) {
+                    $unseen{$o} = 1;
+                }
+            }
+            
+            foreach my $x (keys %{ $self->{'shared_by_city'}{$c} }) {
+                foreach my $y (keys %{ $self->{'shared_by_city'}{$c}{$x} }) {
+                    my $tile = $self->{'map'}{'Tiles'}[$x][$y];
+                    
+                    $total_available{$c} = 0 unless exists $total_available{$c};
+                    $total_available{$c} ++;
+                    
+                    if (@{ $self->{'shareable_tiles'}{$x}{$y} } == 1) {
+                        $food_score{$c} += $tile->{'yld'}[0];
+                    }
+                    else {
+                        $total_shared{$c} ++;
+                    
+                        $total_tiles{$c} = 0 unless exists $total_tiles{$c};
+                        $total_tiles{$c} ++;
+                        
+                        $tile_share_index{$c}{$x}{$y} = 1;
+                        $tiles_to_distribute{$x}{$y}{$c} = $tile;
+                    }
+                }
+            }
+        }
+        
+        my $remaining = scalar keys %unseen;
+        last if $remaining == 0;
+    }
+    
+    $total_available{$_} -= $total_shared{$_} foreach (keys %total_available);
+    
+    # now we have a network composed of cities that are "connected" by food. each of these cities will have a unique
+    # food score (food tiles they don't share with anyone else and food tiles they share with someone else. they'll also
+    # get a weight based on whether they're in the "done settling" zone. anyways our goal will be to equalize the food
+    # across the graph as much as we can.
+    
+    my %cities_updated;
+    
+    while (1) {
+        my $remaining_cities = scalar keys %cities_to_handle;
+        last if $remaining_cities == 0;
+        
+        my $updated = 1;
+        while ($updated == 1) {
+            $updated = 0;
+            
+            my %to_trim;
+            
+            my @remaining_cities = keys %cities_to_handle;
+            foreach my $c (@remaining_cities) {
+                my $city = $self->{'cities'}[$c];
+                
+                # clear out city if it has no more remaining shareables
+                if ($total_tiles{$c} == 0) {
+                    $updated = 1;
+                    
+                    delete $cities_to_handle{$c};
+                    $cities_updated{$c} = 1;
+                    delete $tile_share_index{$c};
+                    next;
+                }
+                
+                # clean out cities that have met their food score
+                if (($city->has_stopped_settling() and ($food_score{$c} >= 2))
+                 or((!$city->has_expanded_borders()) and ($food_score{$c} >= 4))) {
+                    $updated = 1;
+                    
+                    delete $cities_to_handle{$c};
+                    $cities_updated{$c} = 1;
+                    
+                    foreach my $x (keys %{ $tile_share_index{$c} }) {
+                        foreach my $y (keys %{ $tile_share_index{$c}{$x} }) {
+                            $blocked_tiles{$c}{$x}{$y} = 1;
+                            
+                            delete $tiles_to_distribute{$x}{$y}{$c};
+                            my $count = scalar keys %{ $tiles_to_distribute{$x}{$y} };
+                            
+                            if ($count == 1) {
+                                my @c = keys %{ $tiles_to_distribute{$x}{$y} };
+                                
+                                $claimed_tiles{$c[0]}{$x}{$y} = 1;
+                                delete $tile_share_index{$c[0]}{$x}{$y};
+                                delete $tiles_to_distribute{$x}{$y}{$c[0]};
+                                $total_tiles{$c[0]} --;
+                            }
+                        }
+                    }
+                    
+                    delete $total_tiles{$c};
+                    delete $tile_share_index{$c};
+                }
+            }
+        }
+        
+        $remaining_cities = scalar keys %cities_to_handle;
+        last if $remaining_cities == 0;
+        
+        my @neediest = sort { ($total_available{$a} <=> $total_available{$b})
+                                                    ||
+                                   ($food_score{$a} <=> $food_score{$b})
+                                                    ||
+                                                ($b <=> $a)
+                                   } (keys %cities_to_handle);
+                                   
+        my $lc = $neediest[0];
+        my $claimed_tile = {'yld' => [-1]};
+        foreach my $x (keys %{ $tile_share_index{$lc} }) {
+            foreach my $y (keys %{ $tile_share_index{$lc}{$x} }) {
+                my $tile = $tiles_to_distribute{$x}{$y}{$lc};
+                $claimed_tile = $tile if $tile->{'yld'}[0] > $claimed_tile->{'yld'}[0];
+            }
+        }
+        
+        my $cx = $claimed_tile->{'x'};
+        my $cy = $claimed_tile->{'y'};
+        $food_score{$lc} += $claimed_tile->{'yld'}[0];
+        $claimed_tiles{$lc}{$cx}{$cy} = 1;
+        
+        delete $tile_share_index{$lc}{$cx}{$cy};
+        delete $tiles_to_distribute{$cx}{$cy}{$lc};
+        $total_tiles{$lc} --;
+        
+        foreach my $other_city (keys %{ $tiles_to_distribute{$cx}{$cy} }) {
+            next if $other_city == $lc;
+            
+            $blocked_tiles{$other_city}{$cx}{$cy} = 1;
+            delete $tile_share_index{$other_city}{$cx}{$cy};
+            delete $tiles_to_distribute{$cx}{$cy}{$other_city};
+            $total_tiles{$other_city} --;
+        }
+    }
+    
+    foreach my $c (keys %cities_updated) {
+        my $city = $self->{'cities'}[$c];
+        $city->set_blockage($blocked_tiles{$c}, $claimed_tiles{$c});
+    }
+}
+
+sub add_to_share {
+    my ($self, $city_index, $center, $ring) = @_;
+    
+    my @new_shared;
+    my @tiles = ($ring == 1) ? $center->{'bfc'}->get_first_ring() : $center->{'bfc'}->get_second_ring();
+    foreach my $tile (@tiles) {
+        next if $tile->{'PlotType'} == 0;
+        my $x = $tile->get('x');
+        my $y = $tile->get('y');
+        
+        if (((exists $tile->{'bonus_type'}) and ($tile->{'bonus_type'} =~ /f/)) or ((exists $tile->{'FeatureType'}) and ($tile->{'FeatureType'} =~ /flood|oasis/))) {
+            $self->{'shareable_tiles'}{$x}{$y} = [] unless exists $self->{'shareable_tiles'}{$x}{$y};
+            $self->{'shared_by_city'}{$city_index}{$x}{$y} = 1;
+            
+            if (@{ $self->{'shareable_tiles'}{$x}{$y} } > 0) {
+                foreach my $other_city (@{ $self->{'shareable_tiles'}{$x}{$y} }) {
+                    $self->{'food_network'}{$other_city}{$city_index} = 1;
+                    $self->{'food_network'}{$city_index}{$other_city} = 1;
+                }
+            
+                push @new_shared, $tile;
+                push @{ $self->{'shareable_tiles'}{$x}{$y} }, $city_index;
+            }
+            else {
+                push @{ $self->{'shareable_tiles'}{$x}{$y} }, $city_index;
+            }
+        }
+    }
+    
+    return @new_shared;
+}
+
+sub add_city {
+    my ($self, $settler, $center, $prob, $alloc) = @_;
     
     $self->add_to_prospective_zone($center);
     $self->claim_area($center, $alloc);
     
-    # TODO: take into account boat time, if necessary
-    # TODO: need a map->distance_between_points function, which takes wrap into account
-    
     # we don't make settlers walk to the site, but at the very least we'll delay the city
     # from actually doing stuff
-    my $tile_dist = $center->{'distance'}{$self->{'player'}}[1];
+    my $tile_dist = $center->{'distance'}{$self->{'player'}}[1];    
+    $tile_dist += 2 if (@{ $self->{'cities'} } > 0) and ($self->{'cities'}[0]{'center'}{'continent_id'} != $center->{'continent_id'});
     my $initial_delay = ceil($tile_dist/4);
     
-    foreach my $tile ($center->{'bfc'}->get_all_tiles()) {
-        $tile->{'shared_with'}{$self->{'player'}} ++;
-    }
-    
     my $num_cities = $self->city_count();
-    my $new_city = Civ4MapCad::Allocator::ModelCity->new($self->{'player'}, $center, $self->{'turn'}, $num_cities + 1, $initial_delay);
+    
+    my $new_city = Civ4MapCad::Allocator::ModelCity->new($self->{'player'}, $center, $self->{'turn'}, $num_cities + 1, $initial_delay + 1, $prob, $settler);
     push @{ $self->{'cities'} }, $new_city;
     
     my @resources = $center->{'bfc'}->resource_list();
@@ -76,11 +336,14 @@ sub add_city {
     
     if ($num_cities == 0) {
         $new_city->initialize_as_capital($self->{'turn'});
+        $self->add_to_share($num_cities, $center, 1);
+        $self->add_to_share($num_cities, $center, 2);
     }
-    
-    if (! exists $self->{'island_settled'}) {
-        if ($self->{'cities'}[0]{'center'}{'continent_id'} != $center->{'continent_id'}) {
-            $self->{'island_settled'} = [$self->{'turn'}, $center];
+    else {
+        if (! exists $self->{'island_settled'}) {
+            if ($self->{'cities'}[0]{'center'}{'continent_id'} != $center->{'continent_id'}) {
+                $self->{'island_settled'} = [$self->{'turn'}, $center];
+            }
         }
     }
 }
@@ -95,11 +358,22 @@ sub advance_turn {
         }
     }
     
-    # process turn for each city, and collect whatever settlers they've
+    # first do border expansion as a seperate step, collecting all shared tiles
+    # cities whose initial_delay counter first drops down to 1 get a first ring expansion here
+    my @new_shares;
+    foreach my $city (@{ $self->{'cities'} }) {
+        next unless $city->advance_borders() == 1;
+        push @new_shares, $self->add_to_share($city->{'settlement_order'} - 1, $city->{'center'}, 1 + $city->has_expanded_borders());
+    }
+    
+    $self->allocate_shared_food(@new_shares);
+    
+    # then process turn for each city, and collect whatever settlers they've
     # produced for, like, settling new cities
     my @new_cities_to_plant;
     foreach my $city (@{ $self->{'cities'} }) {
         my $update = $city->advance_turn();
+        
         if (exists $update->{'finished_settler'}) {
             push @new_cities_to_plant, $city->get_center();
             $city->grow_next();
@@ -290,6 +564,17 @@ sub strategic_adjustment {
         $strat_bonus += min(0, (1/10)*(2**($self->city_count() - 2)));
     }
     
+    my $new_food_bonus = 1;
+    foreach my $tile (@{ $spot->{'bfc'}{'any_food'} }) {
+    
+        # this goofy line checks to see if a.) a tile is at least 3 tiles away from one of our cities or b.) in the bfc-corner of one of our cities
+        if (($tile->{'city_available'} == 0) or ( (exists $tile->{'prospective_zone'}{$tile->{'x'}}{$tile->{'y'}})
+                                              and (defined $tile->{'prospective_zone'}{$tile->{'x'}}{$tile->{'y'}})
+                                              and (ref($tile->{'prospective_zone'}{$tile->{'x'}}{$tile->{'y'}}) !~ /\w/) )) {
+            $new_food_bonus += $main::config{'new_food_bonus'};
+        }
+    }
+    
     # TODO: luxuries
     # my @resource_list = $spot->{'bfc'}->resource_list();
     # my $lux_count = 0;
@@ -297,11 +582,11 @@ sub strategic_adjustment {
     #################################################################################################
     # finale
     # add up all bonuses and maluses. some factors are ones we that affect how we badly we want the
-    # tiles of a city (factor_adjust), while thers judge the site regardless of how good the tiles
+    # tiles of a city (factor_adjust), while others judge the site regardless of how good the tiles
     # actually are (const_adjust)
     
     my $const_adjust = $choke_malus + $strat_bonus + $outside_safe_malus +  $overseas_malus;
-    my $factor_adjust = $contention_bonus*$diagonal_malus*$dist_malus;
+    my $factor_adjust = $new_food_bonus*$contention_bonus*$diagonal_malus*$dist_malus;
     my $adjusted_value = $const_adjust + $factor_adjust*$bfc_value;
     
     return $adjusted_value;
@@ -408,6 +693,7 @@ sub find_prospective_sites {
         foreach my $y (keys %{ $self->{'prospective_zone'}{$x} }) {
             my $tile = $self->{'prospective_zone'}{$x}{$y};
             next unless defined $tile;
+            next unless ref($tile) =~ /\w/;
             next unless $tile->{'city_available'} == 1;
             push @sites, $tile;
         }
@@ -481,25 +767,25 @@ sub claim_area {
         my $x = $tile->get('x');
         my $y = $tile->get('y');
         
-        if (defined $tile) {
-            $alloc->[$x][$y]{$self->{'player'}} = 1;
-            if ($tile->is_land()) {
-                next unless $tile->{'continent_id'} == $center->{'continent_id'};
-            }
-        
-            $tile->{'city_available'} = 0;
-            $self->{'prospective_zone'}{$x}{$y} = undef;
+        $alloc->[$x][$y]{$self->{'player'}} = 1;
+        if ($tile->is_land()) {
+            next unless $tile->{'continent_id'} == $center->{'continent_id'};
         }
+    
+        $tile->{'city_available'} = 0;
+        $self->{'prospective_zone'}{$x}{$y} = undef;
     }
     
     # finally claim the corners
+    # we mark them slightly different (with a 0 instead of undef) so that we can tell if a food tile at
+    # the corners has been "claimed" or not in strategic_adjustment
     foreach my $dx (-2, 2) {
         foreach my $dy (-2, 2) {
             my $tile = $self->{'map'}->get_tile($cx+$dx, $cy+$dy);
             next unless $tile->{'continent_id'} == $center->{'continent_id'};
             if (defined $tile) {
                 $tile->{'city_available'} = 0;
-                $self->{'prospective_zone'}{$tile->get('x')}{$tile->get('y')} = undef;
+                $self->{'prospective_zone'}{$tile->get('x')}{$tile->get('y')} = 0;
             }
         }
     }

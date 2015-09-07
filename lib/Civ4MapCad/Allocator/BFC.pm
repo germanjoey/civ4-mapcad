@@ -25,6 +25,7 @@ sub new {
         'replacement_counter' => 0,
         'first_ring_coastal' => 0,
         'tiles' => {},
+        'any_food' => [],
         'resources_1st' => {},
         'resources_2nd' => {},
         'ring_1st' => [],
@@ -201,6 +202,10 @@ sub initialize {
                 $bonus =~ s/^bonus_//;
                 
                 $self->{'resources_' . $ring}{$bonus} = 1;
+                
+                if ((exists $tile->{'bonus_type'}) and ($tile->{'bonus_type'} =~ /f/)) {
+                    push @{ $self->{'any_food'} }, $tile;
+                }
             
                 if (exists $tile->{'up_value'}) {
                     my $v = $tile->{'up_value'}*$tile->{'up_value'}/$NUM_TILES_FULL;
@@ -257,7 +262,7 @@ sub calc_bfc_value {
     #   3.) high total food
     my $food = 0;
     foreach my $tile (@all_tiles) {
-        if ($tile->{'yld'}[0] >= 3) {
+        if ($tile->{'yld'}[0] > 3) {
             my $f = $tile->{'yld'}[0] - 2;
             $food += ($f*$f);
         }

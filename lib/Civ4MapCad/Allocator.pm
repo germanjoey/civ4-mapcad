@@ -110,7 +110,8 @@ sub new {
         'raycasts' => {},
         'avg_city_count' => {},
         'avg_city_value' => {},
-        'island_settled' => {}
+        'island_settled' => {},
+        'resource_event_pointer' => 0,
     }, $class;
     
     $obj->initialize();
@@ -135,7 +136,6 @@ sub initialize {
     my $width = $self->get_width();
     my $height = $self->get_height();
     
-    $self->{'map'}->mark_freshwater();
     $self->{'map'}->mark_freshwater();
     $self->{'map'}->mark_continents();
     
@@ -336,7 +336,7 @@ sub calculate_tile_yield {
     
     if ($tile->{'PlotType'} == 0) {
         $tile->{'yld'} = [0, 0, 0];
-        $tile->{'value'} = int(-2*$food - 0.5*$beaker);
+        $tile->{'value'} = int($cost);
         return;
     }
     
@@ -471,18 +471,15 @@ sub calculate_tile_yield {
     }
     else {
         $tile->{'value'} = int($food*$tile->{'yld'}[0] + $hammer*$tile->{'yld'}[1] + $beaker*$tile->{'yld'}[2] - $cost);
-        
-        # we'll use the plot value, not the yield, in determining sites
-        # however, we'll want to think of hills as mined when we're determining what tiles to work
-        if ($tile->{'PlotType'} == 1) {
-            $tile->{'yld'}[1] += ((exists $tile->{'FeatureType'}) ? 1 : 2);
-        }
-        
-        # likewise we'll farm where we can
-        elsif (($tile->{'PlotType'} == 2) and $tile->is_fresh()) {
-           $tile->{'yld'}[0] ++;
-        }
     }
+}
+
+sub has_resource_event {
+    my ($self, $turn) = @_;
+    
+    return 0 if $turn > $self->{'resource_events'}[-1];
+    return $turn == $self->{'resource_events'}[$self->{'resource_event_pointer'}];
+    return 0;
 }
 
 sub upgrade_resource_event {
@@ -510,6 +507,8 @@ sub upgrade_resource_event {
         
         push @found, $resource_name;
     }
+    
+    return if @found == 0;
     
     foreach my $player (keys %{ $self->{'civs'} }) {
         $self->{'civs'}{$player}->choose_tiles_conditionally(@found);
@@ -720,6 +719,7 @@ sub allocate_single {
     
     # create blank allocation matrix
     my $alloc = $self->create_blank_alloc();
+    $self->{'resource_event_pointer'} = 0;
     
     my $width = $self->get_width();
     my $height = $self->get_height();
@@ -742,8 +742,11 @@ sub allocate_single {
     
     my @sorted_civs = sort {$a <=> $b} (keys %$civs);
     foreach my $turn (30..$to_turn) {
-        if ($turn == $self->{'resource_events'}[0]) {
+        # warn "TURN: $turn\n";
+    
+        if ($self->has_resource_event($turn)) {
             $self->upgrade_resource_event($turn);
+            $self->{'resource_event_pointer'} ++;
         }
     
         foreach my $player (@sorted_civs) {
@@ -774,33 +777,38 @@ sub allocate_single {
                 my @final_stat_adjust = splice @stat_adjust, 0, $num_to_consider;
                 my $min = $final_stat_adjust[$#final_stat_adjust][0];
                 
-                
                 # now normalize their priorities by subtracting out the minimum one from each
                 # (so the last one will become zero)
                 my $total = 0;
                 foreach my $s (@final_stat_adjust) {
-                    $s->[0] -= $min;
-                    $s->[0] = $s->[0]**2; # amplify the number
-                    $total += $s->[0];
+                    $s->[2] = $s->[0] - $min;
+                    $s->[2] = $s->[2]**2; # amplify the number
+                    $total += $s->[2];
                 }
                 
                 # finally pick one and settle the damn thing
                 my $choice;
                 if ($total == 0) {
                     $choice = $final_stat_adjust[0][1];
-                    $civ->add_city($settler, $choice, $alloc);
+                    $civ->add_city($settler, $choice, 1, $alloc);
                 }
                 else {
                     my $r = rand(1)*$total;
+                    my $or = sprintf "%6.4f", $r;
                     foreach my $i (0 .. $#final_stat_adjust) {
-                        $r -= $final_stat_adjust[$i][0];
+                        $r -= $final_stat_adjust[$i][2];
                         if ($r <= 0) {
                             $choice = $final_stat_adjust[$i][1];
-                            $civ->add_city($settler, $choice, $alloc);
+                            
+                            my $all = join(" ", map { sprintf "%6.4f/%6.4f", $_->[0], $_->[2] } @final_stat_adjust);
+                            my $prob = sprintf "prob settle %6.4f / num %d, r %s, this weight %6.4f, total weight %6.4f / all weights: <$all>", $final_stat_adjust[$i][2]/$total,  $#final_stat_adjust + 1, $or, $final_stat_adjust[$i][2], $total;
+                            
+                            $civ->add_city($settler, $choice, $prob, $alloc);
                             last;
                         }
                     }
                 }
+                
             }
         }
     }

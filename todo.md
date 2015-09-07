@@ -29,6 +29,7 @@ Medium Ticket TODO:
         - rivers handled well right now, but need to have at least a "draw_river_along_points" command
     - B: grow_bfc command
         - done, needs testing
+    - B: bonus to cities grabbing *NEW* food in strat adjust
     - N: allow rotations from arbitrary origin points
         - just move the layer before/after
         - we might want to redo the rotation algorithm, based on the idea of recomputing the horizontal rotation pattern for  

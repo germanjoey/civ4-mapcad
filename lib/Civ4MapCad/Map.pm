@@ -986,6 +986,24 @@ sub mark_freshwater {
             }
         }
     }
+
+    # finally, deal with the edgecase of oasis
+    foreach my $x (0..$#{$self->{'Tiles'}}) {
+        foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
+            my $tile = $self->{'Tiles'}[$x][$y];
+            next unless $tile->is_land();
+            next unless (exists $tile->{'FeatureType'}) and ($tile->{'FeatureType'} eq 'FEATURE_OASIS');
+            $tile->mark_freshwater();
+            
+            my @directions = ('1 1', '0 1', '-1 1', '1 0', '-1 0', '1 -1', '0 -1', '-1 -1');
+            foreach my $direction (@directions) {
+                my ($xd, $yd) = split ' ', $direction;
+                my $subtile = $self->get_tile($x + $xd, $y + $yd);
+                next unless defined $subtile;
+                $subtile->mark_freshwater();
+            }
+        }
+    }
     
     $self->{'freshwater_marked'} = 1;
     

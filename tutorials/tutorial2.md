@@ -25,7 +25,7 @@ Not too complicated, right? Let's see an example, using the same map as the last
     
 ## Manipulating Groups and Layers
     
-But, you know what? This map is way bigger than necessary for an example; let's trim it up a bit using the "crop_group" command. (Remember that you can use '--help' on any command to learn more about it!)
+But, you know what? This map is way bigger than necessary for an example; let's trim it up a bit using the **crop_group** command. (Remember that you can use '--help' on any command to learn more about it!)
 
 I think from about here to here should be good:
 
@@ -43,9 +43,9 @@ Alright, so we have our main object for this lesson, $t2_cropped. It is a group,
 
 ![tutorial2-img3](t2/i3.png)
     
-Probably about what you'd expect, right? There's a few different list commands, for various types of objects (e.g. list_groups, list_shapes, list_weights, etc), and, like the "help" command, we can filter them out with a search. For example, "list_groups $tutorial2" would list just the $tutorial2 group. Big whoop, right? Try "list_terrain" and you'll see that filtering is a lot more useful there. :)
+Probably about what you'd expect, right? There's a few different list commands, for various types of objects (e.g. list_groups, list_shapes, list_weights, etc), and, like the **help** command, we can filter them out with a search. For example, "list_groups $tutorial2" would list just the $tutorial2 group. Big whoop, right? Try **list_terrain** and you'll see that filtering is a lot more useful there. :)
 
-Anyways, let's make this group a little more interesting by extracting each of the BFCs into their own layers with the "extract_starts" command. This is similar to the "export_sims" command that we used in the last tutorial, but rather than packaging up each starting capital BFC nicely with a bow and dummy AI, we just cut each of them out with scissors and move them to their own layer. So run:
+Anyways, let's make this group a little more interesting by extracting each of the BFCs into their own layers with the **extract_starts** command. This is similar to the **export_sims** command that we used in the last tutorial, but rather than packaging up each starting capital BFC nicely with a bow and dummy AI, we just cut each of them out with scissors and move them to their own layer. So run:
 
     extract_starts --help
     extract_starts $t2_cropped
@@ -59,16 +59,16 @@ Don't worry, they're still there. Take a look at the new tabs:
 
 ![tutorial2-img5](t2/i5.png)
 
-The "list_layers" command sheds some light on the matter:
+The **list_layers** command sheds some light on the matter:
 
 ![tutorial2-img6](t2/i6.png)
 
-Our four remaining BFCs still left after the crop, the starts for players 1, 3, 4, and 5, have been punched out of the background, the layer called "tutorial2," (so named because we originally imported this map via the "import_group" command into a group named $tutorial2) and moved to their own layers above it.  Thus, the situation looks something like this:
+Our four remaining BFCs still left after the crop, the starts for players 1, 3, 4, and 5, have been punched out of the background, the layer called "tutorial2," (so named because we originally imported this map via the **import_group** command into a group named $tutorial2) and moved to their own layers above it.  Thus, the situation looks something like this:
 
 ![tutorial2-layers1](t2/layers1.png)
 ![tutorial2-layers2](t2/layers2.png)
 
-We're now free to manipulate the layers as we see fit. Let's mess with player 3 and player 4 a bit, by flipping their starts horizontally and vertically... JUST BECAUSE WE CAN. ;) We'll use the "flip_layer_tb" and "flip_layer_lr" commands. For commands that take a layer as a parameter, you can refer to a group's layers individually by using a "." similar to how many programming languages do OO.
+We're now free to manipulate the layers as we see fit. Let's mess with player 3 and player 4 a bit, by flipping their starts horizontally and vertically... JUST BECAUSE WE CAN. ;) We'll use the **flip_layer_tb** and **flip_layer_lr** commands. For commands that take a layer as a parameter, you can refer to a group's layers individually by using a "." similar to how many programming languages do OO.
 
     flip_layer_tb $t2_cropped.start3
     flip_layer_tb $t2_cropped.start4
