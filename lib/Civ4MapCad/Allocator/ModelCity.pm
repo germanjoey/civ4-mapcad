@@ -85,7 +85,7 @@ sub debug {
         return;
     }
     
-    print $bo "  best tiles:\n";
+    print $bo "\n  best tiles:\n";
     my $i = 0;
     my @tiles = $self->get_real_yield_tiles();
     foreach my $tile (sort {$b->{'real_value'} <=> $a->{'real_value'}} @tiles) {
@@ -104,7 +104,7 @@ sub debug {
         print $bo "\n";
     }
     
-    print $bo "\n";
+    print $bo "\n\n";
     print $bo "  currently worked tiles:\n";
     foreach my $tile (@{ $self->{'currently_worked'} }) {
         my $cell = $tile->to_cell();
@@ -360,6 +360,8 @@ sub get_real_yield_tiles {
             $tile->{'real_value'} = $main::config{'value_per_food'}*$tile->{'real_yld'}[0] + $main::config{'value_per_hammer'}*$tile->{'real_yld'}[1] + $main::config{'value_per_beaker'}*$tile->{'real_yld'}[2];
             $tile->{'real_value'} -= (2*$main::config{'value_per_food'} + 0.5*$main::config{'value_per_beaker'});
         }
+        
+        # clear forests and either mine, farm, or cottage them
         elsif ((! exists $tile->{'BonusType'}) and (exists $tile->{'FeatureType'})) {
             if (($tile->{'FeatureType'} eq 'FEATURE_JUNGLE') and ($self->{'current_turn'} >= ($Civ4MapCad::Allocator::hidden{'iron'} + 10))) {
                 if ($tile->{'PlotType'} == 1) {
@@ -368,9 +370,10 @@ sub get_real_yield_tiles {
                 }
                 elsif ($tile->{'PlotType'} == 2) {
                     $tile->{'real_yld'}[0] += ($tile->is_fresh() ? 2 : 1);
+                    $tile->{'real_yld'}[2] ++ if ! $tile->is_fresh();
                 }
             }
-            elsif (($tile->{'FeatureType'} eq 'FEATURE_FOREST') and ($turndiff > 10)) {
+            elsif (($tile->{'FeatureType'} eq 'FEATURE_FOREST') and ($turndiff > $main::config{'yield_clear'})) {
                 $tile->{'real_yld'}[1] --;
                     
                 if ($tile->{'PlotType'} == 1) {
@@ -378,9 +381,10 @@ sub get_real_yield_tiles {
                 }
                 elsif ($tile->{'PlotType'} == 2) {
                     $tile->{'real_yld'}[0] ++ if $tile->is_fresh();
+                    $tile->{'real_yld'}[2] ++ if ! $tile->is_fresh();
                 }
             }
-            elsif (($tile->{'FeatureType'} eq 'FEATURE_FLOOD_PLAINS') and ($turndiff > 5)) {
+            elsif (($tile->{'FeatureType'} eq 'FEATURE_FLOOD_PLAINS') and ($turndiff > $main::config{'yield_clear'})) {
                 $tile->{'real_yld'}[0] ++;
             }
             
@@ -388,7 +392,28 @@ sub get_real_yield_tiles {
             $tile->{'real_value'} -= (2*$main::config{'value_per_food'} + 0.5*$main::config{'value_per_beaker'});
         }
         else {
-            $tile->{'real_value'} = $tile->{'value'};
+            if ($turndiff > $main::config{'yield_clear'}) {
+                if ($tile->{'PlotType'} == 1) {
+                    $tile->{'real_yld'}[1] += 2;
+                    $tile->{'real_value'} = $tile->{'value'} + 2*$main::config{'value_per_hammer'};
+                }
+                elsif ($tile->{'PlotType'} == 2) {
+                    if ($tile->is_fresh()) {
+                        $tile->{'real_yld'}[0] ++;
+                        $tile->{'real_value'} = $tile->{'value'} + $main::config{'value_per_food'};
+                    }
+                    else {
+                        $tile->{'real_yld'}[2] ++;
+                        $tile->{'real_value'} = $tile->{'value'} + $main::config{'value_per_beaker'};
+                    }
+                }
+                else {
+                    $tile->{'real_value'} = $tile->{'value'};
+                }
+            }
+            else {
+                $tile->{'real_value'} = $tile->{'value'};
+            }
         }
     }
     
@@ -447,7 +472,6 @@ sub choose_tiles {
 sub advance_borders {
     my ($self) = @_;
     
-    
     if ($self->{'initial_delay'} > 1) {
         $self->{'initial_delay'} --;
         return 0;
@@ -457,6 +481,12 @@ sub advance_borders {
          return 1;
     }
 
+    # on certain turns tile values increase, so we should recalculate which tiles we are working based on the new yields
+    my $turndiff = $self->{'current_turn'} - $self->{'settling_turn'};
+    if (($turndiff == ($main::config{'free_lighthouse'}+1)) or ($turndiff == ($main::config{'yield_clear'}+1))) {
+        $self->choose_tiles();
+    }
+    
     # first, we find out if we need to expand borders
     if (($self->{'borders_expanded'} == 0) and ($self->{'turns_for_expansion'} <= 0)) {
         $self->{'borders_expanded'} = 1;

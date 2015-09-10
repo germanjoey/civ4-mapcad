@@ -16,13 +16,13 @@ use Civ4MapCad::Dump qw(dump_framework);
 use Civ4MapCad::Object::Mask;
 
 our $DEBUG = 1;
-$Civ4MapCad::Map::Tile::DEBUG = 1;
+$Civ4MapCad::Map::Tile::DEBUG = 0;
 
 our $state = Civ4MapCad->new();
 
 my $iterations = 100;
 my $tuning_iterations = 40;
-my $to_turn = 155;
+my $to_turn = 145;
 my $input_filename = 'input/pb27/pb27_final_v9.CivBeyondSwordWBSave';
 my $balance_config = 'def/balance.cfg';
 my @heatmaps = ();
@@ -733,7 +733,7 @@ sub calculate_strategic_access {
                     next if ($dscx <= 2) and ($dscy <= 2);
                     
                     my $spot_td = $spot->{'distance'}{$civ}[1];
-                    my $distance_penalty = -0.1 + 1/sqrt(log($spot_td+3));
+                    my $distance_penalty = 3/($spot_td+1);
                     my $frf_extra_bonus = $frf_factor*$spot->{'frf'};
                     my $score = ($spot->{'bfc_value'}+$frf_extra_bonus)*$distance_penalty;
                     
@@ -751,7 +751,7 @@ sub calculate_strategic_access {
                     next if ($dscx <= 2) and ($dscy <= 2);
                     
                     my $spot_td = $spot->{'distance'}{$civ}[1];
-                    my $distance_penalty = -0.1 + 1/sqrt(log($spot_td+3));
+                    my $distance_penalty = 3/($spot_td+1);
                     my $frf_extra_bonus = $frf_factor*$spot->{'frf'};
                     
                     # if copper is in our second ring, its only half as good!

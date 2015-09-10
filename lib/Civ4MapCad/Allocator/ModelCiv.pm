@@ -328,6 +328,8 @@ sub add_city {
     
     my $num_cities = $self->city_count();
     
+    $initial_delay += $main::config{'initial_idle_turns'} unless $num_cities == 0;
+    
     my $new_city = Civ4MapCad::Allocator::ModelCity->new($self->{'player'}, $center, $self->{'turn'}, $num_cities + 1, $initial_delay + 1, $prob, $settler);
     push @{ $self->{'cities'} }, $new_city;
     
