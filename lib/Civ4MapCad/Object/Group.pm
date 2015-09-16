@@ -667,7 +667,7 @@ sub export {
         $layer->add_dummy_start() if $layer->num_players() == 1;
         $layer->export_layer($path);
         
-        $main::state->report_message("Exported layer $layer_name.");
+        $main::state->report_message("Exported layer $layer_name to $path.");
         print "\n";
     }
     
