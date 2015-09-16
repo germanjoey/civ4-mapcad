@@ -133,8 +133,25 @@ sub get_height {
 sub initialize {
     my ($self) = @_;
     
+    # initial precaches
+    %Civ4MapCad::ModelCiv::dist_cache = ();
+    $Civ4MapCad::ModelCiv::map_width = $self->get_width();
+    $Civ4MapCad::ModelCiv::map_height = $self->get_height();
+    $Civ4MapCad::ModelCiv::map_wrapsX = $self->{'map'}->wrapsX();
+    $Civ4MapCad::ModelCiv::map_wrapsY = $self->{'map'}->wrapsY();
+    
+    if ($Civ4MapCad::ModelCiv::map_wrapsX == 0) {
+        $self->{'map'}{'MapInfo'}{'wrap X'} = 0;
+    }
+    
+    if ($Civ4MapCad::ModelCiv::map_wrapsY == 0) {
+        $self->{'map'}{'MapInfo'}{'wrap Y'} = 0;
+    }
+    
     my $width = $self->get_width();
     my $height = $self->get_height();
+    my $wrapsX = $self->{'map'}->wrapsX();
+    my $wrapsY = $self->{'map'}->wrapsY();
     
     $self->{'map'}->mark_freshwater();
     $self->{'map'}->mark_continents();
@@ -161,16 +178,18 @@ sub initialize {
     $self->{'resource_events'} = [sort {$a <=> $b} (keys %events)];
     
     # precalculate distance from each tile to each capital, both in terms of tile distance and straight-line-distance
-    # (diagonals being distance 1 for tile-istance)
+    # (diagonals being distance 1 for tile-distance)
+    
     foreach my $x (0 .. $width-1) {
         foreach my $y (0 .. $height-1) {
             my $tile = $self->{'map'}{'Tiles'}[$x][$y];
             $tile->{'city_available'} = 1;
+            $tile->{'real_calc_done'} = 0;
             
             foreach my $start (@{ $self->{'starts'} }) {
                 my ($x, $y, $player) = @$start; 
-                my $line_dist = $self->{'map'}->find_line_distance_between_coords($x, $y, $tile->get('x'), $tile->get('y'));
-                my $tile_dist = $self->{'map'}->find_tile_distance_between_coords($x, $y, $tile->get('x'), $tile->get('y'));
+                my $line_dist = $self->{'map'}->find_line_distance_between_coords($width, $height, $wrapsX, $wrapsY, $x, $y, $tile->{'x'}, $tile->{'y'});
+                my $tile_dist = $self->{'map'}->find_tile_distance_between_coords($width, $height, $wrapsX, $wrapsY, $x, $y, $tile->{'x'}, $tile->{'y'});
                 $tile->{'distance'}{$player} = [$line_dist, $tile_dist];
                 $tile->{'shared_with'}{$player} = 0;
             }
@@ -301,7 +320,7 @@ sub precalculate_tile_access {
                     next if (abs($dx) <= 2) and (abs($dy) <= 2);
                     my $other_tile = $self->{'map'}->get_tile($x+$dx, $y+$dy);
                     next unless defined($other_tile);
-                    next if exists $tile->{'access'}{$other_tile->get('x')}{$other_tile->get('y')};
+                    next if exists $tile->{'access'}{$other_tile->{'x'}}{$other_tile->{'y'}};
                     
                     next if $other_tile->is_water();
                     next if $other_tile->{'PlotType'} == 0;
@@ -315,8 +334,8 @@ sub precalculate_tile_access {
                         $ptype = 2 if ($step->{'TerrainType'} eq 'TERRAIN_OCEAN');
                     }
 
-                    $tile->{'access'}{$other_tile->get('x')}{$other_tile->get('y')} = $ptype;
-                    $other_tile->{'access'}{$tile->get('x')}{$tile->get('y')} = $ptype;
+                    $tile->{'access'}{$other_tile->{'x'}}{$other_tile->{'y'}} = $ptype;
+                    $other_tile->{'access'}{$tile->{'x'}}{$tile->{'y'}} = $ptype;
                 }
             }
             
@@ -539,6 +558,7 @@ sub reset_resources {
     foreach my $x (0 .. $width-1) {
         foreach my $y (0 .. $height-1) {
             $self->{'map'}{'Tiles'}[$x][$y]{'city_available'} = 1;
+            $self->{'map'}{'Tiles'}[$x][$y]->{'real_calc_done'} = 0;
             
             foreach my $start (@{ $self->{'starts'} }) {
                 my ($x, $y, $player) = @$start; 

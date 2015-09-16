@@ -213,10 +213,10 @@ sub _report_calling_format {
     my $result = '';
     if (exists $param_spec->{'has_result'}) {
         if ($param_spec->{'has_result'} eq 'layer') {
-            $result = " => \$groupname.layername";
+            $result = " => \$other_groupname.other_layername";
         }
         else {
-            $result = " => $prefix{$param_spec->{'has_result'}}$param_spec->{'has_result'}name";
+            $result = " => $prefix{$param_spec->{'has_result'}}other_$param_spec->{'has_result'}name";
         }
     }
     

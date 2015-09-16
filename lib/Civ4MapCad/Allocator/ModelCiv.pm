@@ -7,6 +7,12 @@ use POSIX qw(ceil);
 use List::Util qw(min max);
 use Civ4MapCad::Allocator::ModelCity;
 
+our %dist_cache;
+our $map_width = 0;
+our $map_height = 0;
+our $map_wrapsX = 0;
+our $map_wrapsY = 0;
+
 # this class models a civ builting settlers
 sub new {
     my $proto = shift;
@@ -113,7 +119,7 @@ sub allocate_shared_food {
     my %unseen;
     
     foreach my $tile (@new_shares) {
-        my @c = @{ $self->{'shareable_tiles'}{$tile->get('x')}{$tile->get('y')} };
+        my @c = @{ $self->{'shareable_tiles'}{$tile->{'x'}}{$tile->{'y'}} };
         $unseen{$_} = 1 foreach @c;
     }
     
@@ -289,8 +295,8 @@ sub add_to_share {
     my @tiles = ($ring == 1) ? $center->{'bfc'}->get_first_ring() : $center->{'bfc'}->get_second_ring();
     foreach my $tile (@tiles) {
         next if $tile->{'PlotType'} == 0;
-        my $x = $tile->get('x');
-        my $y = $tile->get('y');
+        my $x = $tile->{'x'};
+        my $y = $tile->{'y'};
         
         if (((exists $tile->{'bonus_type'}) and ($tile->{'bonus_type'} =~ /f/)) or ((exists $tile->{'FeatureType'}) and ($tile->{'FeatureType'} =~ /flood|oasis/))) {
             $self->{'shareable_tiles'}{$x}{$y} = [] unless exists $self->{'shareable_tiles'}{$x}{$y};
@@ -326,7 +332,7 @@ sub add_city {
     $tile_dist += 2 if (@{ $self->{'cities'} } > 0) and ($self->{'cities'}[0]{'center'}{'continent_id'} != $center->{'continent_id'});
     my $initial_delay = ceil($tile_dist/4);
     
-    my $num_cities = $self->city_count();
+    my $num_cities = @{ $self->{'cities'} } + 0; # city_count
     
     $initial_delay += $main::config{'initial_idle_turns'} unless $num_cities == 0;
     
@@ -393,7 +399,7 @@ sub advance_turn {
     
     # what this models is that as your cities develop, you need to start building stuff like
     # libraries and stuff in them, and thus they stop "contributing" to the settler/worker pump
-    my $c = $self->city_count();
+    my $c = @{ $self->{'cities'} } + 0; # $self->city_count();
     if ($c > $main::config{'city_slack_limit'}) {
         my $num_slackers = min(int($c/2), int( ($c-2) / (($main::config{'city_slack_limit'}-2)-log($c)) ));
     
@@ -449,7 +455,7 @@ sub strategic_adjustment {
     # setup
     #
     
-    my $city_count = $self->city_count();
+    my $city_count = @{ $self->{'cities'} } + 0; # $self->city_count();
     
     # slowly grow a radial zone around our capital where we are "safe" to settle wherever we please. sites
     # outside of this zone get a penalty
@@ -467,7 +473,7 @@ sub strategic_adjustment {
     # and gets updated to the best possible condition as each new city is settled)
     
     my $overseas_malus = 0;
-    my $access = $self->{'path_access'}{$spot->get('x')}{$spot->get('y')};
+    my $access = $self->{'path_access'}{$spot->{'x'}}{$spot->{'y'}};
     if ($spot->{'continent_id'} != $self->{'cities'}[0]{'center'}{'continent_id'}) {
         if ($access == 1) {
             # TODO: this should rampdown more gently
@@ -563,7 +569,7 @@ sub strategic_adjustment {
     my $def = \%Civ4MapCad::Allocator::resource_yield;
     
     if ((! exists $self->{'resource_access'}{'copper'}) and $spot->{'bfc'}->has_resource_any_ring('copper')) {
-        $strat_bonus += min(0, (1/10)*(2**($self->city_count() - 2)));
+        $strat_bonus += min(0, (1/10)*(2**($city_count - 2)));
     }
     
     my $new_food_bonus = 1;
@@ -572,7 +578,7 @@ sub strategic_adjustment {
         # this goofy line checks to see if a.) a tile is at least 3 tiles away from one of our cities or b.) in the bfc-corner of one of our cities
         if (($tile->{'city_available'} == 0) or ( (exists $tile->{'prospective_zone'}{$tile->{'x'}}{$tile->{'y'}})
                                               and (defined $tile->{'prospective_zone'}{$tile->{'x'}}{$tile->{'y'}})
-                                              and (ref($tile->{'prospective_zone'}{$tile->{'x'}}{$tile->{'y'}}) !~ /\w/) )) {
+                                              and (ref($tile->{'prospective_zone'}{$tile->{'x'}}{$tile->{'y'}}) eq '') )) {
             $new_food_bonus += $main::config{'new_food_bonus'};
         }
     }
@@ -605,21 +611,20 @@ sub strategic_adjustment {
 sub chokepoint_consideration {
     my ($self, $spot, $s) = @_;
 
-    my @closest = $self->find_closet_cities_to_spot($spot);
-    return 0 if @closest == 0;
+    my $closest = $self->find_closest_cities_to_spot($spot);
+    return 0 if $closest == 0;
     
-    my @ccoords = map {"($_->{'center'}{'x'},$_->{'center'}{'y'})"} @closest;
     my $spot_congestion = $spot->{'congestion'};
     
     # consider each path from all cities closest to the potential spot 
     # and see if they cross any high congestion areas
     my @paths;
-    foreach my $city (@closest) {
-        my $sx = $spot->get('x');
-        my $sy = $spot->get('y');
+    foreach my $city (@$closest) {
+        my $sx = $spot->{'x'};
+        my $sy = $spot->{'y'};
     
-        my $dx = $sx - $city->{'center'}->get('x');
-        my $dy = $sy - $city->{'center'}->get('y');
+        my $dx = $sx - $city->{'center'}{'x'};
+        my $dy = $sy - $city->{'center'}{'y'};
         my $path = $self->{'raycasts'}{$dx}{$dy};
         
         my $max_path_congestion = -1;
@@ -666,13 +671,30 @@ sub chokepoint_consideration {
 }
 
 # find all cities closest to the spot, including cities that are equi-distant
-sub find_closet_cities_to_spot {
+sub find_closest_cities_to_spot {
     my ($self, $spot) = @_;
     my $min_d = 1000;
     my @closest;
+    
+    my $sx = $spot->{'x'};
+    my $sy = $spot->{'y'};
+    
     foreach my $city (@{ $self->{'cities'} }) {
         next if $spot->{'continent_id'} != $city->{'center'}{'continent_id'};
-        my $d = $self->{'map'}->find_tile_distance_between_coords($spot->get('x'), $spot->get('y'), $city->{'center'}->get('x'), $city->{'center'}->get('y'));
+        
+        my $cx = $city->{'center'}{'x'};
+        my $cy = $city->{'center'}{'y'};
+        
+        # the profiler revealed this as a surprising bottleneck, so lets try to memoize it
+        my $d;
+        if (exists $dist_cache{$sx}{$sy}{$cx}{$cy}) {
+            $d = $dist_cache{$sx}{$sy}{$cx}{$cy};
+        }
+        else {
+            $d = $self->{'map'}->find_tile_distance_between_coords($map_width, $map_height, $map_wrapsX, $map_wrapsY, $sx, $sy, $cx, $cy);
+            $dist_cache{$sx}{$sy}{$cx}{$cy} = $d;
+        }
+        
         if ($d < $min_d) {
             $min_d = $d;
             @closest = ($city);
@@ -681,7 +703,7 @@ sub find_closet_cities_to_spot {
             push @closest, $city;
         }
     }
-    return @closest;
+    return \@closest;
 }
 
 # filter out sites that are not acceptable because some other civ has claimed them
@@ -695,7 +717,7 @@ sub find_prospective_sites {
         foreach my $y (keys %{ $self->{'prospective_zone'}{$x} }) {
             my $tile = $self->{'prospective_zone'}{$x}{$y};
             next unless defined $tile;
-            next unless ref($tile) =~ /\w/;
+            next unless ref($tile) ne '';
             next unless $tile->{'city_available'} == 1;
             push @sites, $tile;
         }
@@ -709,8 +731,8 @@ sub find_prospective_sites {
 sub add_to_prospective_zone {
     my ($self, $new_center) = @_;
     
-    my $cx = $new_center->get('x');
-    my $cy = $new_center->get('y');
+    my $cx = $new_center->{'x'};
+    my $cy = $new_center->{'y'};
     
     my $range = ($self->{'turn'} < $self->{'city_search_widening_turn'}) ? 4 : 5;
     
@@ -723,12 +745,11 @@ sub add_to_prospective_zone {
             my $tile = $self->{'map'}->get_tile($cx+$dx, $cy+$dy);
             next unless defined $tile;
             
-            my $x = $tile->get('x');
-            my $y = $tile->get('y');
+            my $x = $tile->{'x'};
+            my $y = $tile->{'y'};
             
-            next unless $tile->is_land();
+            next unless ($tile->{'PlotType'} == 2) or ($tile->{'PlotType'} == 1);
             next unless $tile->{'city_available'} == 1;
-            next unless $tile->{'PlotType'} != 0;
             
             if (! exists $self->{'prospective_zone'}{$x}{$y}) {
                 $self->{'prospective_zone'}{$x}{$y} = $tile;
@@ -740,11 +761,11 @@ sub add_to_prospective_zone {
             
             next if exists($self->{'path_access'}{$x}{$y}) and ($self->{'path_access'}{$x}{$y} == 0);
             my $type = (exists $self->{'path_access'}{$x}{$y}) ? $self->{'path_access'}{$x}{$y} : 3;
-            $type = min($type, $new_center->{'access'}{$x}{$x}) if exists $new_center->{'access'}{$x}{$x};
+            $type = $new_center->{'access'}{$x}{$x} if (exists $new_center->{'access'}{$x}{$x}) and ($new_center->{'access'}{$x}{$x} < $type);
             foreach my $rtile ($new_center->{'bfc'}->get_all_tiles()) {
-                next unless $rtile->is_land() and ($rtile->{'PlotType'} != 0);
+                next unless ($rtile->{'PlotType'} == 1) and ($rtile->{'PlotType'} == 2);
                 next unless exists $rtile->{'access'}{$x}{$y};
-                $type = min($type, $rtile->{'access'}{$x}{$y}) if exists $rtile->{'access'}{$x}{$y};
+                $type = $rtile->{'access'}{$x}{$y} if (exists $rtile->{'access'}{$x}{$y}) and ($rtile->{'access'}{$x}{$y} < $type);
             }
             
             $self->{'path_access'}{$x}{$y} = $type;
@@ -758,16 +779,16 @@ sub claim_area {
     my ($self, $center, $alloc) = @_;
 
     # first mark the city tile as taken
-    my $cx = $center->get('x');
-    my $cy = $center->get('y');
+    my $cx = $center->{'x'};
+    my $cy = $center->{'y'};
     $center->{'city_available'} = 0;
     $alloc->[$cx][$cy]{$self->{'player'}} = 1;
     $self->{'prospective_zone'}{$cx}{$cy} = undef;
     
     # mark out the bfc tiles
     foreach my $tile ($center->{'bfc'}->get_all_tiles()) {
-        my $x = $tile->get('x');
-        my $y = $tile->get('y');
+        my $x = $tile->{'x'};
+        my $y = $tile->{'y'};
         
         $alloc->[$x][$y]{$self->{'player'}} = 1;
         if ($tile->is_land()) {
@@ -787,7 +808,7 @@ sub claim_area {
             next unless $tile->{'continent_id'} == $center->{'continent_id'};
             if (defined $tile) {
                 $tile->{'city_available'} = 0;
-                $self->{'prospective_zone'}{$tile->get('x')}{$tile->get('y')} = 0;
+                $self->{'prospective_zone'}{$tile->{'x'}}{$tile->{'y'}} = 0;
             }
         }
     }

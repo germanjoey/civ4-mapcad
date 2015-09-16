@@ -15,10 +15,8 @@ use Civ4MapCad::Map::Tile;
 use Civ4MapCad::Dump qw(dump_framework); 
 use Civ4MapCad::Object::Mask;
 
-our $DEBUG = 1;
-$Civ4MapCad::Map::Tile::DEBUG = 0;
-
-our $state = Civ4MapCad->new();
+our $DEBUG = 0;
+$Civ4MapCad::Map::Tile::DEBUG = 1;
 
 my $iterations = 100;
 my $tuning_iterations = 40;
@@ -28,6 +26,9 @@ my $balance_config = 'def/balance.cfg';
 my @heatmaps = ();
 my $heatmap_options = 0;
 my $mod = 'rtr 2.0.7.4';
+my $from_mapcad = 0;
+
+our $state = Civ4MapCad->new();
 
 GetOptions ("iterations=i" => \$iterations,
             "tuning_iterations=i" => \$tuning_iterations,
@@ -37,9 +38,23 @@ GetOptions ("iterations=i" => \$iterations,
             "balance_config=s" => \$balance_config,
             "heatmap=s" => \@heatmaps,
             "heatmap_options" => \$heatmap_options,
+            "from_mapcad" => \$from_mapcad,
             "mod=s" => \$mod
             ) or $state->report_error("Error in command line arguments.\n");
 @heatmaps = ('bfc_value') if @heatmaps == 0;
+
+$SIG{__DIE__} = sub {
+    my $message = shift; 
+    open (my $error_log, '>>', "error.txt");
+    print $error_log $message;
+    close $error_log;
+    $main::state->process_command('write_log');
+};
+
+if ($from_mapcad == 0) {
+    open (my $error_log, '>', "error.txt") or die $!;
+    open (my $output_log, '>', "output.txt") or die $!;
+}
 
 if (! -e $balance_config) {
     $state->report_error(qq[The balance config file "$balance_config" does not exist!]);
@@ -89,15 +104,6 @@ foreach my $hm (@heatmaps) {
     }
 }
 
-$SIG{'INT'} = sub { $main::state->process_command('write_log'); exit(0) };
-$SIG{__DIE__} = sub {
-    my $message = shift; 
-    open (my $error_log, '>>', "error.txt");
-    print $error_log $message;
-    close $error_log;
-    $main::state->process_command('write_log');
-};
-
 $state->process_command('run_script "def/init.civ4mc"');
 $state->process_command(qq[set_mod "$mod"]);
 $state->clear_log();
@@ -127,7 +133,8 @@ if ($ret ne '') {
     die $ret;
 }
 
-print "\n\n    Starting land allocator.\n\n";
+print "\n\n    Starting land allocator. Note that this will take some time, perhaps even\n";
+print "    several minutes if enough iterations are set.\n\n";
 print "        Precalculating map features...\n\n";
 my $alloc = Civ4MapCad::Allocator->new($map);
 $alloc->allocate($tuning_iterations, $iterations, $to_turn);
@@ -401,6 +408,40 @@ sub report {
     }
     $food_score{$_} /= $max_food_score foreach (keys %food_score);
     
+    # tabulate an index of warnings for the map
+    my %worst_civ = (
+        'food' => [1, -1],
+        'lux' => [1,-1],
+        'quality_resource' => {},
+        'missing' => {},
+        'bad' => [],
+    );
+    
+    foreach my $civ (sort {$a <=> $b} (keys %{$alloc->{'avg_city_count'}})) {
+        $worst_civ{'food'} = [$food_score{$civ}, $civ] if $food_score{$civ} < $worst_civ{'food'}[0];
+    
+    
+        if (! exists $total_lux_score->{$civ}) {
+            $worst_civ{'lux'} = [0, $civ];
+        }
+        else {
+            my $score = $total_lux_score->{$civ}{'score'}/$max_lux_score;
+            $worst_civ{'lux'} = [$score, $civ] if $score < $worst_civ{'lux'}[0];
+        }
+            
+        foreach my $bonus (keys %{ $quality_strat->{$civ} }) {
+            my $score = $quality_strat->{$civ}{$bonus}{'score'};
+            $worst_civ{'quality_resource'}{$bonus} = [1, -1] unless exists $worst_civ{'quality_resource'}{$bonus};
+            $worst_civ{'quality_resource'}{$bonus} = [$score, $civ] if $score < $worst_civ{'quality_resource'}{$bonus}[0];
+        }
+        
+        foreach my $type ('completely missing', 'probably unavailable') {
+            foreach my $r (@{ $strat->{$type}{$civ} }) {
+                $worst_civ{'missing'}{$type}{$r} = [] unless exists $worst_civ{'missing'}{$type}{$r};
+                push $worst_civ{'missing'}{$type}{$r}, $civ;
+            }
+        }
+    }
     
     #########################################################################
     # Final report!
@@ -414,6 +455,51 @@ sub report {
     print $bo "much by themselves, but only in comparison to the other players. For example, if one player has a luxury score of 1.0\n";
     print $bo "and another has one of 0.2, that is something that means that there's a big luxury difference between the two of them.\n\n\n";
     
+    # warnings
+    print $bo "** Potential warnings (things worth looking at closer):\n";
+    print $bo "   Worst relative food score: $map->{'Players'}[$worst_civ{'food'}[1]]{'LeaderName'} (Player $worst_civ{'food'}[1]) with a score of $worst_civ{'food'}[0].\n";
+    print $bo "   Worst relative luxury score: $map->{'Players'}[$worst_civ{'lux'}[1]]{'LeaderName'} (Player $worst_civ{'lux'}[1]) with a score of $worst_civ{'lux'}[0].\n";
+    
+    foreach my $r (sort keys %{ $worst_civ{'quality_resource'} }) {
+        print $bo "   Worst relative $r score: $map->{'Players'}[$worst_civ{'quality_resource'}{$r}[1]]{'LeaderName'} (Player $worst_civ{'quality_resource'}{$r}[1]) with a score of $worst_civ{'quality_resource'}{$r}[0].\n";
+    }
+    
+    print $bo "\n";
+    
+    my @certainty = sort keys %{ $worst_civ{'missing'}{'completely missing'} };
+    if (@certainty > 0) {
+        print $bo "  Civs missing resources with certainty:\n";
+        foreach my $r (@certainty) {
+            next if @{ $worst_civ{'missing'}{'completely missing'}{$r} } == 0;
+            print $bo "    $r: ";
+            foreach my $civ (@{ $worst_civ{'missing'}{'completely missing'}{$r} }) {
+                my $name = $map->{'Players'}[$civ]{'LeaderName'};
+                print $bo "$name ($civ) ";
+            }
+            print $bo "\n";
+        }
+        print $bo "\n";
+    }
+    
+    my @hl = sort keys %{ $worst_civ{'missing'}{'probably unavailable'} };
+        
+    if (@hl > 0) {
+        print $bo "  Civs missing resources with high likelihood:\n";
+        foreach my $r (@hl) {
+            next if @{ $worst_civ{'missing'}{'probably unavailable'}{$r} } == 0;
+            print $bo "    $r: ";
+            foreach my $civ (@{ $worst_civ{'missing'}{'probably unavailable'}{$r} }) {
+                my $name = $map->{'Players'}[$civ]{'LeaderName'};
+                print $bo "$name ($civ) ";
+            }
+            print $bo "\n";
+        }
+    }
+    
+    print $bo "\n\n";
+    print $bo "** General Report:\n\n";
+    
+    # general info for each civ
     foreach my $civ (sort {$a <=> $b} (keys %{$alloc->{'avg_city_count'}})) {
         ##########################
         # General metrics
@@ -457,7 +543,7 @@ sub report {
         print $bo "    Strategic access:\n";
         
         foreach my $bonus (keys %{ $quality_strat->{$civ} }) {
-            print $bo $quality_strat->{$civ}{$bonus}, "\n";
+            print $bo $quality_strat->{$civ}{$bonus}{'full_desc'}, "\n";
         }
         
         print $bo "\n";
@@ -766,8 +852,10 @@ sub calculate_strategic_access {
                 
                 $max_value = sprintf '%5.3f', $max_value;
                 my $ring = ($found_second_ring) ? 'second' : 'first';
-                $quality_strat{$civ}{$bonus} = '        - ' . ucfirst($bonus) . " was found at a distance of $td from capital; its best site at $best_site->{'x'},$best_site->{'y'} has it in the\n"
-                                              . "          $ring ring, with a relative strategic quality score of $max_value.";
+                $quality_strat{$civ}{$bonus}{'score'} = $max_value;
+                $quality_strat{$civ}{$bonus}{'full_desc'} = 
+                    '        - ' . ucfirst($bonus) . " was found at a distance of $td from capital; its best site at $best_site->{'x'},$best_site->{'y'} has it in the\n"
+                  . "          $ring ring, with a relative strategic quality score of $max_value.";
             }
         }
     }

@@ -575,10 +575,12 @@ sub check_croppable {
     my $layer_top = $self->{'offsetY'} + $self->get_height() - 1;
     
     my $cropped_width = min($right, $layer_right) - max($left, $layer_left);
-    my $cropped_height = min($right, $layer_top) - max($left, $layer_bottom);
+    my $cropped_height = min($top, $layer_top) - max($bottom, $layer_bottom);
     
-    return -1 if ($cropped_height <= 0) or ($cropped_width <= 0);
+    warn "$left, $bottom, $right, $top / $layer_left $layer_right $layer_bottom $layer_top / $cropped_width $cropped_height";
 
+    return -1 if ($cropped_height <= 0) or ($cropped_width <= 0);
+    
     return 1 if ($layer_left < $left) and ($layer_right > $left);
     return 1 if ($layer_right > $left) and ($layer_right > $right);
     return 1 if ($layer_bottom < $bottom) and ($layer_top > $bottom);
@@ -709,7 +711,7 @@ sub follow_land_tiles {
     
     my $process = sub {
         my ($mark_as_checked, $tile) = @_;
-        $mark_as_checked->($tile->get('x'), $tile->get('y'), $tile);
+        $mark_as_checked->($tile->{'x'}, $tile->{'y'}, $tile);
         return 1 if $tile->is_land();
         return 0;
     };
@@ -853,6 +855,13 @@ sub fix_reveal {
     my ($self) = @_;
 
     $self->{'map'}->fix_reveal();
+}
+
+
+sub fix_map {
+    my ($self) = @_;
+
+    $self->{'map'}->fix_map();
 }
 
 sub add_sign {

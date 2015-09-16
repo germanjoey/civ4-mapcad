@@ -50,3 +50,6 @@ log.civ4mc
 *.out
 *.alloc
 *.debug
+nytprof
+nytprof/*
+map.CivBeyondSwordWBSave

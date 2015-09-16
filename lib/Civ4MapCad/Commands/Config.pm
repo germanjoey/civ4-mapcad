@@ -75,8 +75,7 @@ sub list_mods {
     
     my @mods = map { /mods\/(.+)$/ } grep { -d $_ } glob("mods/*");
     
-    $state->list( qq[The current mod is: "$state->{'mod'}"] );
-    $state->list( @mods );
+    $state->list( qq[The current mod is: "$state->{'mod'}"\n], 'Available Mods: ', map { qq[  "$_"] } @mods );
     return 1;
 }
 
@@ -360,7 +359,7 @@ sub load_xml_data {
         'civics' => \%civics
     };
     
-    print "...done\n\n";
+    print "...done.\n\n";
     $state->register_print();
     
     return 1;

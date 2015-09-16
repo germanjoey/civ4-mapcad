@@ -13,14 +13,14 @@ sub new {
     my $proto = shift;
     my $class = ref $proto || $proto;
     
-    my $obj = bless {}, $class;
+    my $obj = bless { 'wrap X' => 0, 'wrap Y' => 0 }, $class;
     return $obj;
 }
 
 sub new_default {
     my $proto = shift;
     my $class = ref $proto || $proto;
-    my $obj = bless {}, $class;
+    my $obj = bless { 'wrap X' => 0, 'wrap Y' => 0 }, $class;
     
     my ($width, $height) = @_;
     $obj->default($width, $height);
@@ -59,10 +59,9 @@ sub get {
 sub set {
     my ($self, $key, $value) = @_;
     
-    if ((($key eq 'wrap X') or ($key eq 'wrap Y')) and ($value == 0)) {
-        delete $self->{$key};
-    }
-    
+    #if ((($key eq 'wrap X') or ($key eq 'wrap Y')) and ($value == 0)) {
+    #    delete $self->{$key};
+    #}
     
     $self->{$key} = $value;
 }
@@ -88,6 +87,14 @@ sub parse {
 sub write {
     my ($self, $fh) = @_;
     print $fh "BeginMap\n";
+    
+    if ((exists $self->{'wrap X'}) and ($self->{'wrap X'} == 0)) {
+        delete $self->{'wrap X'};
+    }
+    
+    if ((exists $self->{'wrap Y'}) and ($self->{'wrap Y'} == 0)) {
+        delete $self->{'wrap Y'};
+    }
     
     foreach my $field (@fields) {
         write_block_data($self, $fh, 1, $field);

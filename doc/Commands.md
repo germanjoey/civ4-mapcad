@@ -17,7 +17,7 @@ Wherever a settler is found in any layer, a scout is added on top of it. This co
 Adds a sign to a specified coordinate
 
 ##apply_shape_to_mask
-    apply_shape_to_mask *shapename @maskname --shape_param1 value1 --shape_param2 value2 => @maskname 
+    apply_shape_to_mask *shapename @maskname --shape_param1 value1 --shape_param2 value2 => @other_maskname 
       param 1: shape to apply
       param 2: mask to change
 
@@ -39,7 +39,7 @@ Transforms a mask by applying a shape to each coordinate of the mask, meaning th
 Generates a balance report based on an MCMC land allocation algorithm.
 
 ##combine_groups
-    combine_groups $groupname $groupname => $groupname 
+    combine_groups $groupname $groupname => $other_groupname 
       param 1: group A
       param 2: group B
 
@@ -48,13 +48,13 @@ Generates a balance report based on an MCMC land allocation algorithm.
 Merges two groups A and B, into one; all layers in B will be placed under all layers in A.
 
 ##copy_group
-    copy_group $groupname => $groupname 
+    copy_group $groupname => $other_groupname 
       param 1: group to copy
 
 Copy one group into duplicate with a different name.
 
 ##copy_layer_from_group
-    copy_layer_from_group $groupname.layername [ --options ] => $groupname.layername 
+    copy_layer_from_group $groupname.layername [ --options ] => $other_groupname.other_layername 
       param 1: layer to copy
 
     Flag parameters (i.e. --thesethings) specify some special/alternate behaivor of the command and are always optional. This command has 1 possible optional parameters:
@@ -92,7 +92,7 @@ Counts the number of values in the mask that match the target value. If '--thres
 Filters tiles in a layer based on a weight, and then counts the ones that match a value. Matches by default are not exact; e.g. a 'bare_hill' would match both a grassland hill or a plains hill.
 
 ##crop_group
-    crop_group $groupname int int int int => $groupname 
+    crop_group $groupname int int int int => $other_groupname 
       param 1: group to crop
       param 2: left
       param 3: bottom
@@ -104,7 +104,7 @@ Filters tiles in a layer based on a weight, and then counts the ones that match 
 The group's dimensions are trimmed to left/bottom/right/top, from the nominal dimensions of 0 / 0 / width-1 / height-1. Any member layers that exceed these dimensions are cropped as well.
 
 ##crop_layer
-    crop_layer $groupname.layername int int int int => $groupname.layername 
+    crop_layer $groupname.layername int int int int => $other_groupname.other_layername 
       param 1: layer to crop
       param 2: left
       param 3: bottom
@@ -116,7 +116,7 @@ The group's dimensions are trimmed to left/bottom/right/top, from the nominal di
 This layer's dimensions are trimmed to left/bottom/right/top, from the nominal dimensions of 0 / 0 / width-1 / height-1, in reference to the layer. After the crop, the layer is then moved by -left, -bottom, so that tiles are essentially in the exact same place they started.
 
 ##cutout_layer_with_mask
-    cutout_layer_with_mask $groupname.layername @maskname [ --options ] => $groupname.layername 
+    cutout_layer_with_mask $groupname.layername @maskname [ --options ] => $other_groupname.other_layername 
       param 1: layer to cutout from
       param 2: mask to define selection
 
@@ -274,7 +274,7 @@ Exports the mask to a table file; one line per coordinate, first column x, secon
 The '@bfc' mask is applied on each settler, and then that selected area is extracted as a new layer. The group is then exported ala the 'export_group' command, with each layer being saved as its own CivBeyondSwordWBSave. This command does not modify the group.
 
 ##extract_starts
-    extract_starts $groupname => $groupname 
+    extract_starts $groupname => $other_groupname 
       param 1: group to extract from
 
     Specifying a result for this command is optional; if not specified, the original group will be overwritten.
@@ -282,7 +282,7 @@ The '@bfc' mask is applied on each settler, and then that selected area is extra
 The '@bfc' mask is applied on each settler, and then that selected area is extracted as a new layer.
 
 ##find_difference
-    find_difference $groupname $groupname => $groupname 
+    find_difference $groupname $groupname => $other_groupname 
       param 1: group A
       param 2: group B
 
@@ -294,8 +294,16 @@ Take a positive difference between mapobj a and mapobj b to create a new mapobj 
 
 Finds starts (settlers) in a group and reports their locations.
 
+##fix_map
+    fix_map $groupname => $other_groupname 
+      param 1: group to fix
+
+    Specifying a result for this command is optional; if not specified, the original group will be overwritten.
+
+Fixes various map problems: rivers adjacent to coast, mismatched starting techs, removes floodplains that are not river adjacent, removes floodplains/oasis that are not on zero-yield tiles, removes jungles from peaks.
+
 ##flatten_group
-    flatten_group $groupname [ --options ] => $groupname 
+    flatten_group $groupname [ --options ] => $other_groupname 
       param 1: group to flatten
 
     Specifying a result for this command is optional; if not specified, the original group will be overwritten.
@@ -307,7 +315,7 @@ Finds starts (settlers) in a group and reports their locations.
 Flattens a group by merging all layers down, starting with the highest priority. Tiles at the same coordinates in an 'upper' layer will overwrite ones on a 'lower' layer. Ocean tiles are counted as "transparent" in the upper layer. Use the 'list_layers' command to see layer priorities.
 
 ##flip_layer_lr
-    flip_layer_lr $groupname.layername => $groupname.layername 
+    flip_layer_lr $groupname.layername => $other_groupname.other_layername 
       param 1: layer to flip
 
     Specifying a result for this command is optional; if not specified, the original layer will be overwritten.
@@ -315,7 +323,7 @@ Flattens a group by merging all layers down, starting with the highest priority.
 Flip a layer horizontally. Rivers' direction in the layer are also flipped to match the new orientation.
 
 ##flip_layer_tb
-    flip_layer_tb $groupname.layername => $groupname.layername 
+    flip_layer_tb $groupname.layername => $other_groupname.other_layername 
       param 1: layer to flip
 
     Specifying a result for this command is optional; if not specified, the original layer will be overwritten.
@@ -323,7 +331,7 @@ Flip a layer horizontally. Rivers' direction in the layer are also flipped to ma
 Flip a layer horizontally. Rivers' direction in the layer are also flipped to match the new orientation.
 
 ##generate_layer_from_mask
-    generate_layer_from_mask @maskname %weightname [ --options ] => $groupname.layername 
+    generate_layer_from_mask @maskname %weightname [ --options ] => $other_groupname.other_layername 
       param 1: mask to generate from
       param 2: weight table used to translate values into terrain
 
@@ -335,7 +343,7 @@ Flip a layer horizontally. Rivers' direction in the layer are also flipped to ma
 Create a layer by applying a weight table to a mask. The value at each mask coordinate is evaluated according to the weight table, which is used to generate a new tile. For example, if the mask's value at coordinate 3,2 is equal to 0.45, and the weight table specifies that values between 0.4 and 1 map to an ordinary grassland tile, then the output layer will have a grassland tile at 3,2.
 
 ##grow_mask
-    grow_mask @maskname int [ --options ] => @maskname 
+    grow_mask @maskname int [ --options ] => @other_maskname 
       param 1: mask to grow
       param 2: number of tiles to grow by
 
@@ -349,7 +357,7 @@ Create a layer by applying a weight table to a mask. The value at each mask coor
 Expands the mask a certain number of tiles. Only values of '1' are considered; thus, before the actual grow operation occurs, the mask is first thresholded. The mask produced by this command will be larger in the input mask; all four directions will be stretched by the number of tiles that the mask is grown.
 
 ##grow_mask_by_bfc
-    grow_mask_by_bfc @maskname [ --options ] => @maskname 
+    grow_mask_by_bfc @maskname [ --options ] => @other_maskname 
       param 1: mask to grow
 
     Specifying a result for this command is optional; if not specified, the original mask will be overwritten.
@@ -373,13 +381,13 @@ Prints the list of available commands. A search string is optional, but, if pres
 Prints a list of all previous commands back to the command line.
 
 ##import_group
-    import_group "string" => $groupname 
+    import_group "string" => $other_groupname 
       param 1: filename
 
 Create a new group by importing an existing worldbuilder file. The new group will have a single layer with the same name as the result group.
 
 ##import_mask_from_ascii
-    import_mask_from_ascii "string" [ --options ] => @maskname 
+    import_mask_from_ascii "string" [ --options ] => @other_maskname 
       param 1: input filename
 
     Flag parameters (i.e. --thesethings) specify some special/alternate behaivor of the command and are always optional. This command has 1 possible optional parameters:
@@ -389,19 +397,19 @@ Create a new group by importing an existing worldbuilder file. The new group wil
 The 'import_mask_from_ascii' command generates a mask by reading in an ascii art shape and translating the characters into 1's and zeroes, if, for examples, you wanted to create a landmass that looked like some kind of defined shape. By default, a '*' equals a value of 1.0, while a ' ' equals a 0.0; intermediate values map to letters of the alphabet, according to def/standard_ascii.mapping.
 
 ##import_mask_from_table
-    import_mask_from_table "string" => @maskname 
+    import_mask_from_table "string" => @other_maskname 
       param 1: input filename
 
 Imports a mask from a table file; one line per coordinate, first column x, second column y, third column value.
 
 ##import_shape
-    import_shape "string" => *shapename 
+    import_shape "string" => *other_shapename 
       param 1: path
 
 Imports a shape module from the shapes/ directory, probably during the Civ4MC bootup phase.
 
 ##import_weight_table_from_file
-    import_weight_table_from_file "string" => %weightname 
+    import_weight_table_from_file "string" => %other_weightname 
       param 1: weight definition filename
 
 Creates a new Weight Table from a definition described in a file. In short, it follows a format of "operator threshold => result". The result can be either be a terrain or another already-existing Weight Table, the threshold should be a floating point number, and the operator should be either '==' or '>='.
@@ -511,7 +519,7 @@ Loads leader, civ, color, and tech data from the xml files. Set paths in def/con
 List directory. Like the unix command, except there's no corresponding 'cd'. Sorry.
 
 ##mask_difference
-    mask_difference @maskname @maskname [ --options ] => @maskname 
+    mask_difference @maskname @maskname [ --options ] => @other_maskname 
       param 1: mask A
       param 2: mask B
 
@@ -523,14 +531,14 @@ List directory. Like the unix command, except there's no corresponding 'cd'. Sor
 Finds the difference between two masks; if mask A has value '1' at coordinate X,Y while mask B has value '0' at the same coordinate (after applying the offset), then the result will have value '1', and otherwise '0'. For masks with decimal values, the result is max(0, A-B).
 
 ##mask_eval1
-    mask_eval1 @maskname "string" => @maskname 
+    mask_eval1 @maskname "string" => @other_maskname 
       param 1: mask
       param 2: code to evaluate
 
 Applies an arbitrary function of perl code to the value of each individual cell of the mask. The mask value is available, as $a, while he current x,y coordinate is available as $x and $y.
 
 ##mask_eval2
-    mask_eval2 @maskname @maskname "string" [ --options ] => @maskname 
+    mask_eval2 @maskname @maskname "string" [ --options ] => @other_maskname 
       param 1: mask A
       param 2: mask B
       param 3: code to evaluate
@@ -543,7 +551,7 @@ Applies an arbitrary function of perl code to the value of each individual cell 
 Applies an arbitrary function of perl code to the values of each individual pair of coordinates from masks A and B. A's cells can be referred to as $a, while B's are $b. The current x,y coordinate is available as $x and $y.
 
 ##mask_intersect
-    mask_intersect @maskname @maskname [ --options ] => @maskname 
+    mask_intersect @maskname @maskname [ --options ] => @other_maskname 
       param 1: mask A
       param 2: mask B
 
@@ -555,20 +563,20 @@ Applies an arbitrary function of perl code to the values of each individual pair
 Finds the intersection between two masks; if mask A has value '1' at coordinate X,Y and mask B has value '1', the result will have value '1'; otherwise, if either value is '0', then the result will also be '0'. For masks with decimal values, the result is A*B.
 
 ##mask_invert
-    mask_invert @maskname => @maskname 
+    mask_invert @maskname => @other_maskname 
       param 1: mask
 
 Inverts a mask; that is, '1's become '0's and vice versa. For masks with decimal values, then the result is 1-value.
 
 ##mask_threshold
-    mask_threshold @maskname float => @maskname 
+    mask_threshold @maskname float => @other_maskname 
       param 1: input mask
       param 2: threshold level
 
 Swings cell values to either a '1' or a '0' depending on the threshold value, which is the second parameter to this command. Mask cells below this value become a '0', and values above or equal become a '1'.
 
 ##mask_union
-    mask_union @maskname @maskname [ --options ] => @maskname 
+    mask_union @maskname @maskname [ --options ] => @other_maskname 
       param 1: mask A
       param 2: mask B
 
@@ -587,7 +595,7 @@ Finds the union between two masks; if mask A has value '1' at coordinate X,Y whi
 Merges two layers based on their order when calling this command, rather than based on priority in the group (like with the 'flatten_group' command). The first layer wll be considered on top and be the remaining layer after flattening, while the second layer is considered the "background." Both layers must be members of the same group.
 
 ##modify_layer_with_mask
-    modify_layer_with_mask $groupname.layername @maskname %weightname [ --options ] => $groupname.layername 
+    modify_layer_with_mask $groupname.layername @maskname %weightname [ --options ] => $other_groupname.other_layername 
       param 1: layer to modify
       param 2: mask to generate from
       param 3: weight table to generate terrain from
@@ -625,14 +633,14 @@ The specified layer is moved by offsetX, offsetY within its group, referenced fr
 The specified layer is moved to location x,y within its group, referenced from the lower-right corner of the layer.
 
 ##new_group
-    new_group int int => $groupname 
+    new_group int int => $other_groupname 
       param 1: width
       param 2: height
 
 Create a new group with a blank canvas with a size of width/height. The game settings and wrap properties for this group will be set when any layer is first added to it.
 
 ##new_mask_from_filtered_tiles
-    new_mask_from_filtered_tiles $groupname.layername %weightname [ --options ] => @maskname 
+    new_mask_from_filtered_tiles $groupname.layername %weightname [ --options ] => @other_maskname 
       param 1: the layer to find tiles in
       param 2: the weight to filter the layer with
 
@@ -644,7 +652,7 @@ Create a new group with a blank canvas with a size of width/height. The game set
 Creates a mask by applying a weight to every single tile of a layer, i.e. a full scan. Matches by default are not exact; e.g. a 'bare_hill' would match both a grassland hill or a plains hill.
 
 ##new_mask_from_landmass
-    new_mask_from_landmass $groupname.layername int int [ --options ] => @maskname 
+    new_mask_from_landmass $groupname.layername int int [ --options ] => @other_maskname 
       param 1: the layer to generate a mask from
       param 2: x coordinate of starting tile
       param 3: y coordinate of starting tile
@@ -658,7 +666,7 @@ Creates a mask by applying a weight to every single tile of a layer, i.e. a full
 Generate a mask based on a landmass. Sort of like a selection command. The starting tile must be a land tile; otherwise an error will be thrown.
 
 ##new_mask_from_magic_wand
-    new_mask_from_magic_wand $groupname.layername %weightname int int [ --options ] --shape_param1 value1 --shape_param2 value2 => @maskname 
+    new_mask_from_magic_wand $groupname.layername %weightname int int [ --options ] --shape_param1 value1 --shape_param2 value2 => @other_maskname 
       param 1: layer to select from
       param 2: inverse weight to match to tiles
       param 3: start coordinate X
@@ -672,7 +680,7 @@ Generate a mask based on a landmass. Sort of like a selection command. The start
 Creates a mask by applying a weight to a region, starting with a single tile. If this tile matches to a result greater than 0, then the tiles surrounding it will be tested, and so on, until the weight stops matching tiles or it runs out of tiles to match. (This command similar in concept to the "magic wand" selection tool in Photopshop). Matches by default are not exact; e.g. a 'bare_hill' would match both a grassland hill or a plains hill with a forest and a fur on it.
 
 ##new_mask_from_polygon
-    new_mask_from_polygon int int "string" => @maskname 
+    new_mask_from_polygon int int "string" => @other_maskname 
       param 1: width
       param 2: height
       param 3+: coordinate, in the form "x,y"NOTE: this last parameter is expected to be a list of many. 
@@ -680,7 +688,7 @@ Creates a mask by applying a weight to a region, starting with a single tile. If
 The 'new_mask_from_shape' command generates a mask by applying a shape function to a blank canvas of size width/height. The polygon must be a closed, simple (non-internally intersecting) shape, or else an error will be thrown.
 
 ##new_mask_from_shape
-    new_mask_from_shape *shapename int int --shape_param1 value1 --shape_param2 value2 => @maskname 
+    new_mask_from_shape *shapename int int --shape_param1 value1 --shape_param2 value2 => @other_maskname 
       param 1: shape to generate mask with
       param 2: width
       param 3: height
@@ -688,7 +696,7 @@ The 'new_mask_from_shape' command generates a mask by applying a shape function 
 Generates a mask by applying a shape function to a blank canvas of size width/height.
 
 ##new_mask_from_water
-    new_mask_from_water $groupname.layername int int [ --options ] => @maskname 
+    new_mask_from_water $groupname.layername int int [ --options ] => @other_maskname 
       param 1: the layer to generate a mask from
       param 2: x coordinate of starting tile
       param 3: y coordinate of starting tile
@@ -725,7 +733,7 @@ Renames a layer, if you don't want to use copy_layer_from_group + delete_layer.
 Returns a result from a script to be assigned to some other object. The  return type may be any type of group/layer/mask/weight, but not shape. If this result is ignored, a warning will be produced.
 
 ##rotate_layer
-    rotate_layer $groupname.layername float [ --options ] => $groupname.layername 
+    rotate_layer $groupname.layername float [ --options ] => $other_groupname.other_layername 
       param 1: the layer to rotate
       param 2: the angle of rotation, in degrees
 
@@ -743,7 +751,7 @@ If the rotation result is poor, you can try specifying '--iteration' to be a val
 rotate_layer will scale the canvas and move the layer as appropriately so that the result will be an exact rotation once the layer's group is flattened. However, this will add a lot of empty space. You can stop this by using the '--autocrop' option. This can be useful if, for example, you want to just to crop the rotated result afterwards anyways.
 
 ##rotate_mask
-    rotate_mask @maskname float [ --options ] => @maskname 
+    rotate_mask @maskname float [ --options ] => @other_maskname 
       param 1: the mask to rotate
       param 2: the angle of rotation, in degrees
 
@@ -857,7 +865,7 @@ Shows the current difficulty level, which all players in all layers in all group
 Shows the definition for a weight in the console.
 
 ##shrink_mask
-    shrink_mask @maskname int [ --options ] => @maskname 
+    shrink_mask @maskname int [ --options ] => @other_maskname 
       param 1: mask to shrink
       param 2: number of tiles to shrink by
 

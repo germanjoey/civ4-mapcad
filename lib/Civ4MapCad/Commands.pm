@@ -7,7 +7,7 @@ use Exporter::Dispatch;
 use Civ4MapCad::ParamParser;
 
 use Civ4MapCad::Commands::Balance qw(
-   balance_report
+   balance_report fix_map
 );
 
 use Civ4MapCad::Commands::Config qw(

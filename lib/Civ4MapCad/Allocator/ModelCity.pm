@@ -87,8 +87,8 @@ sub debug {
     
     print $bo "\n  best tiles:\n";
     my $i = 0;
-    my @tiles = $self->get_real_yield_tiles();
-    foreach my $tile (sort {$b->{'real_value'} <=> $a->{'real_value'}} @tiles) {
+    my $tiles = $self->get_real_yield_tiles();
+    foreach my $tile (sort {$b->{'real_value'} <=> $a->{'real_value'}} @$tiles) {
         no warnings;
         my $cell = $tile->to_cell();
         my ($title) = $cell =~ /title\s*=\s*"([^"]+)\"/;
@@ -336,63 +336,90 @@ sub calculate_max_fpt {
     $self->{'max_fpt'} = $max_fpt;
 }
 
+# if this sub seems coded redundantly and messily it is because it was a huge performance bottleneck, and so I had to strip out stuff to make it run quicker
 sub get_real_yield_tiles {
     my ($self) = @_;
     
-    my @tiles = ($self->{'borders_expanded'} == 1) ? $self->{'center'}{'bfc'}->get_all_tiles() : $self->{'center'}{'bfc'}->get_first_ring();
+    my $tiles = ($self->{'borders_expanded'} == 1) ? $self->{'center'}{'bfc'}->get_all_tiles_ref() : $self->{'center'}{'bfc'}->get_first_ring_ref();
     my $turndiff = $self->{'current_turn'} - $self->{'settling_turn'};
+    my $tdyc_ok = ($turndiff > $main::config{'yield_clear'});
     
     # upgrade water and wooded tiles
-    foreach my $tile (@tiles) {
+    foreach my $tile (@$tiles) {
+        next if $tile->{'real_calc_done'} == 1;
         $tile->{'real_yld'} = [$tile->{'yld'}[0], $tile->{'yld'}[1], $tile->{'yld'}[2]];
         
-        if ($tile->is_water()) {
         # give water tiles their full food bonus
+        if ($tile->{'PlotType'} == 3) {
             if (exists $tile->{'BonusType'}) {
                 $tile->{'real_yld'}[0] = int($tile->{'real_yld'}[0] + 0.5);
+                $tile->{'real_value'} = $main::config{'value_per_food'}*$tile->{'real_yld'}[0] + $main::config{'value_per_hammer'}*$tile->{'real_yld'}[1] + $main::config{'value_per_beaker'}*$tile->{'real_yld'}[2];
+                $tile->{'real_value'} -= (2*$main::config{'value_per_food'} + 0.5*$main::config{'value_per_beaker'});
+            }
+            else {
+                $tile->{'real_value'} = $tile->{'value'};
             }
             
-            # activate a lighthouse
+            # activate lighthouse
             if (($self->{'center'}{'bfc'}{'first_ring_coastal'} == 1) and ($turndiff >= $main::config{'free_lighthouse'})) {
                 $tile->{'real_yld'}[0] ++;
+                $tile->{'real_value'} = $main::config{'value_per_food'}*$tile->{'real_yld'}[0] + $main::config{'value_per_hammer'}*$tile->{'real_yld'}[1] + $main::config{'value_per_beaker'}*$tile->{'real_yld'}[2];
+                $tile->{'real_value'} -= (2*$main::config{'value_per_food'} + 0.5*$main::config{'value_per_beaker'});
+                $tile->{'real_calc_done'} = 1;
             }
-            
-            $tile->{'real_value'} = $main::config{'value_per_food'}*$tile->{'real_yld'}[0] + $main::config{'value_per_hammer'}*$tile->{'real_yld'}[1] + $main::config{'value_per_beaker'}*$tile->{'real_yld'}[2];
-            $tile->{'real_value'} -= (2*$main::config{'value_per_food'} + 0.5*$main::config{'value_per_beaker'});
         }
         
         # clear forests and either mine, farm, or cottage them
         elsif ((! exists $tile->{'BonusType'}) and (exists $tile->{'FeatureType'})) {
+            my $need_calc = 0;
+        
             if (($tile->{'FeatureType'} eq 'FEATURE_JUNGLE') and ($self->{'current_turn'} >= ($Civ4MapCad::Allocator::hidden{'iron'} + 10))) {
                 if ($tile->{'PlotType'} == 1) {
                     $tile->{'real_yld'}[0] += 1;
                     $tile->{'real_yld'}[1] += 2;
+                    $need_calc = 1;
                 }
                 elsif ($tile->{'PlotType'} == 2) {
-                    $tile->{'real_yld'}[0] += ($tile->is_fresh() ? 2 : 1);
-                    $tile->{'real_yld'}[2] ++ if ! $tile->is_fresh();
-                }
-            }
-            elsif (($tile->{'FeatureType'} eq 'FEATURE_FOREST') and ($turndiff > $main::config{'yield_clear'})) {
-                $tile->{'real_yld'}[1] --;
+                    my $fresh = $tile->is_fresh();
                     
-                if ($tile->{'PlotType'} == 1) {
-                    $tile->{'real_yld'}[1] += 2;
-                }
-                elsif ($tile->{'PlotType'} == 2) {
-                    $tile->{'real_yld'}[0] ++ if $tile->is_fresh();
-                    $tile->{'real_yld'}[2] ++ if ! $tile->is_fresh();
+                    $tile->{'real_yld'}[0] += (($fresh) ? 2 : 1);
+                    $tile->{'real_yld'}[2] ++ if $fresh == 0;
+                    $need_calc = 1;
                 }
             }
-            elsif (($tile->{'FeatureType'} eq 'FEATURE_FLOOD_PLAINS') and ($turndiff > $main::config{'yield_clear'})) {
+            elsif ($tdyc_ok and ($tile->{'FeatureType'} eq 'FEATURE_FOREST')) {
+                if ($tile->{'PlotType'} == 1) {
+                    $tile->{'real_yld'}[1] --;
+                    $tile->{'real_yld'}[1] += 2;
+                    $need_calc = 1;
+                }
+                elsif ($tile->{'PlotType'} == 2) {
+                    my $fresh = $tile->is_fresh();
+                    
+                    $tile->{'real_yld'}[1] --;
+                    $tile->{'real_yld'}[0] ++ if $fresh == 1;
+                    $tile->{'real_yld'}[2] ++ if $fresh == 0;
+                    $need_calc = 1;
+                }
+            }
+            elsif ($tdyc_ok and ($tile->{'FeatureType'} eq 'FEATURE_FLOOD_PLAINS')) {
                 $tile->{'real_yld'}[0] ++;
+                $need_calc = 1;
             }
             
-            $tile->{'real_value'} = $main::config{'value_per_food'}*$tile->{'real_yld'}[0] + $main::config{'value_per_hammer'}*$tile->{'real_yld'}[1] + $main::config{'value_per_beaker'}*$tile->{'real_yld'}[2];
-            $tile->{'real_value'} -= (2*$main::config{'value_per_food'} + 0.5*$main::config{'value_per_beaker'});
+            if ($need_calc == 1) {
+                $tile->{'real_value'} = $main::config{'value_per_food'}*$tile->{'real_yld'}[0] + $main::config{'value_per_hammer'}*$tile->{'real_yld'}[1] + $main::config{'value_per_beaker'}*$tile->{'real_yld'}[2];
+                $tile->{'real_value'} -= (2*$main::config{'value_per_food'} + 0.5*$main::config{'value_per_beaker'});
+                $tile->{'real_calc_done'} = 1;
+            }
+            else {
+                $tile->{'real_value'} = $tile->{'value'};
+            }
         }
         else {
-            if ($turndiff > $main::config{'yield_clear'}) {
+            if ($tdyc_ok) {
+                $tile->{'real_calc_done'} = 1;
+                
                 if ($tile->{'PlotType'} == 1) {
                     $tile->{'real_yld'}[1] += 2;
                     $tile->{'real_value'} = $tile->{'value'} + 2*$main::config{'value_per_hammer'};
@@ -417,36 +444,39 @@ sub get_real_yield_tiles {
         }
     }
     
-    return @tiles;
+    return $tiles;
 }
 
 # put tiles in order in terms of what the city will work based on what is available
 sub choose_tiles {
     my ($self, $recalc_fpt) = @_;
     
-    my @tiles = $self->get_real_yield_tiles();
+    my $tiles = $self->get_real_yield_tiles();
     
     # max food for growth, but don't completely ignore the other good tiles either as that wouldn't be accurate
     if ($self->{'current_status'} eq 'growth') {
         $self->calculate_max_fpt() if $self->{'max_fpt'} < 0;
         
-        @tiles = sort { $b->{'real_yld'}[0] <=> $a->{'real_yld'}[0] }
+        $tiles = [sort { $b->{'real_yld'}[0] <=> $a->{'real_yld'}[0] }
                  grep { ! exists $self->{'blocked_tiles'}{$_->{'x'}}{$_->{'y'}} }
-                 @tiles;
+                 @$tiles];
         
         my @chosen;
         while (1) {
-            last if @tiles == 0;
-            last if $tiles[0]{'real_yld'}[0] < 3;
-            push @chosen, (shift @tiles);
+            last if @$tiles == 0;
+            last if $tiles->[0]{'real_yld'}[0] < 3;
+            push @chosen, (shift @$tiles);
         }
     
-        @tiles = (@chosen, (sort { $b->{'real_value'} <=> $a->{'real_value'} } @tiles));
+        $tiles = [(@chosen, (sort { $b->{'real_value'} <=> $a->{'real_value'} } @$tiles))];
     }
     else {
-        @tiles = sort { ($b->{'real_yld'}[0]+$b->{'real_yld'}[1]) <=> ($a->{'real_yld'}[0]+$a->{'real_yld'}[1]) }
-                 grep { ! exists $self->{'blocked_tiles'}{$_->{'x'}}{$_->{'y'}} }
-                 @tiles;
+        # schwartzian transform, heh
+        $tiles = [ map { $_->[0] }
+                  sort { $b->[1] <=> $a->[1] }
+                   map { [$_, $_->{'real_yld'}[0]+$_->{'real_yld'}[1]] }
+                  grep { ! exists $self->{'blocked_tiles'}{$_->{'x'}}{$_->{'y'}} }
+                       @$tiles];
     }
     
     $self->{'current_fpt'} = ((exists $self->{'center'}{'bonus_type'}) and ($self->{'center'}{'bonus_type'} =~ /f/)) ? 3  : 2;
@@ -454,10 +484,11 @@ sub choose_tiles {
     $self->{'current_hpt'} = 2 if ($self->{'is_capital'} == 1) and ($main::config{'2h_capital'} == 1);
     
     $self->{'currently_worked'} = [];
-    my $limit = min($self->{'current_size'} - 1, $#tiles);
+    
+    my $limit = (@$tiles > $self->{'current_size'}) ? ($self->{'current_size'} - 1) : $#$tiles;
     foreach my $i (0 .. $limit) {
-        my $tile = $tiles[$i];
-        next if exists $self->{'blocked_tiles'}{$tile->get('x')}{$tile->get('y')}; 
+        my $tile = $tiles->[$i];
+        next if exists $self->{'blocked_tiles'}{$tile->{'x'}}{$tile->{'y'}}; 
         
         $self->{'current_fpt'} += int($tile->{'real_yld'}[0]);
         $self->{'current_hpt'} += int($tile->{'real_yld'}[1]);
@@ -466,7 +497,8 @@ sub choose_tiles {
     
     # TODO: if current_fpt is negative, the algorithm should probably backtrack tiles until fpt is equal to 0
     $self->{'real_fpt'} = $self->{'current_fpt'} - 2*$self->{'current_size'};
-    $self->{'current_fpt'} = max(0, $self->{'real_fpt'});
+    $self->{'current_fpt'} = ($self->{'real_fpt'} > 0) ? $self->{'real_fpt'} : 0;
+    
 }
 
 sub advance_borders {

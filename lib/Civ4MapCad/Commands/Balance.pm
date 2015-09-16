@@ -5,7 +5,7 @@ use warnings;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(balance_report);
+our @EXPORT_OK = qw(balance_report fix_map);
 
 use Civ4MapCad::Util qw(deepcopy);
 use Civ4MapCad::ParamParser;
@@ -71,9 +71,40 @@ sub balance_report {
     my $group_name = $group->get_name();
     my $in_filename = $output_dir . "/" . $group_name . ".CivBeyondSwordWBSave";
     
-    my $command_opt = "--input_filename $in_filename --balance_config $balance_config --to_turn $sim_to_turn --iterations $iterations --tuning_iterations $tuning_iterations --mod $state->{'mod'}";
+    my $command_opt = "--input_filename $in_filename --balance_config $balance_config --to_turn $sim_to_turn --iterations $iterations --tuning_iterations $tuning_iterations --mod \"$state->{'mod'}\" --from_mapcad";
     $command_opt .= " --heatmap $heatmap";
-    system("perl balance.pl $command_opt");
+    my $command = "perl balance.pl $command_opt";
+    
+    $state->list("Running command:\n", $command);
+    system($command);
     
     return 1;
 }
+
+my $fix_map_help_text = qq[
+    Fixes various map problems: rivers adjacent to coast, mismatched starting techs, removes floodplains that are not river adjacent,
+    removes floodplains/oasis that are not on zero-yield tiles, removes jungles from peaks.
+];
+sub fix_map {
+    my ($state, @params) = @_;
+    my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
+        'required' => ['group'],
+        'required_descriptions' => ['group to fix'],
+        'help_text' => $fix_map_help_text,
+        'has_result' => 'group',
+        'allow_implied_result' => 1,
+    });
+    return -1 if $pparams->has_error;
+    return 1 if $pparams->done;
+
+    my ($group) = $pparams->get_required();
+    my ($result_name) = $pparams->get_result_name();
+    my $copy = ($result_name eq $group->get_full_name()) ? $group : deepcopy($group);
+    
+    $copy->fix_map();
+    $state->set_variable($result_name, 'group', $copy);
+    
+    return 1;
+}
+
+1;

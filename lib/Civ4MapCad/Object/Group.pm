@@ -769,4 +769,12 @@ sub fix_reveal {
     }
 }
 
+sub fix_map {
+    my ($self) = @_;
+
+    foreach my $layer ($self->get_layers()) {
+        $layer->fix_map();
+    }
+}
+
 1;

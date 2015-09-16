@@ -69,9 +69,19 @@ sub get_first_ring {
     return @{ $self->{'ring_1st'} };
 }
 
+sub get_first_ring_ref {
+    my ($self) = @_;
+    return $self->{'ring_1st'};
+}
+
 sub get_second_ring {
     my ($self) = @_;
     return @{ $self->{'ring_2nd'} };
+}
+
+sub get_all_tiles_ref {
+    my ($self) = @_;
+    return $self->{'all_rings_ref'};
 }
 
 sub get_all_tiles {
@@ -161,8 +171,8 @@ sub upgrade_via_resource {
 sub initialize {
     my ($self, $map) = @_;
     
-    my $cx = $self->{'center'}->get('x');
-    my $cy = $self->{'center'}->get('y');
+    my $cx = $self->{'center'}{'x'};
+    my $cy = $self->{'center'}{'y'};
     
     # collect all the bfc tiles and bin them in 1st ring or second
     # also collect all the resource tiles for when we need to upgrade them later
@@ -228,6 +238,8 @@ sub initialize {
             }
         }
     }
+    
+    $self->{'all_rings_ref'} = [@{ $self->{'ring_1st'} }, @{ $self->{'ring_2nd'} }];
 }
 
 # calculate a metric that describes how good a city site is if we were to

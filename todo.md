@@ -19,15 +19,12 @@ Medium Ticket TODO:
         - just move the layer before/after
         - we might want to redo the rotation algorithm, based on the idea of recomputing the horizontal rotation pattern for  
           each step
-    - N: check_map command
-        - checks to make sure each active civ has 2 techs
-        - checks for floodplains/oasis on non desert/ice tiles and for river adjacency
-        - checks for jungles on peaks (resources too i guess)
+    - N: fix_map command
         - fixes river direction
-        - clears rivers from coast edge
         
 Small Ticket TODO:
 
+    - B: print command
     - N: add a see_also field to params
     - B: test find_difference again
         - that code is goddamn ancient

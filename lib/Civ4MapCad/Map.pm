@@ -177,14 +177,11 @@ sub expand_dim {
 }
 
 sub find_line_distance_between_coords {
-    my ($self, $from_x, $from_y, $to_x, $to_y) = @_;
-    
-    my $width = $self->info('grid width');
-    my $height = $self->info('grid height');
+    my ($self, $width, $height, $wrapsX, $wrapsY, $from_x, $from_y, $to_x, $to_y) = @_;
     
     my $dx; my $dy;
     
-    if ($self->wrapsX() and $self->wrapsY()) {
+    if (($wrapsX == 1) and ($wrapsY == 1)) {
         $dx = abs($from_x - $to_x);
         $dx = min($width - $dx, $dx);
         
@@ -192,12 +189,12 @@ sub find_line_distance_between_coords {
         $dy = min($height - $dy, $dy);
         
     }
-    elsif ($self->wrapsX()) {
+    elsif ($wrapsX == 1) {
         $dx = abs($from_x - $to_x);
         $dx = min($width - $dx, $dx);
         $dy = abs($from_y - $to_y);
     }
-    elsif ($self->wrapsY()) {
+    elsif ($wrapsY == 1) {
         $dy = abs($from_y - $to_y);
         $dy = min($height - $dy, $dy);
         $dx = abs($from_x - $to_x);
@@ -211,13 +208,12 @@ sub find_line_distance_between_coords {
     
 }
 
+# width, height, wrapsX, and wrapsY are all prefetched because the profiler found that the
+# calls to their accessor methods were taking an insane amount of time
 sub find_tile_distance_between_coords {
-    my ($self, $from_x, $from_y, $to_x, $to_y) = @_;
+    my ($self, $width, $height, $wrapsX, $wrapsY, $from_x, $from_y, $to_x, $to_y) = @_;
     
-    my $width = $self->info('grid width');
-    my $height = $self->info('grid height');
-    
-    if ($self->wrapsX() and $self->wrapsY()) {
+    if (($wrapsX == 1) and ($wrapsY == 1)) {
         my $dx = abs($from_x - $to_x);
         $dx = min($width - $dx, $dx);
         
@@ -226,12 +222,12 @@ sub find_tile_distance_between_coords {
         
         return max($dx, $dy);
     }
-    elsif ($self->wrapsX()) {
+    elsif ($wrapsX == 1) {
         my $dx = abs($from_x - $to_x);
         $dx = min($width - $dx, $dx);
         return max($dx, abs($from_y - $to_y));
     }
-    elsif ($self->wrapsY()) {
+    elsif ($wrapsY == 1) {
         my $dy = abs($from_y - $to_y);
         $dy = min($height - $dy, $dy);
         return max(abs($from_x - $to_x), $dy);
@@ -536,6 +532,7 @@ sub add_scouts_to_settlers {
     return 1;
 }
 
+# accessor methods accesses optimized out
 sub get_tile {
     my ($self, $x, $y) = @_;
     
@@ -543,25 +540,25 @@ sub get_tile {
     my $uy = $y;
     
     if ($x > $#{ $self->{'Tiles'} }) {
-        return unless $self->wrapsX();
+        return unless $self->{'MapInfo'}{'wrap X'};
         my $oldX = $ux;
-        $ux = $ux - $self->info('grid width');
+        $ux = $ux - $self->{'MapInfo'}{'grid width'};
     }
     elsif ($x < 0) {
-        return unless $self->wrapsX();
+        return unless $self->{'MapInfo'}{'wrap X'};
         my $oldX = $ux;
-        $ux = $ux + $self->info('grid width');
+        $ux = $ux + $self->{'MapInfo'}{'grid width'};
     }
     
     if ($y > $#{ $self->{'Tiles'}[$ux] }) {
-        return unless $self->wrapsY();
+        return unless $self->{'MapInfo'}{'wrap Y'};
         my $oldY = $uy;
-        $uy = $uy - $self->info('grid height');
+        $uy = $uy - $self->{'MapInfo'}{'grid height'};
     }
     elsif ($y < 0) {
-        return unless $self->wrapsY();
+        return unless $self->{'MapInfo'}{'wrap Y'};
         my $oldY = $uy;
-        $uy = $uy + $self->info('grid height');
+        $uy = $uy + $self->{'MapInfo'}{'grid height'};
     }
     
     return $self->{'Tiles'}[$ux][$uy];
@@ -910,7 +907,7 @@ sub mark_continents {
     
     my $process = sub {
         my ($mark_as_checked, $tile) = @_;
-        $mark_as_checked->($tile->get('x'), $tile->get('y'), $tile);
+        $mark_as_checked->($tile->{'x'}, $tile->{'y'}, $tile);
         if ($tile->is_land()) {
             $tile->mark_continent_id($cont_id);
             return 1;
@@ -1102,8 +1099,8 @@ sub clear_coasts {
 sub region_search {
     my ($self, $start_tile, $is_already_checked, $mark_as_checked, $process) = @_;
     
-    my $start_x = $start_tile->get('x');
-    my $start_y = $start_tile->get('y');
+    my $start_x = $start_tile->{'x'};
+    my $start_y = $start_tile->{'y'};
     
     my @queue = ([$start_x, $start_y]);
     $mark_as_checked->($start_x, $start_y, $start_tile);
@@ -1131,8 +1128,8 @@ sub region_search {
             }
             
             # check again, in case coordinate wrapping from get_tile makes a difference
-            $tx = $tile->get('x');
-            $ty = $tile->get('y');
+            $tx = $tile->{'x'};
+            $ty = $tile->{'y'};
             next if $is_already_checked->($tx, $ty);
             
             my $to_add = $process->($mark_as_checked, $tile);
@@ -1200,6 +1197,186 @@ sub set_turn0 {
     if ($self->{'Game'}->get('GameTurn') != 0) {
         $main::state->report_warning("Game turn not 0! Resetting...\n");
         $self->{'Game'}->set('GameTurn', 0)
+    }
+}
+ 
+ 
+
+sub fix_map {
+    my ($self) = @_;
+    
+    $self->fix_techs();
+    $self->fix_reveal();
+    $self->fix_tiles();
+}
+
+sub fix_tiles {
+    my ($self) = @_;
+    my %already_seen;
+    
+    # compress the tile warnings
+    my $have_warned = 0;
+    my $did_short_warn = 0;
+    my $warn = sub {
+        my ($msg) = @_;
+        if ($have_warned == 1) {
+            print " * $msg\n";
+            $did_short_warn = 1;
+        }
+        else {
+            $main::state->report_warning($msg);
+            $have_warned = 1;
+        }
+    };
+    
+    if (($self->wrapsX() == 1) and ($self->wrapsY() == 1)) {
+        my $width = $self->info('grid width');
+        my $height = $self->info('grid height');
+        
+        if ((($width%4) != 0) or (($height%4) != 0)) {
+            $warn->("It is recommended that Toroidal maps have widths and heights divisible by 4 to prevent graphical glitches, but this map has dimensions of ${width}x${height}.");
+        }
+    }
+    
+    # first eliminate rivers that are adjacent to coast tiles
+    foreach my $x (0..$#{$self->{'Tiles'}}) {
+        foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
+            my $tile = $self->{'Tiles'}[$x][$y];
+        
+            if ($tile->is_NOfRiver()) {
+                if ($tile->is_water()) {
+                    $warn->("Deleting coastal-adjacent river at $x,$y");
+                    delete $tile->{'isNOfRiver'};
+                    delete $tile->{'RiverNSDirection'}
+                }
+                else {
+                    my $southern_tile = $self->get_tile($x, $y-1);
+                    if ($southern_tile->is_water()) {
+                        $warn->("Deleting coastal-adjacent river at $x,$y");
+                        delete $tile->{'isNOfRiver'};
+                        delete $tile->{'RiverNSDirection'}
+                    }
+                }
+            }
+            
+            if ($tile->is_WOfRiver()) {
+                if ($tile->is_water()) {
+                    $warn->("Deleting coastal-adjacent river at $x,$y");
+                    delete $tile->{'isWOfRiver'};
+                    delete $tile->{'RiverWEDirection'}
+                }
+                else {
+                    my $eastern_tile = $self->get_tile($x+1, $y);
+                    if ($eastern_tile->is_water()) {
+                        $warn->("Deleting coastal-adjacent river at $x,$y");
+                        delete $tile->{'isWOfRiver'};
+                        delete $tile->{'RiverWEDirection'}
+                    }
+                }
+            }
+        }
+    }
+    
+    $self->mark_freshwater();
+    
+    # now we'll fix features that don't belong
+    # this stuff should be pretty self-explanatory
+    foreach my $x (0..$#{$self->{'Tiles'}}) {
+        foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
+            my $tile = $self->{'Tiles'}[$x][$y];
+            
+            if (exists $tile->{'FeatureType'}) {
+                if ($tile->{'FeatureType'} eq 'FEATURE_FLOOD_PLAINS') {
+                    if ($tile->is_river_adjacent() == 0) {
+                        $warn->("Deleting non-river adjacent floodplain at $x,$y.");
+                        delete $tile->{'FeatureType'};
+                        delete $tile->{'FeatureVariety'};
+                        next;
+                    }
+                    
+                    if (($tile->{'TerrainType'} ne 'TERRAIN_DESERT') and ($tile->{'TerrainType'} ne 'TERRAIN_SNOW')) {
+                        $warn->("Deleting floodplain on non- desert/snow tile at $x,$y.");
+                        delete $tile->{'FeatureType'};
+                        delete $tile->{'FeatureVariety'};
+                    }
+                }
+                elsif ($tile->{'FeatureType'} eq 'FEATURE_OASIS') {
+                    if (($tile->{'TerrainType'} ne 'TERRAIN_DESERT') and ($tile->{'TerrainType'} ne 'TERRAIN_SNOW')) {
+                        $warn->("Deleting oasis on non- desert/snow tile at $x,$y.");
+                        delete $tile->{'FeatureType'};
+                        delete $tile->{'FeatureVariety'};
+                    }
+                }
+                elsif ($tile->{'FeatureType'} eq 'FEATURE_JUNGLE') {
+                    if (($tile->{'PlotType'} == 0)) {
+                        $warn->("Jungle on peak detected (but not deleted) at: $x,$y.");
+                    }
+                    elsif (($tile->{'PlotType'} == 3)) {
+                        $warn->("Deleting watery jungle at: $x,$y.");
+                        delete $tile->{'FeatureType'};
+                        delete $tile->{'FeatureVariety'};
+                    }
+                    elsif (($tile->{'TerrainType'} ne 'TERRAIN_GRASS')) {
+                        $warn->("Jungle on non-grassland detected (but not deleted) at: $x,$y.");
+                    }
+                }
+                elsif ($tile->{'FeatureType'} eq 'FEATURE_FOREST') {
+                    if (($tile->{'PlotType'} == 0)) {
+                        $warn->("Forest on peak detected (but not deleted) at: $x,$y.");
+                    }
+                    elsif (($tile->{'PlotType'} == 3)) {
+                        $warn->("Deleting watery forest at: $x,$y.");
+                        delete $tile->{'FeatureType'};
+                        delete $tile->{'FeatureVariety'};
+                    }
+                }
+            }
+        }
+    }   
+    
+    print "\n" if $did_short_warn == 1;
+    
+    $self->clear_coasts();
+}
+
+sub fix_techs {
+    my ($self) = @_;
+    my $data = $main::state->{'data'}{'civs'};
+    
+    # first check techs
+    # TODO: this won't work for teamer maps!
+    foreach my $i (0..$#{ $self->{'Players'} }) {
+        my $player = $self->{'Players'}[$i];
+        next if $player->{'CivType'} eq 'NONE';
+        
+        my $team = $self->{'Teams'}{$player->{'Team'}};
+        my $actual_techs = $team->{'Techs'};
+        my $supposed_techs = $data->{$player->{'CivType'}}{'_Tech'};
+        
+        my $mismatch = 0;
+        my %sts; my %ats;
+        @sts{@$supposed_techs} = (1) x @$supposed_techs;
+        @ats{@$actual_techs} = (1) x @$actual_techs;
+        foreach my $st (@$supposed_techs) {
+            if (! exists $ats{$st}) {
+                $mismatch = 1;
+                $main::state->report_warning("Player $i ($player->{'LeaderName'} of $player->{'CivType'}) is supposed to have $st but is missing it!");
+            }
+        }
+        foreach my $at (@$actual_techs) {
+            if (! exists $sts{$at}) {
+                $mismatch = 1;
+                $main::state->report_warning("Player $i ($player->{'LeaderName'} of $player->{'CivType'}) has $at but isn't supposed to!");
+            }
+        }
+        
+        if ($mismatch == 1) {
+            $main::state->report_warning("Setting techs to the default techs of $player->{'CivType'}.");
+            $self->{'Teams'}{$player->{'Team'}}{'Techs'} = [];
+            foreach my $t (@{ $data->{$player->{'CivType'}}{'_Tech'} }) {
+                $team->add_tech($t);
+            }
+        }
     }
 }
  
