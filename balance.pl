@@ -794,7 +794,8 @@ sub calculate_strategic_access {
             my $td = $quality_access_to->{$bonus}{$civ}[1];
             
             if (!defined $tile) {
-                $quality_strat{$civ}{$bonus} = '        - ** SEVERE WARNING: important early strategic resource ' . ucfirst($bonus) . " is completely inaccessible!";
+                $quality_strat{$civ}{$bonus}{'score'} = 0.0;
+                $quality_strat{$civ}{$bonus}{'full_desc'} = '        - ** SEVERE WARNING: important early strategic resource ' . ucfirst($bonus) . " is completely inaccessible!";
                 next;
             }
             
@@ -803,60 +804,61 @@ sub calculate_strategic_access {
             my $dcy = abs($capital->{'y'} - $tile->{'y'});
             
             if (($dcx != 2) and ($dcy != 2) and ($dcx <= 2) and ($dcy <= 2)) {
-                $quality_strat{$civ}{$bonus} = ucfirst($bonus) . " has capital BFC access.";
+                $quality_strat{$civ}{$bonus}{'score'} = 0.0;
+                $quality_strat{$civ}{$bonus}{'full_desc'} = ucfirst($bonus) . " has capital BFC access.";
+                next;
             }
-            else {
-                my $is_third_ring = (max($dcx, $dcy) <= 3) ? 1 : 0;
-                my $second_ring_factor = ($is_third_ring) ? 0.75 : 0.5; 
+
+            my $is_third_ring = (max($dcx, $dcy) <= 3) ? 1 : 0;
+            my $second_ring_factor = ($is_third_ring) ? 0.75 : 0.5; 
+        
+            my $max_value = 0;
+            my $found_second_ring = 0;
+            my $best_site;
+            foreach my $spot ($tile->{'bfc'}->get_first_ring()) {
+                next if ($spot->{'PlotType'} == 0) or ($spot->{'PlotType'} == 3);
+                my $dscx = abs($capital->{'x'} - $spot->{'x'});
+                my $dscy = abs($capital->{'y'} - $spot->{'y'});
+                next if ($dscx <= 2) and ($dscy <= 2);
+                
+                my $spot_td = $spot->{'distance'}{$civ}[1];
+                my $distance_penalty = 3/($spot_td+1);
+                my $frf_extra_bonus = $frf_factor*$spot->{'frf'};
+                my $score = ($spot->{'bfc_value'}+$frf_extra_bonus)*$distance_penalty;
+                
+                if ($score > $max_value) {
+                    $best_site = $spot;
+                    $max_value = $score;
+                }
+            }
             
-                my $max_value = 0;
-                my $found_second_ring = 0;
-                my $best_site;
-                foreach my $spot ($tile->{'bfc'}->get_first_ring()) {
-                    next if ($spot->{'PlotType'} == 0) or ($spot->{'PlotType'} == 3);
-                    my $dscx = abs($capital->{'x'} - $spot->{'x'});
-                    my $dscy = abs($capital->{'y'} - $spot->{'y'});
-                    next if ($dscx <= 2) and ($dscy <= 2);
-                    
-                    my $spot_td = $spot->{'distance'}{$civ}[1];
-                    my $distance_penalty = 3/($spot_td+1);
-                    my $frf_extra_bonus = $frf_factor*$spot->{'frf'};
-                    my $score = ($spot->{'bfc_value'}+$frf_extra_bonus)*$distance_penalty;
-                    
-                    if ($score > $max_value) {
-                        $best_site = $spot;
-                        $max_value = $score;
-                    }
-                }
+            # if our best copper is only a second ring site, that's bad
+            foreach my $spot ($tile->{'bfc'}->get_second_ring()) {
+                next if ($spot->{'PlotType'} == 0) or ($spot->{'PlotType'} == 3);
+                my $dscx = abs($capital->{'x'} - $spot->{'x'});
+                my $dscy = abs($capital->{'y'} - $spot->{'y'});
+                next if ($dscx <= 2) and ($dscy <= 2);
                 
-                # if our best copper is only a second ring site, that's bad
-                foreach my $spot ($tile->{'bfc'}->get_second_ring()) {
-                    next if ($spot->{'PlotType'} == 0) or ($spot->{'PlotType'} == 3);
-                    my $dscx = abs($capital->{'x'} - $spot->{'x'});
-                    my $dscy = abs($capital->{'y'} - $spot->{'y'});
-                    next if ($dscx <= 2) and ($dscy <= 2);
-                    
-                    my $spot_td = $spot->{'distance'}{$civ}[1];
-                    my $distance_penalty = 3/($spot_td+1);
-                    my $frf_extra_bonus = $frf_factor*$spot->{'frf'};
-                    
-                    # if copper is in our second ring, its only half as good!
-                    my $score = $second_ring_factor*($spot->{'bfc_value'}+$frf_extra_bonus)*$distance_penalty;
-                    
-                    if ($score > $max_value) {
-                        $best_site = $spot;
-                        $max_value = $score;
-                        $found_second_ring = 1;
-                    }
-                }
+                my $spot_td = $spot->{'distance'}{$civ}[1];
+                my $distance_penalty = 3/($spot_td+1);
+                my $frf_extra_bonus = $frf_factor*$spot->{'frf'};
                 
-                $max_value = sprintf '%5.3f', $max_value;
-                my $ring = ($found_second_ring) ? 'second' : 'first';
-                $quality_strat{$civ}{$bonus}{'score'} = $max_value;
-                $quality_strat{$civ}{$bonus}{'full_desc'} = 
-                    '        - ' . ucfirst($bonus) . " was found at a distance of $td from capital; its best site at $best_site->{'x'},$best_site->{'y'} has it in the\n"
-                  . "          $ring ring, with a relative strategic quality score of $max_value.";
+                # if copper is in our second ring, its only half as good!
+                my $score = $second_ring_factor*($spot->{'bfc_value'}+$frf_extra_bonus)*$distance_penalty;
+                
+                if ($score > $max_value) {
+                    $best_site = $spot;
+                    $max_value = $score;
+                    $found_second_ring = 1;
+                }
             }
+            
+            $max_value = sprintf '%5.3f', $max_value;
+            my $ring = ($found_second_ring) ? 'second' : 'first';
+            $quality_strat{$civ}{$bonus}{'score'} = $max_value;
+            $quality_strat{$civ}{$bonus}{'full_desc'} = 
+                '        - ' . ucfirst($bonus) . " was found at a distance of $td from capital; its best site at $best_site->{'x'},$best_site->{'y'} has it in the\n"
+              . "          $ring ring, with a relative strategic quality score of $max_value.";
         }
     }
     
