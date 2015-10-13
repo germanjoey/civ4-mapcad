@@ -297,7 +297,7 @@ sub precalculate_tile_access {
         my $dx = $ddx - 5;
         foreach my $ddy (0..10) {
             my $dy = $ddy - 5;
-            next if (abs($dx) <= 2) and (abs($dy) <= 2);
+            next if (abs($dx) <= 1) and (abs($dy) <= 1);
             
             # line() is a call to Algorithm::Line::Bresenham::line
             $self->{'raycasts'}{$dx}{$dy} = [line(0,0 => $dx,$dy)];
@@ -316,14 +316,14 @@ sub precalculate_tile_access {
                 my $dx = $ddx - 5;
                 foreach my $ddy (0..10) {
                     my $dy = $ddy - 5;
-                    
-                    next if (abs($dx) <= 2) and (abs($dy) <= 2);
                     my $other_tile = $self->{'map'}->get_tile($x+$dx, $y+$dy);
                     next unless defined($other_tile);
+                    next if $other_tile->is_water();
+                    
+                    next if (abs($dx) <= 2) and (abs($dy) <= 2) and ($tile->{'continent_id'} == $other_tile->{'continent_id'});
                     next if exists $tile->{'access'}{$other_tile->{'x'}}{$other_tile->{'y'}};
                     
-                    next if $other_tile->is_water();
-                    next if $other_tile->{'PlotType'} == 0;
+                    # next if $other_tile->{'PlotType'} == 0;
                     
                     my $ptype = 0;
                     my $path = $self->{'raycasts'}{$dx}{$dy};
@@ -784,6 +784,8 @@ sub allocate_single {
                 foreach my $i (0 .. $#$spots) {
                     my $spot = $spots->[$i];
                     my $adjust = $civ->strategic_adjustment($spot, $settler, $consider_estimate);
+                    #warn "ps1 $spot->{'x'} $spot->{'y'} $turn $spot->{'bfc_value'} $adjust" if ($spot->{'x'} == 33) and (($spot->{'y'} == 17) or ($spot->{'y'} == 16));
+                    
                     next unless $adjust > (-1*$turn/150);
                     push @stat_adjust, [$adjust, $spot];
                 }
@@ -803,6 +805,9 @@ sub allocate_single {
                 foreach my $s (@final_stat_adjust) {
                     $s->[2] = $s->[0] - $min;
                     $s->[2] = $s->[2]**2; # amplify the number
+                    
+                    #warn "ps2 $s->[1]{'x'} $s->[1]{'y'} $_->[2]" if ($s->[1]{'x'} == 33) and (($s->[1]{'y'} == 17) or ($s->[1]{'y'} == 16));
+                    
                     $total += $s->[2];
                 }
                 

@@ -95,3 +95,7 @@ new_weight_table >= 1.00 => grass,
                  >= 0.00 => ocean
                  => %land
                  
+new_weight_table >= 1.00 => coast,
+                 >= 0.99 => ocean
+                 => %any_water
+                 

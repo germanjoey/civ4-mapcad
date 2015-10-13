@@ -740,10 +740,10 @@ sub add_to_prospective_zone {
         my $dx = $ddx - $range;
         foreach my $ddy (0..(2*$range)) {
             my $dy = $ddy - $range;
-            next if (abs($dx) <= 2) and (abs($dy) <= 2);
-            
             my $tile = $self->{'map'}->get_tile($cx+$dx, $cy+$dy);
             next unless defined $tile;
+            
+            next if (abs($dx) <= 2) and (abs($dy) <= 2) and ($new_center->{'continent_id'} == $tile->{'continent_id'});
             
             my $x = $tile->{'x'};
             my $y = $tile->{'y'};
@@ -763,7 +763,7 @@ sub add_to_prospective_zone {
             my $type = (exists $self->{'path_access'}{$x}{$y}) ? $self->{'path_access'}{$x}{$y} : 3;
             $type = $new_center->{'access'}{$x}{$x} if (exists $new_center->{'access'}{$x}{$x}) and ($new_center->{'access'}{$x}{$x} < $type);
             foreach my $rtile ($new_center->{'bfc'}->get_all_tiles()) {
-                next unless ($rtile->{'PlotType'} == 1) and ($rtile->{'PlotType'} == 2);
+                next unless ($rtile->{'PlotType'} == 1) or ($rtile->{'PlotType'} == 2);
                 next unless exists $rtile->{'access'}{$x}{$y};
                 $type = $rtile->{'access'}{$x}{$y} if (exists $rtile->{'access'}{$x}{$y}) and ($rtile->{'access'}{$x}{$y} < $type);
             }
@@ -805,11 +805,11 @@ sub claim_area {
     foreach my $dx (-2, 2) {
         foreach my $dy (-2, 2) {
             my $tile = $self->{'map'}->get_tile($cx+$dx, $cy+$dy);
-            next unless $tile->{'continent_id'} == $center->{'continent_id'};
-            if (defined $tile) {
-                $tile->{'city_available'} = 0;
-                $self->{'prospective_zone'}{$tile->{'x'}}{$tile->{'y'}} = 0;
-            }
+            next unless defined $tile;
+            next unless ($tile->is_land() and ($tile->{'continent_id'} == $center->{'continent_id'}));
+            
+            $tile->{'city_available'} = 0;
+            $self->{'prospective_zone'}{$tile->{'x'}}{$tile->{'y'}} = 0;
         }
     }
 }

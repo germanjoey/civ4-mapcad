@@ -540,11 +540,15 @@ sub alloc_cell {
         my ($civ, $ownership, $alpha) = @{ $mixed_colors[$i] };
         my $z = @mixed_colors - $i;
         
-        my $op = int(100*$ownership + 0.5);
         my $o = int(100*$alpha + 0.5);
-        
-        $title_alloc .= "$civ: $op\%, ";
         $cell_alloc .= qq[<div class="c$civ o$o z$z"></div>];
+    }
+    
+    @mixed_colors = sort { $a->[0] <=> $b->[0] } @mixed_colors;
+    foreach my $i (0..$#mixed_colors) {
+        my ($civ, $ownership, $alpha) = @{ $mixed_colors[$i] };
+        my $op = int(100*$ownership + 0.5);
+        $title_alloc .= "$civ: $op\%, ";
     }
     
     $title_alloc =~ s/, $//;

@@ -375,6 +375,7 @@ sub apply_weight {
             my $tile = $self->{'map'}{'Tiles'}[$x][$y];
             
             my ($value) = $weight->evaluate_inverse($tile, $exact);
+            
             $mask->{'canvas'}[$x][$y] = (defined $value) ? max($post_match_threshold, $value) : 0.0;
             
         }

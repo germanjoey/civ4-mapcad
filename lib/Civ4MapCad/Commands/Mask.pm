@@ -1090,7 +1090,7 @@ sub count_tiles {
     my $pparams = Civ4MapCad::ParamParser->new($state, \@params, {
         'help_text' => $count_tiles_help_text,
         'required' => ['layer', 'weight', 'float'],
-        'required_descriptions' => ['the layer to find tiles in', 'the weight to filter the layer with'],
+        'required_descriptions' => ['the layer to find tiles in', 'the weight to filter the layer with', 'threshold to apply after the weight'],
         'optional' => {
             'exact_match' => 'false',
             'pre_count_threshold' => 'false',
