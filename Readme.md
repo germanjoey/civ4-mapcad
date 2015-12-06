@@ -23,13 +23,13 @@ Read through the tutorials in the [tutorials/](tutorials/) directory or Commands
 
 ## Quickstart Mode
 
-0.) Install actveperl, if you don't already have it: http://www.activestate.com/activeperl
-1.) Download the new version, extract everything to a folder: https://github.com/germanjoey/civ4-mapcad/archive/master.zip (for example, drag the contents of this zip file to your My Documents folder)
-2.) Put your map into the directory you just unzipped. This is the same directory as the one containing mapcad.pl and rename the map to map.CivBeyondSwordWBSave
-3.) Double-click on easy_click.pl
-4.) Press enter twice, if using Civ4 BTS. If using a different mod, pick the right mod.
-5.) Wait a few minutes for the thing to calculate stuff
-6.) Press enter again.
-7.) Outputs are now ready.
+0. Install actveperl, if you don't already have it: http://www.activestate.com/activeperl
+1. Download the new version, extract everything to a folder: https://github.com/germanjoey/civ4-mapcad/archive/master.zip (for example, drag the contents of this zip file to your My Documents folder)
+2. Put your map into the directory you just unzipped. This is the same directory as the one containing mapcad.pl and rename the map to map.CivBeyondSwordWBSave
+3. Double-click on easy_click.pl
+4. Press enter twice, if using Civ4 BTS. If using a different mod, pick the right mod.
+5. Wait a few minutes for the thing to calculate stuff
+6. Press enter again.
+7. Outputs are now ready.
 
 The sims for each start and the checked map (named map_fixed.CivBeyondSwordWBSave) will be in the outputs/ folder, while map_fixed.html (the balance report) and map_fixed.bfc_value.html will be in the base directory. The actual balance report is attached in a big text box at the bottom of map_fixed.html.
