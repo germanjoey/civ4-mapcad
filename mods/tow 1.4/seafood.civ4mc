@@ -1,0 +1,31 @@
+new_weight_table >= 0.00 => coast_clam
+                 => %clam
+
+new_weight_table >= 0.00 => coast_crab
+                 => %crab
+
+new_weight_table >= 0.50 => coast_fish,
+                 >= 0.00 => ocean_fish
+                 => %fish
+
+new_weight_table >= 0.50 => coast_seaoil,
+                 >= 0.00 => ocean_seaoil
+                 => %seaoil
+
+new_weight_table >= 0.00 => coast_whales
+                 => %whales
+
+new_weight_table >= 0.80 => %clam,
+                 >= 0.60 => %crab,
+                 >= 0.40 => %fish,
+                 >= 0.20 => %seaoil,
+                 >= 0.00 => %whales
+                 => %seafood
+
+new_weight_table >= 0.80 => bare_clam,
+                 >= 0.60 => bare_crab,
+                 >= 0.40 => bare_fish,
+                 >= 0.20 => bare_seaoil,
+                 >= 0.00 => bare_whales
+                 => %bare_seafood
+

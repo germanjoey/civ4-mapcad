@@ -112,6 +112,11 @@
 	TerrainType=TERRAIN_GRASS
 	PlotType=2
 </grass_corn>
+<wheat_corn>
+	BonusType=BONUS_CORN
+	TerrainType=TERRAIN_PLAINS
+	PlotType=2
+</wheat_corn>
 <bare_corn>
 	BonusType=BONUS_CORN
 </bare_corn>

@@ -46,11 +46,16 @@ sub import_ascii_mask {
         push @canvas, \@filtered if @filtered > 0;
     }
     
+    # we transpose AND fliptb
     my @transposed;
-    foreach my $x (0..$#canvas) {
-        foreach my $y (0 .. $#{ $canvas[$x] }) {
-            my $yy = $#{$canvas[$x]} - $y;
-            $transposed[$x][$yy] = $canvas[$y][$x];
+    for my $y (0..$max_col-1) {
+        $transposed[$y] = [];
+    }
+    
+    for my $x (0..$#canvas) {
+        my $xx = $#canvas - $x;
+        for my $y (0..$#{ $canvas[$x] }) {
+            $transposed[$y][$x] = $canvas[$xx][$y];
         }
     }
     

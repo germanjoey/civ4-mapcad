@@ -1,0 +1,94 @@
+<grass_ivory>
+	BonusType=BONUS_IVORY
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grass_ivory>
+<jungle_ivory>
+	BonusType=BONUS_IVORY
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+    FeatureType = FEATURE_JUNGLE
+    FeatureVariety = 0
+</jungle_ivory>
+<bare_ivory>
+	BonusType=BONUS_BANANA
+</bare_ivory>
+
+<grassforest_fur>
+	BonusType=BONUS_FUR
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 0
+</grassforest_fur>
+<plainsforest_fur>
+	BonusType=BONUS_FUR
+	TerrainType=TERRAIN_PLAINS
+	PlotType=2
+    FeatureType = FEATURE_FOREST
+    FeatureVariety = 0
+</plainsforest_fur>
+<bare_fur>
+	BonusType=BONUS_DYE
+</bare_fur>
+
+<grass_gems>
+	BonusType=BONUS_GEMS
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grass_gems>
+<grasshill_gems>
+	BonusType=BONUS_GEMS
+	TerrainType=TERRAIN_GRASS
+	PlotType=1
+</grasshill_gems>
+<jungle_gems>
+	BonusType=BONUS_GEMS
+	TerrainType=TERRAIN_GRASS
+	FeatureType=FEATURE_JUNGLE
+    FeatureVariety=0
+	PlotType=2
+</jungle_gems>
+<junglehill_gems>
+	BonusType=BONUS_GEMS
+	TerrainType=TERRAIN_GRASS
+	FeatureType=FEATURE_JUNGLE
+    FeatureVariety=0
+	PlotType=1
+</junglehill_gems>
+<bare_gems>
+	BonusType=BONUS_DYE
+</bare_gems>
+
+<grasshill_silver>
+	BonusType=BONUS_SILVER
+	TerrainType=TERRAIN_GRASS
+	PlotType=1
+</grasshill_silver>
+<plainshill_silver>
+	BonusType=BONUS_SILVER
+	TerrainType=TERRAIN_PLAINS
+	PlotType=1
+</plainshill_silver>
+<tundra_silver>
+	BonusType=BONUS_SILVER
+	TerrainType=TERRAIN_TUNDRA
+	PlotType=1
+</tundra_silver>
+<bare_silver>
+	BonusType=BONUS_SILVER
+</bare_silver>
+
+<plainshill_gold>
+	BonusType=BONUS_GOLD
+	TerrainType=TERRAIN_PLAINS
+	PlotType=1
+</plainshill_gold>
+<deserthill_gold>
+	BonusType=BONUS_GOLD
+	TerrainType=TERRAIN_DESERT
+	PlotType=1
+</deserthill_gold>
+<bare_gold>
+	BonusType=BONUS_GOLD
+</bare_gold>

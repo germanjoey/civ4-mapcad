@@ -1,0 +1,64 @@
+new_weight_table >= 0.50 => grasshill_aluminum,
+                 >= 0.00 => plainshill_aluminum
+                 => %aluminum
+
+new_weight_table >= 0.50 => grasshill_coal,
+                 >= 0.00 => plainshill_coal
+                 => %coal
+
+new_weight_table >= 0.75 => grass_copper,
+                 >= 0.50 => grasshill_copper,
+                 >= 0.25 => plains_copper,
+                 >= 0.00 => plainshill_copper
+                 => %copper
+
+new_weight_table >= 0.75 => grass_iron,
+                 >= 0.50 => grasshill_iron,
+                 >= 0.25 => plains_iron,
+                 >= 0.00 => plainshill_iron
+                 => %iron
+
+new_weight_table >= 0.67 => grass_landoil,
+                 >= 0.34 => plains_landoil,
+                 >= 0.00 => tundra_landoil
+                 => %landoil
+
+new_weight_table >= 0.75 => grasshill_marble,
+                 >= 0.50 => icehill_marble,
+                 >= 0.25 => plainshill_marble,
+                 >= 0.00 => tundrahill_marble
+                 => %marble
+
+new_weight_table >= 0.80 => desert_stone,
+                 >= 0.60 => deserthill_stone,
+                 >= 0.40 => grasshill_stone,
+                 >= 0.20 => plains_stone,
+                 >= 0.00 => plainshill_stone
+                 => %stone
+
+new_weight_table >= 0.75 => grass_uranium,
+                 >= 0.50 => grasshill_uranium,
+                 >= 0.25 => jungle_grass_uranium,
+                 >= 0.00 => jungle_grasshill_uranium
+                 => %uranium
+
+new_weight_table >= 0.88 => %aluminum,
+                 >= 0.76 => %coal,
+                 >= 0.64 => %copper,
+                 >= 0.52 => %iron,
+                 >= 0.40 => %landoil,
+                 >= 0.28 => %marble,
+                 >= 0.16 => %stone,
+                 >= 0.00 => %uranium
+                 => %strategic
+
+new_weight_table >= 0.88 => bare_aluminum,
+                 >= 0.76 => bare_coal,
+                 >= 0.64 => bare_copper,
+                 >= 0.52 => bare_iron,
+                 >= 0.40 => bare_landoil,
+                 >= 0.28 => bare_marble,
+                 >= 0.16 => bare_stone,
+                 >= 0.00 => bare_uranium
+                 => %bare_strategic
+

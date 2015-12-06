@@ -24,7 +24,7 @@ sub balance_report {
             'iterations' => 100,
             'tuning_iterations' => 40,
             'balance_config' => 'def/balance.cfg',
-            'sim_to_turn' => 155,
+            'sim_to_turn' => 145,
             'heatmap' => 'bfc_value',
         },
         'optional_descriptions' => {

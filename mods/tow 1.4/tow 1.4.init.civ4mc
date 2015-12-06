@@ -1,0 +1,15 @@
+load_terrain "mods/tow 1.4/base_terrain.terrain"
+load_terrain "mods/tow 1.4/luxury.terrain"
+load_terrain "mods/tow 1.4/seafood.terrain"
+load_terrain "mods/tow 1.4/landfood.terrain"
+load_terrain "mods/tow 1.4/strategic.terrain"
+load_terrain "mods/tow 1.4/plantation.terrain"
+
+run_script "mods/tow 1.4/base_terrain.civ4mc"
+run_script "mods/tow 1.4/luxury.civ4mc"
+run_script "mods/tow 1.4/seafood.civ4mc"
+run_script "mods/tow 1.4/landfood.civ4mc"
+run_script "mods/tow 1.4/strategic.civ4mc"
+run_script "mods/tow 1.4/plantation.civ4mc"
+
+load_xml_data

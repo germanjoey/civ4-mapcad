@@ -56,9 +56,8 @@ sub new_from_ascii {
         return $result;
     }
     
-    # TODO: are these two right?
-    my $height = @{ $result->{'canvas'} } + 0;
-    my $width = @{ $result->{'canvas'}[0] } + 0;
+    my $width = @{ $result->{'canvas'} } + 0;
+    my $height = @{ $result->{'canvas'}[0] } + 0;
     
     my %obj = (
         'width' => $width, # width of the canvas
