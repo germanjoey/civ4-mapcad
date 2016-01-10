@@ -804,8 +804,8 @@ sub calculate_strategic_access {
             my $dcy = abs($capital->{'y'} - $tile->{'y'});
             
             if (($dcx != 2) and ($dcy != 2) and ($dcx <= 2) and ($dcy <= 2)) {
-                $quality_strat{$civ}{$bonus}{'score'} = 0.0;
-                $quality_strat{$civ}{$bonus}{'full_desc'} = ucfirst($bonus) . " has capital BFC access.";
+                $quality_strat{$civ}{$bonus}{'score'} = 1.0;
+                $quality_strat{$civ}{$bonus}{'full_desc'} = '        - ' . ucfirst($bonus) . " has capital BFC access.";
                 next;
             }
 
