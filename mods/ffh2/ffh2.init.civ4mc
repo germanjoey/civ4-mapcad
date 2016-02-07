@@ -1,0 +1,19 @@
+load_terrain "mods/ffh2/base_terrain.terrain"
+load_terrain "mods/ffh2/luxury.terrain"
+load_terrain "mods/ffh2/seafood.terrain"
+load_terrain "mods/ffh2/landfood.terrain"
+load_terrain "mods/ffh2/strategic.terrain"
+load_terrain "mods/ffh2/plantation.terrain"
+load_terrain "mods/ffh2/ffh2_basic.terrain"
+load_terrain "mods/ffh2/ffh2_mana.terrain"
+load_terrain "mods/ffh2/ffh2_feature.terrain"
+load_terrain "mods/ffh2/ffh2_special.terrain"
+
+run_script "mods/ffh2/base_terrain.civ4mc"
+run_script "mods/ffh2/luxury.civ4mc"
+run_script "mods/ffh2/seafood.civ4mc"
+run_script "mods/ffh2/landfood.civ4mc"
+run_script "mods/ffh2/strategic.civ4mc"
+run_script "mods/ffh2/plantation.civ4mc"
+
+load_xml_data

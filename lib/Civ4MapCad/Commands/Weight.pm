@@ -32,7 +32,7 @@ sub load_terrain {
     
     my $ret = open (my $test, $filename) || 0;
     unless ($ret) {
-        $state->report_error("cannot import ascii shape from '$filename': $!");
+        $state->report_error("cannot open '$filename': $!");
         return -1;
     }
     close $test;

@@ -1,0 +1,156 @@
+#############
+# livestock #
+#############
+
+<grass_pig>
+	BonusType=BONUS_PIG
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grass_pig>
+<grasshill_pig>
+	BonusType=BONUS_PIG
+	TerrainType=TERRAIN_GRASS
+	PlotType=1
+</grasshill_pig>
+<jungle_pig>
+	BonusType=BONUS_PIG
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+    FeatureType = FEATURE_JUNGLE
+    FeatureVariety = 0
+</jungle_pig>
+<bare_pig>
+	BonusType=BONUS_PIG
+</bare_pig>
+
+<grass_sheep>
+	BonusType=BONUS_SHEEP
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grass_sheep>
+<grasshill_sheep>
+	BonusType=BONUS_SHEEP
+	TerrainType=TERRAIN_GRASS
+	PlotType=1
+</grasshill_sheep>
+<plains_sheep>
+	BonusType=BONUS_SHEEP
+	TerrainType=TERRAIN_PLAINS
+	PlotType=2
+</plains_sheep>
+<plainshill_sheep>
+	BonusType=BONUS_SHEEP
+	TerrainType=TERRAIN_PLAINS
+	PlotType=1
+</grasshill_sheep>
+<bare_sheep>
+	BonusType=BONUS_SHEEP
+</bare_sheep>
+
+<grass_cow>
+	BonusType=BONUS_COW
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grass_cow>
+<plains_cow>
+	BonusType=BONUS_COW
+	TerrainType=TERRAIN_PLAINS
+	PlotType=2
+</plains_cow>
+<bare_cow>
+	BonusType=BONUS_COW
+</bare_cow>
+
+<grass_deer>
+	BonusType=BONUS_DEER
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grass_deer>
+<grassforest_deer>
+	BonusType=BONUS_DEER
+	TerrainType=TERRAIN_GRASS
+	FeatureType=FEATURE_FOREST
+    FeatureVariety=0
+	PlotType=2
+</grassforest_deer>
+<plains_deer>
+	BonusType=BONUS_DEER
+	TerrainType=TERRAIN_PLAINS
+	PlotType=2
+</plains_deer>
+<plainsforest_deer>
+	BonusType=BONUS_DEER
+	TerrainType=TERRAIN_PLAINS
+	FeatureType=FEATURE_FOREST
+    FeatureVariety=2
+	PlotType=2
+</plainsforest_deer>
+<tundra_deer>
+	BonusType=BONUS_DEER
+	TerrainType=TERRAIN_TUNDRA
+	FeatureType=FEATURE_FOREST
+    FeatureVariety=3
+	PlotType=2
+</tundra_deer>
+<tundraforest_deer>
+	BonusType=BONUS_DEER
+	TerrainType=TERRAIN_TUNDRA
+	FeatureType=FEATURE_FOREST
+    FeatureVariety=3
+	PlotType=2
+</tundraforest_deer>
+<bare_deer>
+	BonusType=BONUS_DEER
+</bare_deer>
+
+##########
+# grains #
+##########
+
+<grass_corn>
+	BonusType=BONUS_CORN
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grass_corn>
+<wheat_corn>
+	BonusType=BONUS_CORN
+	TerrainType=TERRAIN_PLAINS
+	PlotType=2
+</wheat_corn>
+<bare_corn>
+	BonusType=BONUS_CORN
+</bare_corn>
+
+<grass_rice>
+	BonusType=BONUS_RICE
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grass_rice>
+<jungle_rice>
+	BonusType=BONUS_RICE
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+    FeatureType = FEATURE_JUNGLE
+    FeatureVariety = 0
+</jungle_rice>
+<bare_rice>
+	BonusType=BONUS_RICE
+</bare_rice>
+
+<grass_wheat>
+	BonusType=BONUS_WHEAT
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grass_wheat>
+<plains_wheat>
+	BonusType=BONUS_WHEAT
+	TerrainType=TERRAIN_PLAINS
+	PlotType=2
+</plains_wheat>
+<bare_wheat>
+	BonusType=BONUS_WHEAT
+</bare_wheat>
+
+###########
+# seafood #
+###########

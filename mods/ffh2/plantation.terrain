@@ -1,0 +1,103 @@
+<grass_sugar>
+	BonusType=BONUS_SUGAR
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grass_sugar>
+<jungle_sugar>
+	BonusType=BONUS_SUGAR
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+    FeatureType = FEATURE_JUNGLE
+    FeatureVariety = 0
+</jungle_sugar>
+<bare_sugar>
+	BonusType=BONUS_BANANA
+</bare_sugar>
+
+<grass_dye>
+	BonusType=BONUS_DYE
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grass_dye>
+<jungle_dye>
+	BonusType=BONUS_DYE
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+    FeatureType = FEATURE_JUNGLE
+    FeatureVariety = 0
+</jungle_dye>
+<bare_dye>
+	BonusType=BONUS_DYE
+</bare_dye>
+
+<grassforest_spices>
+	BonusType=BONUS_SPICES
+	TerrainType=TERRAIN_GRASS
+	FeatureType=FEATURE_FOREST
+    FeatureVariety=0
+	PlotType=2
+</grassforest_spices>
+<plainsforest_spices>
+	BonusType=BONUS_SPICES
+	TerrainType=TERRAIN_GRASS
+	FeatureType=FEATURE_FOREST
+    FeatureVariety=1
+	PlotType=2
+</plainsforest_spices>
+<bare_spices>
+	BonusType=BONUS_SPICES
+</bare_spices>
+
+<plains_incense>
+	BonusType=BONUS_INCENSE
+	TerrainType=TERRAIN_PLAINS
+	PlotType=2
+</plains_incense>
+<desert_incense>
+	BonusType=BONUS_INCENSE
+	TerrainType=TERRAIN_DESERT
+	PlotType=2
+</desert_incense>
+<deserthill_incense>
+	BonusType=BONUS_INCENSE
+	TerrainType=TERRAIN_DESERT
+	PlotType=1
+</deserthill_incense>
+<bare_incense>
+	BonusType=BONUS_INCENSE
+</bare_incense>
+
+<grass_banana>
+	BonusType=BONUS_BANANA
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grass_banana>
+<jungle_banana>
+	BonusType=BONUS_BANANA
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+    FeatureType = FEATURE_JUNGLE
+    FeatureVariety = 0
+</jungle_banana>
+<bare_banana>
+	BonusType=BONUS_BANANA
+</bare_banana>
+
+<grass_wine>
+	BonusType=BONUS_WINE
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grass_wine>
+<grasshill_wine>
+	BonusType=BONUS_WINE
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grasshill_wine>
+<plains_wine>
+	BonusType=BONUS_WINE
+	TerrainType=TERRAIN_PLAINS
+	PlotType=2
+</plains_wine>
+<bare_wine>
+	BonusType=BONUS_WINE
+</bare_wine>

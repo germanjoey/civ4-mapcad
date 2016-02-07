@@ -1,0 +1,54 @@
+<bare_ice_mana>
+    BonusType=BONUS_MANA_ICE
+</bare_ice_mana>
+<bare_life_mana>
+    BonusType=BONUS_MANA_LIFE
+</bare_life_mana>
+<bare_sun_mana>
+    BonusType=BONUS_MANA_SUN
+</bare_sun_mana>
+<bare_fire_mana>
+    BonusType=BONUS_MANA_FIRE
+</bare_fire_mana>
+<bare_earth_mana>
+    BonusType=BONUS_MANA_EARTH
+</bare_earth_mana>
+<bare_death_mana>
+    BonusType=BONUS_MANA_DEATH
+</bare_death_mana>
+<bare_air_mana>
+    BonusType=BONUS_MANA_AIR
+</bare_air_mana>
+<bare_body_mana>
+    BonusType=BONUS_MANA_BODY
+</bare_body_mana>
+<bare_chaos_mana>
+    BonusType=BONUS_MANA_CHAOS
+</bare_chaos_mana>
+<bare_enchantment_mana>
+    BonusType=BONUS_MANA_ENCHANTMENT
+</bare_enchantment_mana>
+<bare_entropy_mana>
+    BonusType=BONUS_MANA_ENTROPY
+</bare_entropy_mana>
+<bare_law_mana>
+    BonusType=BONUS_MANA_LAW
+</bare_law_mana>
+<bare_metamagic_mana>
+    BonusType=BONUS_MANA_METAMAGIC
+</bare_metamagic_mana>
+<bare_mind_mana>
+    BonusType=BONUS_MANA_MIND
+</bare_mind_mana>
+<bare_nature_mana>
+    BonusType=BONUS_MANA_NATURE
+</bare_nature_mana>
+<bare_spirit_mana>
+    BonusType=BONUS_MANA_SPIRIT
+</bare_spirit_mana>
+<bare_water_mana>
+    BonusType=BONUS_MANA_WATER
+</bare_water_mana>
+<bare_shadow_mana>
+    BonusType=BONUS_MANA_SHADOW
+</bare_shadow_mana>

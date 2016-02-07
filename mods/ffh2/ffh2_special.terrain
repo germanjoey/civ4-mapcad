@@ -1,0 +1,63 @@
+<yggdrasil>
+	BonusType=BONUS_FRUIT_OF_YGGDRASIL
+	ImprovementType=IMPROVEMENT_YGGDRASIL
+	FeatureType=FEATURE_FOREST, FeatureVariety=0
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</yggdrasil>
+<remnants_of_patria>
+	ImprovementType=IMPROVEMENT_REMNANTS_OF_PATRIA
+	TerrainType=TERRAIN_PLAINS
+	PlotType=2
+</remnants_of_patria>
+<mirror_of_heaven>
+	BonusType=BONUS_MANA_SUN
+	ImprovementType=IMPROVEMENT_MIRROR_OF_HEAVEN
+	TerrainType=TERRAIN_PLAINS
+	PlotType=1
+</mirror_of_heaven>
+<pool_of_tears>
+	ImprovementType=IMPROVEMENT_POOL_OF_TEARS
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</pool_of_tears>
+<tomb_of_sucellus>
+	BonusType=BONUS_MANA_LIFE
+	ImprovementType=IMPROVEMENT_TOMB_OF_SUCELLUS
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</tomb_of_sucellus>
+<broken_sepulcher>
+	BonusType=BONUS_MANA_DEATH
+	ImprovementType=IMPROVEMENT_BROKEN_SEPULCHER
+	TerrainType=TERRAIN_PLAINS
+	PlotType=2
+</broken_sepulcher>
+<dragon_bonus>
+	BonusType=BONUS_IVORY
+	ImprovementType=IMPROVEMENT_DRAGON_BONES
+	TerrainType=TERRAIN_PLAINS
+	PlotType=1
+</dragon_bonus>
+<standing_stones>
+	BonusType=BONUS_MANA_EARTH
+	ImprovementType=IMPROVEMENT_STANDING_STONES
+	TerrainType=TERRAIN_PLAINS
+	PlotType=2
+</standing_stones>
+<odios_prison>
+	ImprovementType=IMPROVEMENT_ODIOS_PRISON
+	TerrainType=TERRAIN_PLAINS
+	PlotType=1
+</odios_prison>
+<letum_frigus>
+	BonusType=BONUS_MANA_ICE
+	ImprovementType=IMPROVEMENT_LETUM_FRIGUS
+	TerrainType=TERRAIN_SNOW
+	PlotType=1
+</letum_frigus>
+<bradelines_well>
+	ImprovementType=IMPROVEMENT_BRADELINES_WELL
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</bradelines_well>

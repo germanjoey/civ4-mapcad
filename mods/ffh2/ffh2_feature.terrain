@@ -1,0 +1,112 @@
+<bare_flames>
+    FeatureType=FEATURE_FLAMES, FeatureVariety=0
+</bare_flames>
+<bare_blizzard>
+    FeatureType=FEATURE_BLIZZARD, FeatureVariety=0
+</bare_blizzard>
+<bare_tormented_souls>
+    FeatureType=FEATURE_TORMENTED_SOULS, FeatureVariety=0
+</bare_tormented_souls>
+<bare_door_west_closed>
+    FeatureType=FEATURE_DOOR_WEST_CLOSED, FeatureVariety=0
+</bare_door_west_closed>
+<bare_door_west_open>
+    FeatureType=FEATURE_DOOR_WEST_OPEN, FeatureVariety=0
+</bare_door_west_open>
+<bare_door_north_closed>
+    FeatureType=FEATURE_DOOR_NORTH_CLOSED, FeatureVariety=0
+</bare_door_north_closed>
+<bare_door_north_open>
+    FeatureType=FEATURE_DOOR_NORTH_OPEN, FeatureVariety=0
+</bare_door_north_open>
+<bare_walls>
+    FeatureType=FEATURE_WALLS, FeatureVariety=0
+</bare_walls>
+<bare_forest_new>
+    FeatureType=FEATURE_FOREST_NEW, FeatureVariety=0
+</bare_forest_new>
+<bare_forest_ancient>
+    FeatureType=FEATURE_FOREST_ANCIENT, FeatureVariety=0
+</bare_forest_ancient>
+<bare_volcano>
+    FeatureType=FEATURE_VOLCANO, FeatureVariety=0
+</bare_volcano>
+<bare_forest_burnt>
+    FeatureType=FEATURE_FOREST_BURNT, FeatureVariety=0
+</bare_forest_burnt>
+<bare_scrub>
+    FeatureType=FEATURE_SCRUB, FeatureVariety=0
+</bare_scrub>
+
+<floodplain_w_n>
+    isWOfRiver=1
+    RiverNSDirection=0
+    TerrainType = TERRAIN_DESERT
+    PlotType = 2
+    FeatureType=FEATURE_OBSIDIAN_PLAINS
+    FeatureVariety=0
+</floodplai_nw_n>
+<floodplain_w_s>
+    isWOfRiver=1
+    RiverNSDirection=2
+    TerrainType = TERRAIN_DESERT
+    PlotType = 2
+    FeatureType=FEATURE_OBSIDIAN_PLAINS
+    FeatureVariety=0
+</floodplain_w_s>
+<floodplain_n_w>
+    isNOfRiver=1
+    RiverWEDirection=3
+    TerrainType = TERRAIN_DESERT
+    PlotType = 2
+    FeatureType=FEATURE_OBSIDIAN_PLAINS
+    FeatureVariety=0
+</floodplain_n_w>
+<floodplain_n_e>
+    isNOfRiver=1
+    RiverNSDirection=1
+    TerrainType = TERRAIN_DESERT
+    PlotType = 2
+    FeatureType=FEATURE_OBSIDIAN_PLAINS
+    FeatureVariety=0
+</floodplain_n_e>
+<floodplain_nw>
+    isNOfRiver=1
+    isWOfRiver=1
+    RiverNSDirection=0
+    RiverWEDirection=3
+    TerrainType = TERRAIN_DESERT
+    PlotType = 2
+    FeatureType=FEATURE_OBSIDIAN_PLAINS
+    FeatureVariety=0
+</floodplain_nw>
+<floodplain_sw>
+    isNOfRiver=1
+    isWOfRiver=1
+    RiverNSDirection=2
+    RiverWEDirection=3
+    TerrainType = TERRAIN_DESERT
+    PlotType = 2
+    FeatureType=FEATURE_OBSIDIAN_PLAINS
+    FeatureVariety=0
+</floodplain_sw>
+<floodplain_se>
+    isNOfRiver=1
+    isWOfRiver=1
+    RiverNSDirection=2
+    RiverWEDirection=1
+    TerrainType = TERRAIN_DESERT
+    PlotType = 2
+    FeatureType=FEATURE_OBSIDIAN_PLAINS
+    FeatureVariety=0
+</floodplain_se>
+<floodplain_ne>
+    isNOfRiver=1
+    isWOfRiver=1
+    RiverNSDirection=0
+    RiverWEDirection=1
+    TerrainType = TERRAIN_DESERT
+    PlotType = 2
+    FeatureType=FEATURE_OBSIDIAN_PLAINS
+    FeatureVariety=0
+</floodplain_ne>

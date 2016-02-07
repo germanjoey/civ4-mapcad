@@ -345,24 +345,32 @@
     RiverNSDirection=0
     TerrainType = TERRAIN_DESERT
     PlotType = 2
+    FeatureType=FEATURE_FLOOD_PLAINS
+    FeatureVariety=0
 </floodplai_nw_n>
 <floodplain_w_s>
     isWOfRiver=1
     RiverNSDirection=2
     TerrainType = TERRAIN_DESERT
     PlotType = 2
+    FeatureType=FEATURE_FLOOD_PLAINS
+    FeatureVariety=0
 </floodplain_w_s>
 <floodplain_n_w>
     isNOfRiver=1
     RiverWEDirection=3
     TerrainType = TERRAIN_DESERT
     PlotType = 2
+    FeatureType=FEATURE_FLOOD_PLAINS
+    FeatureVariety=0
 </floodplain_n_w>
 <floodplain_n_e>
     isNOfRiver=1
     RiverNSDirection=1
     TerrainType = TERRAIN_DESERT
     PlotType = 2
+    FeatureType=FEATURE_FLOOD_PLAINS
+    FeatureVariety=0
 </floodplain_n_e>
 <floodplain_nw>
     isNOfRiver=1
@@ -371,6 +379,8 @@
     RiverWEDirection=3
     TerrainType = TERRAIN_DESERT
     PlotType = 2
+    FeatureType=FEATURE_FLOOD_PLAINS
+    FeatureVariety=0
 </floodplain_nw>
 <floodplain_sw>
     isNOfRiver=1
@@ -379,6 +389,8 @@
     RiverWEDirection=3
     TerrainType = TERRAIN_DESERT
     PlotType = 2
+    FeatureType=FEATURE_FLOOD_PLAINS
+    FeatureVariety=0
 </floodplain_sw>
 <floodplain_se>
     isNOfRiver=1
@@ -387,6 +399,8 @@
     RiverWEDirection=1
     TerrainType = TERRAIN_DESERT
     PlotType = 2
+    FeatureType=FEATURE_FLOOD_PLAINS
+    FeatureVariety=0
 </floodplain_se>
 <floodplain_ne>
     isNOfRiver=1
@@ -395,4 +409,6 @@
     RiverWEDirection=1
     TerrainType = TERRAIN_DESERT
     PlotType = 2
+    FeatureType=FEATURE_FLOOD_PLAINS
+    FeatureVariety=0
 </floodplain_ne>

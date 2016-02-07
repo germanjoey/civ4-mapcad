@@ -1,0 +1,66 @@
+<bare_mana>
+	BonusType=BONUS_MANA
+</bare_mana>
+<bare_gunpowder>
+	BonusType=BONUS_GUNPOWDER
+</bare_gunpowder>
+<bare_reagents>
+	BonusType=BONUS_REAGENTS
+</bare_reagents>
+<bare_mithril>
+	BonusType=BONUS_MITHRIL
+</bare_mithril>
+<bare_cotton>
+	BonusType=BONUS_COTTON
+</bare_cotton>
+<bare_gulagarm>
+	BonusType=BONUS_GULAGARM
+</bare_gulagarm>
+<bare_nightmare>
+	BonusType=BONUS_NIGHTMARE
+</bare_nightmare>
+<bare_toad>
+	BonusType=BONUS_TOAD
+</bare_toad>
+<bare_sheut_stone>
+	BonusType=BONUS_SHEUT_STONE
+</bare_sheut_stone>
+<bare_ale>
+	BonusType=BONUS_ALE
+</bare_ale>
+<bare_fine_clothes>
+	BonusType=BONUS_FINE_CLOTHES
+</bare_fine_clothes>
+
+<fields_of_perdition>
+	TerrainType=TERRAIN_FIELDS_OF_PERDITION
+    PlotType=2
+</fields_of_perdition>
+<fields_of_perdition_hill>
+	TerrainType=TERRAIN_FIELDS_OF_PERDITION
+    PlotType=1
+</fields_of_perdition_hill>
+<broken_lands>
+	TerrainType=TERRAIN_BROKEN_LANDS
+    PlotType=2
+</broken_lands>
+<broken_lands_hill>
+	TerrainType=TERRAIN_BROKEN_LANDS
+    PlotType=1
+</broken_lands_hill>
+<burning_sands>
+	TerrainType=TERRAIN_BURNING_SANDS
+    PlotType=2
+</burning_sands>
+<burning_sands_hill>
+	TerrainType=TERRAIN_BURNING_SANDS
+    PlotType=1
+</burning_sands_hill>
+<shallows>
+	TerrainType=TERRAIN_SHALLOWS
+    PlotType=2
+</shallows>
+<marsh>
+	TerrainType=TERRAIN_MARSH
+    PlotType=2
+</marsh>

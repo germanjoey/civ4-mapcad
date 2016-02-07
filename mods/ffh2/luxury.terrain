@@ -11,7 +11,7 @@
     FeatureVariety = 0
 </jungle_ivory>
 <bare_ivory>
-	BonusType=BONUS_IVORY
+	BonusType=BONUS_BANANA
 </bare_ivory>
 
 <grassforest_fur>
@@ -29,7 +29,7 @@
     FeatureVariety = 0
 </plainsforest_fur>
 <bare_fur>
-	BonusType=BONUS_FUR
+	BonusType=BONUS_DYE
 </bare_fur>
 
 <grass_gems>
@@ -57,7 +57,7 @@
 	PlotType=1
 </junglehill_gems>
 <bare_gems>
-	BonusType=BONUS_GEMS
+	BonusType=BONUS_DYE
 </bare_gems>
 
 <grasshill_silver>
