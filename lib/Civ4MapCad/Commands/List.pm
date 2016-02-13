@@ -425,7 +425,7 @@ sub list_colors {
     my $color_name_proper = 'PLAYERCOLOR_' . uc("$color_name");
     $color_name_proper =~ s/\s+/_/g;
     
-    $color_name = _format_color_name($state, $color_name_proper);
+    $color_name = _format_color_name($state, $color_name_proper) if $color_name_proper ne 'PLAYERCOLOR_';
     my @raw_colors = sort keys %{ $state->{'data'}{'colors'} };
     
     if ($color_name_exact ne '') {
@@ -727,12 +727,14 @@ sub _format_tech_name {
 sub _format_color_name {
     my ($state, $name) = @_;
     
+    my $oname = $name;
     $name =~ s/^PLAYERCOLOR_//i;
     my $code = "$name";
     $code = 'COLOR_PLAYER_' . $code;
-    my $hex = $state->{'data'}{'colorcodes'}{$code}{'hex'};
     
+    my $hex = $state->{'data'}{'colorcodes'}{$code}{'hex'};
     my $formatted_name = join ' ', (map { ucfirst(lc($_)) } (split /_|\s+/, $name));
+    
     return ($formatted_name . " ($hex)");
 }
 

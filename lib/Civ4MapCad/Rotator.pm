@@ -5,7 +5,7 @@ use warnings;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(rotate_grid);
+our @EXPORT_OK = qw(rotate_grid flip_lr flip_tb);
 
 use POSIX qw(ceil);
 use List::Util qw(min);
@@ -513,9 +513,27 @@ sub flip_lr {
         foreach my $y (0..$height-1) {
             $new[$x][$y] = $grid->[$xx][$y];
             
-            if (ref($new[$y][$x]) =~ /tile/i) {
-                $new[$y][$x]->flip_rivers_lr();
+            if (ref($new[$x][$y]) =~ /tile/i) {
+                $new[$x][$y]->set('x', $x);
+                $new[$x][$y]->flip_rivers_lr();
             }
+        }
+    }
+    
+    foreach my $x (0..$width-1) {
+        foreach my $y (0..$height-1) {
+            next unless defined($new[$x][$y]);
+            next unless ref($new[$x][$y]) =~ /tile/i;
+            
+            if (defined($new[$x-1][$y])) {
+                next unless exists $new[$x][$y]{'isWOfRiver'};
+                
+                $new[$x-1][$y]{'isWOfRiver'} = $new[$x][$y]{'isWOfRiver'};
+                $new[$x-1][$y]{'RiverNSDirection'} = $new[$x][$y]{'RiverNSDirection'};
+            }
+            
+            delete $new[$x][$y]{'RiverNSDirection'};
+            delete $new[$x][$y]{'isWOfRiver'};
         }
     }
     
@@ -533,9 +551,31 @@ sub flip_tb {
             my $y = $height - 1 - $yy;
             $new[$x][$y] = $grid->[$x][$yy];
             
-            if (ref($new[$y][$x]) =~ /tile/i) {
-                $new[$y][$x]->flip_rivers_tb();
+            if (ref($new[$x][$y]) =~ /tile/i) {
+                $new[$x][$y]->set('y', $y);
+                $new[$x][$y]->flip_rivers_tb();
             }
+        }
+    }
+    
+    foreach my $yy (0..$height-1) {
+        my $y = $height - 1 - $yy;
+        my $yp1 = $y + 1;
+        $yp1 = 0 if $yp1 == $height;
+        
+        foreach my $x (0..$width-1) {
+            next unless defined($new[$x][$y]);
+            next unless ref($new[$x][$y]) =~ /tile/i;
+            
+            if (defined($new[$x][$yp1])) {
+                next unless exists $new[$x][$y]{'isNOfRiver'};
+                
+                $new[$x][$yp1]{'isNOfRiver'} = $new[$x][$y]{'isNOfRiver'};
+                $new[$x][$yp1]{'RiverWEDirection'} = $new[$x][$y]{'RiverWEDirection'};
+            }
+            
+            delete $new[$x][$y]{'RiverWEDirection'};
+            delete $new[$x][$y]{'isNOfRiver'};
         }
     }
     
@@ -557,6 +597,46 @@ sub transpose_grid {
             if (ref($new[$y][$x]) =~ /tile/i) {
                 $new[$y][$x]->transpose_rivers();
             }
+        }
+    }
+    
+    # now fix the river offset
+    
+    foreach my $yy (0..$width-1) {
+        my $y = $width - 1 - $yy;
+        foreach my $x (0..$height-1) {
+            next unless defined($new[$x][$y]);
+            next unless ref($new[$x][$y]) =~ /tile/i;
+            
+            my $yp1 = $y + 1;
+            #$yp1 = 0 if $yp1 == $width;
+            
+            if (defined($new[$x][$yp1])) {
+                next unless exists $new[$x][$y]{'isNOfRiver'};
+                
+                $new[$x][$yp1]{'isNOfRiver'} = $new[$x][$y]{'isNOfRiver'};
+                $new[$x][$yp1]{'RiverWEDirection'} = $new[$x][$y]{'RiverWEDirection'};
+            }
+            
+            delete $new[$x][$y]{'isNOfRiver'};
+            delete $new[$x][$y]{'RiverWEDirection'};
+        }
+    }
+    
+    foreach my $x (0..$height-1) {
+        foreach my $y (0..$width-1) {
+            next unless defined($new[$x][$y]);
+            next unless ref($new[$x][$y]) =~ /tile/i;
+            
+            if (defined($new[$x-1][$y])) {
+                next unless exists $new[$x][$y]{'isWOfRiver'};
+                
+                $new[$x-1][$y]{'isWOfRiver'} = $new[$x][$y]{'isWOfRiver'};
+                $new[$x-1][$y]{'RiverNSDirection'} = $new[$x][$y]{'RiverNSDirection'};
+            }
+            
+            delete $new[$x][$y]{'RiverNSDirection'};
+            delete $new[$x][$y]{'isWOfRiver'};
         }
     }
     

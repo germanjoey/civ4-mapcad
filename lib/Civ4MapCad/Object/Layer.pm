@@ -577,8 +577,6 @@ sub check_croppable {
     
     my $cropped_width = min($right, $layer_right) - max($left, $layer_left);
     my $cropped_height = min($top, $layer_top) - max($bottom, $layer_bottom);
-    
-    warn "$left, $bottom, $right, $top / $layer_left $layer_right $layer_bottom $layer_top / $cropped_width $cropped_height";
 
     return -1 if ($cropped_height <= 0) or ($cropped_width <= 0);
     

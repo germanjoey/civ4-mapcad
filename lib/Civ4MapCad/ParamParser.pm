@@ -363,7 +363,7 @@ sub _process {
     }
     
     # fix up the named parameters
-    if ((!$has_shape_params) and (@preproc != @$required) and ($required->[-1] !~ /^\*/)) {
+    if ((!$has_shape_params) and (@preproc != @$required) and (@$required > 0) and ($required->[-1] !~ /^\*/)) {
         my @unknown;
         foreach my $item (@preproc) {
             if ($item =~ /^\-\-/) {
@@ -402,7 +402,7 @@ sub _process {
             next;
         }
     
-        my $expected_type = ($required->[-1] =~ /^\*/) ? $required->[min($i, $#$required)] : $required->[$i];
+        my $expected_type = ((@$required > 0) and ($required->[-1] =~ /^\*/)) ? $required->[min($i, $#$required)] : ((@$required > 0) ? $required->[$i] : undef);
         
         if (! defined($expected_type)) {
             $processed_params{'error_msg'} = "Do not know what to do with unexpected parameter '$preproc[$i]'. (perhaps you intended to assign this to a result?)";

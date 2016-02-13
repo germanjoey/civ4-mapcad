@@ -195,32 +195,37 @@ sub parse {
 sub flip_rivers_tb {
     my ($self) = @_;
     
-    if (exists $self->{'RiverWEDirection'}) {
-        $self->{'RiverWEDirection'} = ($self->{'RiverWEDirection'} == 0) ? 2 : 0;
+    if (exists $self->{'RiverNSDirection'}) {
+        $self->{'RiverNSDirection'} = ($self->{'RiverNSDirection'} == 0) ? 2 : 0;
     }
 }
 
 sub flip_rivers_lr {
     my ($self) = @_;
     
-    if (exists $self->{'RiverNSDirection'}) {
-        $self->{'RiverNSDirection'} = ($self->{'RiverNSDirection'} == 1) ? 3 : 1;
+    if (exists $self->{'RiverWEDirection'}) {
+        $self->{'RiverWEDirection'} = ($self->{'RiverWEDirection'} == 1) ? 3 : 1;
     }
 }
 
 sub transpose_rivers {
     my ($self) = @_;
     
-    if (exists $self->{'isNOfRiver'}) {
-        delete $self->{'isNOfRiver'};
+    if ((exists $self->{'isNOfRiver'}) and (exists $self->{'isWOfRiver'})) {
+        my $ns = $self->{'RiverNSDirection'};
+        $self->{'RiverNSDirection'} = ($self->{'RiverWEDirection'} == 1) ? 0 : 2;
+        $self->{'RiverWEDirection'} = ($ns == 0) ? 1 : 3;
+    }
+    elsif (exists $self->{'isNOfRiver'}) {
         $self->{'isWOfRiver'} = 1;
-        $self->{'RiverNSDirection'} = ($self->{'RiverWEDirection'} == 1) ? 2 : 0;
+        $self->{'RiverNSDirection'} = ($self->{'RiverWEDirection'} == 1) ? 0 : 2;
+        delete $self->{'isNOfRiver'};
         delete $self->{'RiverWEDirection'};
     }
     elsif (exists $self->{'isWOfRiver'}) {
-        delete $self->{'isWOfRiver'};
         $self->{'isNOfRiver'} = 1;
         $self->{'RiverWEDirection'} = ($self->{'RiverNSDirection'} == 0) ? 1 : 3;
+        delete $self->{'isWOfRiver'};
         delete $self->{'RiverNSDirection'};
     }
 }

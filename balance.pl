@@ -326,7 +326,7 @@ sub report {
                 my $effective_distance = (2 - $v) * $tile_distance;    
                 my $capital_tile = $alloc->{'civs'}{$civ}{'cities'}[0]{'center'};
                 
-                if (exists $tile->{'BonusType'}) {
+                if ((exists $tile->{'BonusType'}) and (exists $tile->{'bonus_type'})) {
                     my $bonus = lc $tile->{'BonusType'};
                     $bonus =~ s/^bonus_//;
                     
@@ -447,6 +447,8 @@ sub report {
     # Final report!
     
     open (my $bo, '>', $output_filename) or die $!;
+    open (TABLE, '>', "$output_filename.table") or die $!;
+    printf TABLE "Player Name\tAvg Tiles\tAvg Land Tiles\tAvg Coast\tAvg River-Adjacent Tiles\tAvg Strong Food Tiles\tAvg Weak Food Tiles\tFood Density Score\tLuxury Score\n";
     
     print $bo "*** Balance report for $input_filename ***\n\n";
     print $bo "Simulated land up to turn $to_turn with $tuning_iterations tuning iterations and $iterations actual iterations.\n\n";
@@ -498,7 +500,7 @@ sub report {
     
     print $bo "\n\n";
     print $bo "** General Report:\n\n";
-    
+      
     # general info for each civ
     foreach my $civ (sort {$a <=> $b} (keys %{$alloc->{'avg_city_count'}})) {
         ##########################
@@ -590,6 +592,7 @@ sub report {
         print $bo join("\n", map { "        classical $_" } @{ $total_lux_score->{$civ}{'cl'} });
         print $bo "\n";
         
+        printf TABLE "%s\t%5.2f\t%5.2f\t%5.2f\t%5.2f\t%5.2f\t%5.2f\t%5.2f\t%5.3f\n", $name, $total_tile, $land_tile_count{$civ}, $coast_tile_count{$civ}, $riverage{$civ}, $food_count{$civ}, $wfood_count{$civ}, $food_score{$civ}, $total_lux_score->{$civ}{'score'}/$max_lux_score;
         
         ##########################
         # Neighbors
@@ -630,6 +633,7 @@ sub report {
         }
     }
     
+    close TABLE;
     close $bo;
 }
 

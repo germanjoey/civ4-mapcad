@@ -5,7 +5,7 @@ use warnings;
 
 use List::Util qw(min max);
 
-use Civ4MapCad::Rotator qw(rotate_grid);
+use Civ4MapCad::Rotator qw(rotate_grid flip_lr flip_tb);
 use Civ4MapCad::Util qw(write_block_data deepcopy);
 
 our @fields = qw(TeamID RevealMap);
@@ -786,7 +786,29 @@ sub crop {
         }
     }
     
+    my @new_signs;
+    foreach my $sign (@{$self->{'Signs'}}) {
+        my $x = $sign->get('plotX');
+        my $y = $sign->get('plotY');
+    
+        next if $x < $left;
+        next if $x > $right;
+        next if $y < $bottom;
+        next if $y > $top;
+        
+        my $nsign = Civ4MapCad::Map::Sign->new();
+        $nsign->set('plotX', $x-$left);
+        $nsign->set('plotY', $y-$bottom);
+        $nsign->set('caption', $sign->get('caption'));
+        $nsign->set('playerType', $sign->get('PlayerType') || -1);
+        
+        warn sprintf "%d %d %d '%s'\n", $nsign->{'playerType'}, $nsign->{'plotX'}, $nsign->{'plotY'}, $nsign->{'caption'};
+        
+        push @new_signs, $nsign;
+    }
+    
     $self->{'Tiles'} = \@new;
+    $self->{'Signs'} = \@new_signs;
     $width = $right - $left + 1;
     $height = $top - $bottom + 1;
     
@@ -798,37 +820,17 @@ sub crop {
 sub fliplr {
     my ($self) = @_;
     
-    my @new;
-    foreach my $xx (0..$#{$self->{'Tiles'}}) {
-        my $x = $#{$self->{'Tiles'}} - $xx;
-        $new[$x] = [];
-        
-        foreach my $y (0..$#{$self->{'Tiles'}[$xx]}) {
-            $new[$x][$y] = $self->{'Tiles'}[$xx][$y];
-            $new[$x][$y]->set('x', $x);
-            $new[$x][$y]->flip_rivers_lr();
-        }
-    }
-    
-    $self->{'Tiles'} = \@new;
+    my $width = $self->{'MapInfo'}->get('grid width');
+    my $height = $self->{'MapInfo'}->get('grid height');
+    ($self->{'Tiles'}, $width, $height) = flip_lr($self->{'Tiles'}, $width, $height);
 }
 
 sub fliptb {
     my ($self) = @_;
     
-    my @new;
-    foreach my $x (0..$#{$self->{'Tiles'}}) {
-        $new[$x] = [];
-        
-        foreach my $yy (0..$#{$self->{'Tiles'}[$x]}) {
-            my $y = $#{$self->{'Tiles'}[$x]} - $yy;
-            $new[$x][$y] = $self->{'Tiles'}[$x][$yy];
-            $new[$x][$y]->set('y', $y);
-            $new[$x][$y]->flip_rivers_tb();
-        }
-    }
-    
-    $self->{'Tiles'} = \@new;
+    my $width = $self->{'MapInfo'}->get('grid width');
+    my $height = $self->{'MapInfo'}->get('grid height');
+    ($self->{'Tiles'}, $width, $height) = flip_tb($self->{'Tiles'}, $width, $height);
 }
 
 sub set_player_from_civdata {
