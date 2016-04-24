@@ -113,7 +113,7 @@ sub set_mod {
     
     if (! exists $state->{'config'}{'civ4_path'}) {
         $state->{'config'}{'civ4_path'} = "$state->{'config'}{'civ4_exe'}";
-        $state->{'config'}{'civ4_path'} =~ s/Civ4BeyondSword.exe$//;
+        $state->{'config'}{'civ4_path'} =~ s/Civ4BeyondSword\w*.exe$//;
         $state->{'config'}{'civ4_path'} =~ s/\/+$//;
         $state->{'config'}{'civ4_path'} =~ s/\\+$//;
         $state->{'config'}{'civ4_path'} =~ s/\\+/\//g;

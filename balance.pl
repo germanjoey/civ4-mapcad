@@ -553,7 +553,7 @@ sub report {
         foreach my $type ('completely missing', 'probably unavailable', 'uncertain') {
             if (@{ $strat->{$type}{$civ} } == 1) {
                 my $r = $strat->{$type}{$civ}[0];
-                print $bo "        WARNING: Stratgic access to $r is $type nearby ${name}'s start.\n";
+                print $bo "        WARNING: Strategic access to $r is $type nearby ${name}'s start.\n";
                 $any_missing_strat ++;
             }
             elsif (@{ $strat->{$type}{$civ} } > 1) {
