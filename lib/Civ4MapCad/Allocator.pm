@@ -52,7 +52,11 @@ our %resource_yield = (
     'silk' => ['c', 0, 0, 3, 'cl'],
     'spices' => ['c', 1, 0, 2, 'cl'], 
     'sugar' => ['f', 1, 0, 1, 'cl'],
-    'banana' => ['f', 2, 0, 0, 'wf']
+    'banana' => ['f', 2, 0, 0, 'wf'],
+    
+    'drama' => ['f', 2, 0, 0, 'f'],
+    'music' => ['f', 2, 0, 0, 'f'],
+    'movies' => ['f', 2, 0, 0, 'f'],
 );
 
 # bare tile yields
@@ -690,7 +694,7 @@ sub allocate {
         print "        starting tuning iteration $it.\n";
         
         # iterating to turn 220 is a bit arbitrary here; the idea is to let it run until we
-        # pretty much run out of tiles to get a good idea what is whose
+        # pretty much run out of tiles to get a good idea whose is whose
         my $ownership = $self->allocate_single($it, 220, 0);
         
         $self->update_alloc('estimated_allocation', $tuning_iterations, $ownership, 0);
@@ -768,7 +772,7 @@ sub allocate_single {
             $self->upgrade_resource_event($turn);
             $self->{'resource_event_pointer'} ++;
         }
-    
+        
         foreach my $player (@sorted_civs) {
             my $civ = $civs->{$player};
             next if exists $done{$player};

@@ -31,7 +31,7 @@ sub new {
         'path_access' => {},
         'settlers_produced' => 0,
         'resource_access' => {},
-        'city_search_widening_turn' => 115,
+        'city_search_widening_turn' => $main::config{'city_search_widening_turn'},
         'shareable_tiles' => {},
         'shared_by_city' => {},
         'food_network' => {},
@@ -786,14 +786,16 @@ sub claim_area {
     $self->{'prospective_zone'}{$cx}{$cy} = undef;
     
     # mark out the bfc tiles
-    foreach my $tile ($center->{'bfc'}->get_all_tiles()) {
+    
+    my @bfc = $center->{'bfc'}->get_all_tiles();
+    foreach my $tile (@bfc) {
         my $x = $tile->{'x'};
         my $y = $tile->{'y'};
         
         $alloc->[$x][$y]{$self->{'player'}} = 1;
         if ($tile->is_land()) {
             next unless $tile->{'continent_id'} == $center->{'continent_id'};
-        }
+        }        
     
         $tile->{'city_available'} = 0;
         $self->{'prospective_zone'}{$x}{$y} = undef;

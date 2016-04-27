@@ -263,6 +263,7 @@ sub write {
     }
     
     if ($DEBUG == 1) {
+        write_block_data($self, $fh, 1, 'city_available');
         write_block_data($self, $fh, 1, 'freshwater');
         write_block_data($self, $fh, 1, 'coastal');
         write_block_data($self, $fh, 1, 'river_adjacent');

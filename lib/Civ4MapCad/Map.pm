@@ -927,6 +927,7 @@ sub mark_continents {
             $cont_id ++;
         }
     }
+    
 }
 
 sub mark_freshwater {
@@ -1103,10 +1104,9 @@ sub region_search {
     
     my $start_x = $start_tile->{'x'};
     my $start_y = $start_tile->{'y'};
+    $process->($mark_as_checked, $start_tile);
     
     my @queue = ([$start_x, $start_y]);
-    $mark_as_checked->($start_x, $start_y, $start_tile);
-    
     my @directions = ('1 1', '0 1', '-1 1', '1 0', '-1 0', '1 -1', '0 -1', '-1 -1');
     
     # check all surrounding tiles to the ones we've already found
