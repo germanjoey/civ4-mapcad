@@ -27,11 +27,11 @@ sub new_default {
     my $class = ref $proto || $proto;
     my $obj = bless {}, $class;
     
-    $obj->default();
+    $obj->set_default();
     return $obj;
 }
 
-sub default {
+sub set_default {
     my ($self) = @_;
     $self->clear();
     
@@ -176,7 +176,7 @@ sub parse {
     }
 }
 
-sub write {
+sub writeout {
     my ($self, $fh) = @_;
     print $fh "BeginGame\n";
     

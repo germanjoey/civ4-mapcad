@@ -226,9 +226,9 @@ sub load_xml_data {
     return 1 if $pparams->done;
 
     $state->buffer_bar();
-    $| = 1;
+    local $| = 1;
     print "\n  Loading XML data...";
-    $| = 0;
+    local $| = 0;
     
     my $civdata = XMLin($state->{'config'}{'civ4_info_path'}, KeyAttr => {  }, ForceArray => [ 'CivilizationInfo', 'Cities', 'Building', 'Unit', 'FreeTech', 'FreeBuildingClass', 'FreeUnitClass', 'CivicType', 'Leader' ]);
     my $flagdata = XMLin($state->{'config'}{'civ4_artdefines_path'}, KeyAttr => {  }, ForceArray => [ 'CivilizationArtInfo' ]);

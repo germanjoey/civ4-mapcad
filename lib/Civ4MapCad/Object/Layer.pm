@@ -73,7 +73,7 @@ sub get_full_name {
     return '$' . $self->get_group()->get_name() . '.' . $self->{'name'};
 }
 
-sub rename {
+sub rename_layer {
     my ($self, $new_name) = @_;
     $self->{'name'} = $new_name;
 }
@@ -330,7 +330,7 @@ sub set_tile {
 
 sub clear_tile {
     my ($self, $x, $y, $terrain) = @_;
-    $self->{'map'}{'Tiles'}[$x][$y]->default($x, $y);
+    $self->{'map'}{'Tiles'}[$x][$y]->set_default($x, $y);
 }
 
 sub update_tile {
@@ -407,7 +407,7 @@ sub select_with_mask {
                 
                 if ($clear_selected) {
                     $self->{'map'}{'Tiles'}[$tx][$ty]->clear();
-                    $self->{'map'}{'Tiles'}[$tx][$ty]->default($tx, $ty);
+                    $self->{'map'}{'Tiles'}[$tx][$ty]->set_default($tx, $ty);
                 }
             }
         }
@@ -419,7 +419,7 @@ sub select_with_mask {
         $selection->set_player_from_layer($player, $self);
     }
     
-    $selection->rename($self->get_name() . '_selection');
+    $selection->rename_layer($self->get_name() . '_selection');
     $selection->set_wrapX($self->wrapsX());
     $selection->set_wrapY($self->wrapsY());
     $selection->set_speed($self->get_speed());

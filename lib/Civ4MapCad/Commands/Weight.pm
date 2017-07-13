@@ -30,7 +30,7 @@ sub load_terrain {
     
     my ($filename) = $pparams->get_required();
     
-    my $ret = open (my $test, $filename) || 0;
+    my $ret = open (my $test, '<', $filename) || 0;
     unless ($ret) {
         $state->report_error("cannot open '$filename': $!");
         return -1;
@@ -127,7 +127,7 @@ sub import_weight_table_from_file {
     
     my $result_name = $pparams->get_result_name();
     
-    my $ret = open(my $weights, $filename) || 0;
+    my $ret = open (my $weights, '<', $filename) || 0;
     unless ($ret) {
         $state->report_error("cannot open file: $!");
         return -1;

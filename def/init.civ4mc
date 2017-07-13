@@ -9,4 +9,8 @@ import_shape "shapes/circ_trim.pm" => *circ_trim
 
 new_mask_from_shape *bfc 5 5 --centerX 2 --centerY 2 => @bfc
 
+# for "big reveal" games, e.g. late starts or ffh2/eitb
+# remember to also edit line 465 of Commands/Group.pm
+# new_mask_from_shape *rect 9 9 --startX 0 --startY 0 --rect_height 9 --rect_width 9 => @bfc
+
 set_mod "none"

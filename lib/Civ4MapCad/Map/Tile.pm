@@ -41,11 +41,11 @@ sub new_default {
     $obj->{'Units'} = [];
     
     my ($x, $y) = @_;
-    $obj->default($x, $y);
+    $obj->set_default($x, $y);
     return $obj;
 }
     
-sub default {
+sub set_default {
     my ($self, $x, $y) = @_;
     
     $self->set('x', $x);
@@ -87,7 +87,8 @@ sub add_reveals {
 
 sub get_revealed {
     my ($self) = @_;
-    return sort {$a <=> $b} keys %{ $self->{'Revealed'} };
+    my @tiles = sort {$a <=> $b} keys %{ $self->{'Revealed'} };
+    return @tiles;
 }
 
 sub add_unit {
@@ -230,7 +231,7 @@ sub transpose_rivers {
     }
 }
 
-sub write {
+sub writeout {
     my ($self, $fh) = @_;
     print $fh "BeginPlot\n";
     
@@ -253,7 +254,7 @@ sub write {
     
     my @units = $self->get_units();
     foreach my $unit (@units) {
-        $unit->write($fh);
+        $unit->writeout($fh);
     }
     
     my @revealed = $self->get_revealed();

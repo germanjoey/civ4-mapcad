@@ -91,7 +91,7 @@ sub rgb_to_cymk {
     
     my $r = hex substr($rgb, 0, 2);
     my $g = hex substr($rgb, 2, 4);
-    my $b = hex substr($rgb, 4, 6);
+    local $b = hex substr($rgb, 4, 6);
     
     my $c = 255 - $r;
     my $m = 255 - $g;
@@ -110,7 +110,7 @@ sub cmyk_to_rgb {
   
   my $r = $c*(1-$k) + $k;
   my $g = $m*(1-$k) + $k;
-  my $b = $y*(1-$k) + $k;
+  local $b = $y*(1-$k) + $k;
      $r = sprintf '%02x', int(255*(1-$r) + 0.5);
      $g = sprintf '%02x', int(255*(1-$g) + 0.5);
      $b = sprintf '%02x', int(255*(1-$b) + 0.5);

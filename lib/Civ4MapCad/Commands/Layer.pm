@@ -393,7 +393,7 @@ sub rename_layer {
     
     my $p = $group->get_layer_priority($old_layer_name);
     $state->delete_variable($layer->get_full_name(), 'layer');
-    $layer->rename($new_name);
+    $layer->rename_layer($new_name);
     $state->set_variable($layer->get_full_name(), 'layer', $layer);
     $group->set_layer_priority($new_name, $p);
     

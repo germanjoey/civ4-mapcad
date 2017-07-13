@@ -42,6 +42,11 @@
 	TerrainType=TERRAIN_GRASS
 	PlotType=1
 </grasshill_gems>
+<plainshill_gems>
+	BonusType=BONUS_GEMS
+	TerrainType=TERRAIN_PLAINS
+	PlotType=1
+</plainshill_gems>
 <jungle_gems>
 	BonusType=BONUS_GEMS
 	TerrainType=TERRAIN_GRASS

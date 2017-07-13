@@ -243,7 +243,7 @@ sub list_terrain {
             $full[-1] .= "\n";
         }
         
-        chomp $full[$#full] if @full > 0;
+        chomp $full[-1] if @full > 0;
         @terrain_names = @full;
     }
     elsif (@params > 0) {

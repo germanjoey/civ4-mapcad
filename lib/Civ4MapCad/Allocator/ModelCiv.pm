@@ -60,7 +60,7 @@ sub debug {
     print $bo "RESOURCES: <", join(" ", sort keys %{ $self->{'resource_access'} }), ">\n\n";
     print $bo "FOOD_NETWORK: \n";
     foreach my $c (sort {$a <=> $b} keys %{ $self->{'food_network'} }) {
-        my @o = sort {$a <=> $b} (keys $self->{'food_network'}{$c});
+        my @o = sort {$a <=> $b} (keys %{ $self->{'food_network'}{$c} });
         print $bo "    $c: @o\n";
     }
     
@@ -195,8 +195,6 @@ sub allocate_shared_food {
         my $updated = 1;
         while ($updated == 1) {
             $updated = 0;
-            
-            my %to_trim;
             
             my @remaining_cities = keys %cities_to_handle;
             foreach my $c (@remaining_cities) {

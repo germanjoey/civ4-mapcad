@@ -438,7 +438,7 @@ sub report {
         foreach my $type ('completely missing', 'probably unavailable') {
             foreach my $r (@{ $strat->{$type}{$civ} }) {
                 $worst_civ{'missing'}{$type}{$r} = [] unless exists $worst_civ{'missing'}{$type}{$r};
-                push $worst_civ{'missing'}{$type}{$r}, $civ;
+                push @{ $worst_civ{'missing'}{$type}{$r} }, $civ;
             }
         }
     }

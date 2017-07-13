@@ -55,7 +55,7 @@ sub new_default {
     };
     $obj = bless $obj, $class;
     
-    $obj->default($width, $height);
+    $obj->set_default($width, $height);
     return $obj;
 }
 
@@ -95,7 +95,7 @@ sub info {
     return $self->{'MapInfo'}->get($field);
 }
 
-sub default {
+sub set_default {
     my ($self, $width, $height) = @_;
     
     $self->{'Game'} = Civ4MapCad::Map::Game->new_default();
@@ -146,7 +146,7 @@ sub clear_map {
     foreach my $x (0..$#{$self->{'Tiles'}}) {
         foreach my $y (0..$#{$self->{'Tiles'}[$x]}) {
             $self->{'Tiles'}[$x][$y]->clear();
-            $self->{'Tiles'}[$x][$y]->default($x, $y);
+            $self->{'Tiles'}[$x][$y]->set_default($x, $y);
         }
     }
     
@@ -308,7 +308,8 @@ sub add_team {
 
 sub get_teams {
     my ($self, $fh) = @_;
-    return sort { $a->get('TeamID') <=> $b->get('TeamID') } (values %{$self->{'Teams'}});
+    my @teams = sort { $a->get('TeamID') <=> $b->get('TeamID') } (values %{$self->{'Teams'}});
+    return @teams;
 }
 
 sub add_sign {
@@ -369,7 +370,7 @@ sub add_sign_to_coord {
 sub import_map {
     my ($self, $filename, $strip_nonsettlers) = @_;
     
-    open (my $fh, $filename) or return "$!";
+    open (my $fh, '<', $filename) or return "$!";
     $self->{'Version'} = <$fh>;
     chomp $self->{'Version'};
     
@@ -423,23 +424,23 @@ sub export_map {
     open (my $fh, '>', $filename) or die $!;
     
     print $fh $self->{'Version'}, "\n";
-    $self->{'Game'}->write($fh);
+    $self->{'Game'}->writeout($fh);
     
     foreach my $team ($self->get_teams()) {
-        $team->write($fh);
+        $team->writeout($fh);
     }
     
     foreach my $player ($self->get_players()) {
-        $player->write($fh);
+        $player->writeout($fh);
     }
     
     $self->{'MapInfo'}->set('num signs written', @{$self->{'Signs'}}+0);
-    $self->{'MapInfo'}->write($fh);
+    $self->{'MapInfo'}->writeout($fh);
     print $fh "\n### Plot Info ###\n";
 
     foreach my $xv (@{ $self->{'Tiles'} }) {
         foreach my $tile (@$xv) {
-            $tile->write($fh);
+            $tile->writeout($fh);
         }
     }
     
@@ -447,7 +448,7 @@ sub export_map {
         print $fh "\n### Sign Info ###\n";
     }
     foreach my $sign (@{$self->{'Signs'}}) {
-        $sign->write($fh);
+        $sign->writeout($fh);
     }
 }
 
@@ -670,7 +671,7 @@ sub reassign_player {
     
     $self->{'Players'}[$to] = deepcopy($self->{'Players'}[$from]);
     $self->{'Players'}[$from]->clear();
-    $self->{'Players'}[$from]->default($from);
+    $self->{'Players'}[$from]->set_default($from);
     
     my $teamcount = 0;
     foreach my $i (0 .. $#{ $self->{'Players'} }) {
@@ -688,7 +689,7 @@ sub reassign_player {
         $self->{'Players'}[$to]->set('Team', $to);
         
         $self->{'Teams'}{$from}->clear();
-        $self->{'Teams'}{$from}->default($from);
+        $self->{'Teams'}{$from}->set_default($from);
     }
     
     foreach my $x (0..$#{$self->{'Tiles'}}) {
@@ -1214,7 +1215,6 @@ sub fix_map {
 
 sub fix_tiles {
     my ($self) = @_;
-    my %already_seen;
     
     # compress the tile warnings
     my $have_warned = 0;

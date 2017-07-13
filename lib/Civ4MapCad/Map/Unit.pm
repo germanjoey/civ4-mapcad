@@ -1,5 +1,8 @@
 package Civ4MapCad::Map::Unit;
 
+use strict;
+use warnings;
+
 our @fields = qw(UnitType UnitOwner UnitName Damage Level Experience FacingDirection UnitAIType PromotionType);
 our %field_names;
 @field_names{@fields} = (1) x @fields;
@@ -11,7 +14,7 @@ sub new {
     my $class = ref $proto || $proto;
     
     my $obj = bless {}, $class;
-    $obj->{'Promotions'} = [];
+    $obj->{'promotions'} = [];
     
     return $obj;
 }
@@ -67,7 +70,7 @@ sub parse {
     }
 }
 
-sub write {
+sub writeout {
     my ($self, $fh) = @_;
     print $fh "\tBeginUnit\n";
     

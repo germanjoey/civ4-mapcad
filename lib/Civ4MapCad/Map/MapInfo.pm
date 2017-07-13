@@ -23,7 +23,7 @@ sub new_default {
     my $obj = bless { 'wrap X' => 0, 'wrap Y' => 0 }, $class;
     
     my ($width, $height) = @_;
-    $obj->default($width, $height);
+    $obj->set_default($width, $height);
     return $obj;
 }
 
@@ -33,7 +33,7 @@ sub clear {
     $self->{'Civics'} = [];
 }
 
-sub default {
+sub set_default {
     my ($self, $width, $height) = @_;
     
     $self->set('grid width', $width);
@@ -84,7 +84,7 @@ sub parse {
     }
 }
 
-sub write {
+sub writeout {
     my ($self, $fh) = @_;
     print $fh "BeginMap\n";
     

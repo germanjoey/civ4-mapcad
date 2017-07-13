@@ -223,7 +223,7 @@ sub layer_exists {
     return 0;
 }
 
-sub rename {
+sub rename_group {
     my ($self, $new_name) = @_;
     $new_name =~ s/\$//g;
     $self->{'name'} = $new_name;
@@ -487,7 +487,7 @@ sub merge_all {
     # rename the final layer to match the group name, so clean out the old name from the indexes
     if (($remnant ne $self->get_name()) and ($rename_final_to_match)) {
         my $new_name = $self->get_name();
-        $self->{'layers'}{$remnant}->rename($new_name);
+        $self->{'layers'}{$remnant}->rename_layer($new_name);
         $self->{'layers'}{$new_name} = $self->{'layers'}{$remnant};
         $self->{'priority'}{$new_name} = 0;
         
@@ -625,7 +625,7 @@ sub extract_starts_with_mask {
         
         my $start_layer = $self->{'layers'}{$layer_name}->select_with_mask($mask, $offsetX, $offsetY, $clear_selected);
         $start_layer->set_player_from_layer($owner, $self->{'layers'}{$layer_name});
-        $start_layer->rename("start" . $owner);
+        $start_layer->rename_layer("start" . $owner);
         
         if ($as_sim) {
             $start_layer->strip_hidden_strategic();

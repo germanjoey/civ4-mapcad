@@ -88,7 +88,7 @@ sub new_from_layer {
 sub new_from_file {
     my ($class, $filename) = @_;
     
-    open (my $file, $filename);
+    open (my $file, '<', $filename);
     my @lines = <$file>;
     close $file;
     

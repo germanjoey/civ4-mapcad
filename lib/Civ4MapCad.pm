@@ -480,7 +480,7 @@ sub set_variable {
     
     if ($type eq 'group') {
         $name =~ s/\$//g;
-        $value->rename($name);
+        $value->rename_group($name);
         
         # clear out old layer names, in case some got deleted in a merge
         foreach my $full_layer_name (keys %{ $self->{'layer'} }) {
@@ -503,7 +503,7 @@ sub _assign_layer_result {
     
     my ($result_group_name, $result_layer_name) = $result_name =~ /\$(\w+)\.(\w+)/;
     my $group = $self->get_variable('$' . $result_group_name, 'group');
-    $result_layer->rename($result_layer_name);
+    $result_layer->rename_layer($result_layer_name);
     
     my $old_group = $result_layer->get_group();
     if ((!defined($old_group)) or ($old_group->get_name() ne $result_group_name)) {

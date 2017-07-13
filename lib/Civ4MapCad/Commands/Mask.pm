@@ -147,7 +147,7 @@ sub import_mask_from_ascii {
     return 1 if $pparams->done;
     
     my ($filename) = $pparams->get_required();
-    my $ret = open (my $test, $filename) || 0;
+    my $ret = open (my $test, '<', $filename) || 0;
     unless ($ret) {
         $state->report_error("cannot import ascii shape from '$filename': $!");
         return -1;
@@ -189,7 +189,7 @@ sub import_mask_from_table {
     return 1 if $pparams->done;
     
     my ($filename) = $pparams->get_required();
-    my $ret = open (my $test, $filename) || 0;
+    my $ret = open (my $test, '<', $filename) || 0;
     unless ($ret) {
         $state->report_error("cannot import mask from '$filename': $!");
         return -1;

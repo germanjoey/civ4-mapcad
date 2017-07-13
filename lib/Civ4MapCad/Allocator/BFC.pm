@@ -143,7 +143,7 @@ sub get_estimated_ownership {
     return $self->{'average_ownership'}{$player};
 }
 
-sub reset {
+sub reset_bfc {
     my ($self) = @_;
     
     $self->{'bfc_value'} = $self->{'original_bfc_value'};

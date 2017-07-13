@@ -24,11 +24,11 @@ sub new_default {
     my $obj = bless {}, $class;
     
     my $teamID = shift;
-    $obj->default($teamID);
+    $obj->set_default($teamID);
     return $obj;
 }
 
-sub default {
+sub set_default {
     my ($self, $teamID) = @_;
     $self->clear();
     $self->set('Team', $teamID);
@@ -102,7 +102,7 @@ sub parse {
     }
 }
 
-sub write {
+sub writeout {
     my ($self, $fh) = @_;
     print $fh "BeginPlayer\n";
     

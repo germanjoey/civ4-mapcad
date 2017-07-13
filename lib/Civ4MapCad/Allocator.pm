@@ -502,7 +502,6 @@ sub has_resource_event {
     
     return 0 if $turn > $self->{'resource_events'}[-1];
     return $turn == $self->{'resource_events'}[$self->{'resource_event_pointer'}];
-    return 0;
 }
 
 sub upgrade_resource_event {
@@ -554,7 +553,7 @@ sub reset_resources {
             $resource_tile->{'value'} = $resource_tile->{'base_value'};
             
             foreach my $other_bfc (@{ $resource_tile->{'member_of'} }) {
-                $other_bfc->reset();
+                $other_bfc->reset_bfc();
             }
         }
     }
@@ -801,7 +800,7 @@ sub allocate_single {
                 my $num_to_consider = min(0+@stat_adjust, 3 + $city_count);
                 @stat_adjust = sort { $b->[0] <=> $a->[0] } @stat_adjust;
                 my @final_stat_adjust = splice @stat_adjust, 0, $num_to_consider;
-                my $min = $final_stat_adjust[$#final_stat_adjust][0];
+                my $min = $final_stat_adjust[-1][0];
                 
                 # now normalize their priorities by subtracting out the minimum one from each
                 # (so the last one will become zero)

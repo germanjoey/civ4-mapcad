@@ -445,7 +445,7 @@ sub _read_alloc_file {
     return if $filename eq '';
     
     my %alloc;
-    open (my $ain, $filename) or return;
+    open (my $ain, '<', $filename) or return;
     
     my $max_x = 0;
     my $max_y = 0;
@@ -504,10 +504,22 @@ sub _dump_alloc_css {
         $player_color = 'COLOR_PLAYER_' . $player_color;
     
         $alloc_css .= "    .c$i {\n";
-        $alloc_css .= "        background-color: $state->{'data'}{'colorcodes'}{$player_color}{'hex'} !important;$tmpl";
+        
+        my $displayed_color = $player_color;
+        if ($displayed_color =~ /_AND_/) {
+            $displayed_color =~ s/_AND_.+$//;
+        }
+        
+        if ($displayed_color =~ / /) {
+            warn "player color '$player_color' found with spaces in the name";
+        }
+        
+        $alloc_css .= "        background-color: $state->{'data'}{'colorcodes'}{$displayed_color}{'hex'} !important;$tmpl";
         $alloc_css .= "}\n\n";
         $i++;
     }
     
     return $alloc_css;
 }
+
+1;

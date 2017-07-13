@@ -23,20 +23,26 @@ new_weight_table >= 0.67 => grass_wine,
                  >= 0.34 => grasshill_wine,
                  >= 0.00 => plains_wine
                  => %wine
+                 
+new_weight_table >= 0.67 => grass_silk,
+                 >= 0.00 => jungle_silk,
+                 => %silk
 
-new_weight_table >= 0.83 => %banana,
-                 >= 0.66 => %dye,
-                 >= 0.50 => %incense,
-                 >= 0.33 => %spices,
-                 >= 0.16 => %sugar,
+new_weight_table >= 0.84 => %banana,
+                 >= 0.70 => %dye,
+                 >= 0.56 => %silk,
+                 >= 0.42 => %incense,
+                 >= 0.28 => %spices,
+                 >= 0.14 => %sugar,
                  >= 0.00 => %wine
                  => %plantation
                  
-new_weight_table >= 0.83 => bare_banana,
-                 >= 0.66 => bare_dye,
-                 >= 0.50 => bare_incense,
-                 >= 0.33 => bare_spices,
-                 >= 0.16 => bare_sugar,
-                 >= 0.00 => bare_wine
+new_weight_table >= 0.84 => bare_banana,
+                 >= 0.70 => bare_dye,
+                 >= 0.56 => bare_silk,
+                 >= 0.42 => bare_incense,
+                 >= 0.28 => bare_spices,
+                 >= 0.14 => bare_sugar,
+                 >= 0.10 => bare_wine
                  => %bare_plantation
 

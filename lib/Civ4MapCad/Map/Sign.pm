@@ -58,7 +58,7 @@ sub parse {
     }
 }
 
-sub write {
+sub writeout {
     my ($self, $fh) = @_;
     print $fh "BeginSign\n";
     

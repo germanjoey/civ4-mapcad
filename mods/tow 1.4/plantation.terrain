@@ -67,6 +67,22 @@
 	BonusType=BONUS_INCENSE
 </bare_incense>
 
+<grass_silk>
+	BonusType=BONUS_SILK
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+</grass_silk>
+<jungle_silk>
+	BonusType=BONUS_SILK
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+    FeatureType = FEATURE_JUNGLE
+    FeatureVariety = 0
+</jungle_silk>
+<bare_silk>
+	BonusType=BONUS_SILK
+</bare_silk>
+
 <grass_banana>
 	BonusType=BONUS_BANANA
 	TerrainType=TERRAIN_GRASS

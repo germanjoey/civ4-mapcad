@@ -223,7 +223,7 @@ sub flatten_group {
     
     if ($rename_final) {
         my ($raw_name) = $result_name =~ /\$(\w+)/;
-        $copy->rename($raw_name);
+        $copy->rename_group($raw_name);
     }
     
     my $has_duplicate_owners = $group->has_duplicate_owners();
@@ -462,6 +462,7 @@ sub export_sims {
     
     my $bfc = $state->get_variable('@bfc', 'mask');
     my $bfc_for_sim = Civ4MapCad::Object::Mask->new_blank($width, $height);
+    #$bfc_for_sim = $bfc_for_sim->union($bfc, int($width/2)-6, int($height/2)-6);
     $bfc_for_sim = $bfc_for_sim->union($bfc, int($width/2)-2, int($height/2)-2);
     
     my @layers = $group->get_layer_names();

@@ -11,7 +11,7 @@ our @EXPORT_OK = qw(import_ascii_mask export_ascii_mask import_ascii_mapping_fil
 sub import_ascii_mask {
     my ($filename, $mapping) = @_;
 
-    open (my $ascii, $filename);
+    open (my $ascii, '<', $filename);
     my @lines = <$ascii>;
     close $ascii;
     
@@ -112,7 +112,7 @@ sub find_nearest_mapping_match {
 sub import_ascii_mapping_file {
     my ($mapping_file) = @_;
     
-    my $ret = open (my $map, $mapping_file) or 0;
+    my $ret = open (my $map, '<', $mapping_file) or 0;
     if (!$ret) {
         return {
             'error' => 1,
@@ -163,7 +163,7 @@ sub import_ascii_mapping_file {
 sub clean_ascii {
     my ($filename) = @_;
 
-    open (my $in, $filename);
+    open (my $in, '<', $filename);
     my @lines = <$in>;
     close $in;
     
