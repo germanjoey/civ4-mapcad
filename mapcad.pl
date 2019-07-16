@@ -1,5 +1,17 @@
 #!perl
 
+# perl 5.26 removed "." from @INC by default, so we've gotta re-add it.
+BEGIN {
+    if ($] >= 5.026) {
+        use File::Spec;
+        my $current_file = File::Spec->rel2abs(__FILE__);
+        $current_file =~ s/\\\w+\.pl$//;
+        chdir $current_file or die "Can't chdir to $current_file: $!\n";
+        # safe now
+        push @INC, '.';
+    }
+}
+
 # this crazy jazz right here (the next 15 lines) splits STDOUT to a file
 # method from here: http://stackoverflow.com/questions/387702/how-can-i-hook-into-perls-print
 package IO::Override;
