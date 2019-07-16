@@ -1,0 +1,37 @@
+new_weight_table >= 0.50 => grassforest_fur,
+                 >= 0.00 => plainsforest_fur
+                 => %fur
+
+new_weight_table >= 0.75 => grass_gems,
+                 >= 0.50 => grasshill_gems,
+                 >= 0.25 => jungle_gems,
+                 >= 0.00 => junglehill_gems
+                 => %gems
+
+new_weight_table >= 0.50 => deserthill_gold,
+                 >= 0.00 => plainshill_gold
+                 => %gold
+
+new_weight_table >= 0.50 => grass_ivory,
+                 >= 0.00 => jungle_ivory
+                 => %ivory
+
+new_weight_table >= 0.67 => grasshill_silver,
+                 >= 0.34 => plainshill_silver,
+                 >= 0.00 => tundra_silver
+                 => %silver
+
+new_weight_table >= 0.80 => %fur,
+                 >= 0.60 => %gems,
+                 >= 0.40 => %gold,
+                 >= 0.20 => %ivory,
+                 >= 0.00 => %silver
+                 => %luxury
+
+new_weight_table >= 0.80 => bare_fur,
+                 >= 0.60 => bare_gems,
+                 >= 0.40 => bare_gold,
+                 >= 0.20 => bare_ivory,
+                 >= 0.00 => bare_silver
+                 => %bare_luxury
+

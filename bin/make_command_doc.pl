@@ -30,7 +30,7 @@ my @commands = map { $_ =~ s/\s//g; $_ } sort @lines;
 
 open (my $doc, '>', 'doc/Commands.md') or die $!;
 
-print $doc "#Command List\n";
+print $doc "# Command List\n";
 print $doc "This file is auto-generated from bin/make_command_doc.pl from the in-program help text for each command.\n\n";
 
 foreach my $i (0..$#commands) {
@@ -46,7 +46,7 @@ foreach my $i (0..$#commands) {
     
     my @lines = split "\n", $captured_output;
     
-    print $doc "##$command\n";
+    print $doc "## $command\n";
     
     # strip out indent
     foreach my $line (@lines) {
