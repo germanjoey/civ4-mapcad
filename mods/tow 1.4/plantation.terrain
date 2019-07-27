@@ -95,6 +95,13 @@
     FeatureType = FEATURE_JUNGLE
     FeatureVariety = 0
 </jungle_banana>
+<grassforest_banana>
+	BonusType=BONUS_BANANA
+	TerrainType=TERRAIN_GRASS
+	PlotType=2
+	FeatureType=FEATURE_FOREST
+    FeatureVariety=1
+</grassforest_banana>
 <bare_banana>
 	BonusType=BONUS_BANANA
 </bare_banana>

@@ -1,0 +1,15 @@
+load_terrain "mods/rtr 4.1.0.8/base_terrain.terrain"
+load_terrain "mods/rtr 4.1.0.8/luxury.terrain"
+load_terrain "mods/rtr 4.1.0.8/seafood.terrain"
+load_terrain "mods/rtr 4.1.0.8/landfood.terrain"
+load_terrain "mods/rtr 4.1.0.8/strategic.terrain"
+load_terrain "mods/rtr 4.1.0.8/plantation.terrain"
+
+run_script "mods/rtr 4.1.0.8/base_terrain.civ4mc"
+run_script "mods/rtr 4.1.0.8/luxury.civ4mc"
+run_script "mods/rtr 4.1.0.8/seafood.civ4mc"
+run_script "mods/rtr 4.1.0.8/landfood.civ4mc"
+run_script "mods/rtr 4.1.0.8/strategic.civ4mc"
+run_script "mods/rtr 4.1.0.8/plantation.civ4mc"
+
+load_xml_data
